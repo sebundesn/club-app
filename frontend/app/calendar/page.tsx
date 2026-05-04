@@ -1,26 +1,37 @@
 "use client";
-import { useState} from "react";
+
+import { useEffect, useState} from "react";
 import { generateCalendarDays } from "../utils/calendar";
+import { getNowTime} from "../utils/getTime";
 
 export default function CalendarPage() {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [events, setEvents] = useState<any[]>([]);
+    //events = date: "2020-05-23" title: "森吉山" subtitle: "8:00~"
     const [eventData, setEventData] = useState({
       title: "",
       subtitle: "",
       pdf_path: "",
       content: "",
     });
-    
 
     //ほかの月もできるように
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    const today = now.getDate();
+    const [year, month, today, dayNames] = getNowTime();
     const days = generateCalendarDays(year, month);
-    const dayNames = ["日", "月", "火", "水", "木", "金", "土"];
+
+    const fetchMonthEvents = async () => {                                  
+      const res = await fetch(`http://localhost:8080/getMonthEvents?month=${String(year)}-${String(month).padStart(2, '0')}`);
+      const data = await res.json();
+      setEvents(data);
+      console.log("monthData: ", data);
+    };
+
+    const eventMap = (events ?? []).reduce((acc, cur) => {
+      acc[cur.date] = cur;
+      return acc;
+    }, {});
 
     const handleDateClick = async (date: number) => {
         const dateStr = `${String(year)}-${String(month).padStart(2, "0")}-${String(date).padStart(2, "0")}`;
@@ -34,6 +45,33 @@ export default function CalendarPage() {
       setIsModalOpen(false);
       setSelectedDate("");
     };
+
+    const saveEvent = async () => {
+      const res = await fetch("http://localhost:8080/saveEvent", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          date: selectedDate,
+          title: eventData.title,
+          subtitle: eventData.subtitle,
+          content: eventData.content,
+          pdf_path: eventData.pdf_path 
+        }), 
+      });
+
+      if(res.ok){
+        alert("保存完了！");
+        setIsModalOpen(false);
+      }else{
+        alert("保存失敗ー")
+      };
+    };
+
+    useEffect(() => {
+      fetchMonthEvents();
+    }, []);
 
     return (
     <div className="container">
@@ -49,6 +87,8 @@ export default function CalendarPage() {
         <div className="calendar-grid">
           {days.map((date, i) => {
             const isToday = date === today;
+            const dateKey = `${String(year)}-${String(month).padStart(2, "0")}-${String(date).padStart(2, "0")}`;
+            const event = eventMap[dateKey];
 
             return (
               <div
@@ -59,6 +99,13 @@ export default function CalendarPage() {
                 onClick={() => date && handleDateClick(date)}
               >
                 {date}
+
+                {event && (
+                    <div className="event-info">
+                      <p className="event-title">{event.title}</p>
+                      <p className="event-subtitle">{event.subtitle}</p>
+                    </div>
+                )}
               </div>
             );
           })}
@@ -75,6 +122,7 @@ export default function CalendarPage() {
               <ul>
                 <li>
                   <a href="https://hirosaki.e-rev.jp/index.jsp">体育館予約サイト</a>
+                  <p>利用者ID: 69290365  パスワード: 1031</p>
                 </li>
 
                 <li>
@@ -117,7 +165,7 @@ export default function CalendarPage() {
                 <button className="cancel-button" onClick={closeModal}>
                   キャンセル
                 </button>
-                <button className="save-button">
+                <button className="save-button" onClick={saveEvent}>
                   保存
                 </button>
               </div>

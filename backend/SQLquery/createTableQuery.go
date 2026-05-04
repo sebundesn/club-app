@@ -1,4 +1,4 @@
-package queries
+package SQLquery
 
 const CreateEventsTable_Q = `
 	CREATE TABLE IF NOT EXISTS events (
@@ -10,8 +10,4 @@ const CreateEventsTable_Q = `
 		pdf_path TEXT,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);
-`
-
-const GeneratePDFPath_Q = `
-	UPDATE events SET pdf_path = $1 WHERE date = $2
 `

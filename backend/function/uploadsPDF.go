@@ -1,8 +1,8 @@
-package pdf
+package function
 
 import (
-	"club-app/connection"
-	"club-app/queries"
+	"club-app/utility"
+	"club-app/SQLquery"
 	"fmt"
 	"io"
 	"net/http"
@@ -29,7 +29,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) error {
 	defer out.Close()
 	io.Copy(out, file)
 
-	_, err = connection.DB.Exec(queries.GeneratePDFPath_Q, fileName, date)
+	_, err = utility.DB.Exec(SQLquery.GeneratePDFPath_Q, date, fileName)
 	if err != nil {
 		return fmt.Errorf("Failed for sql execution: %w", err)
 	}

@@ -11,4 +11,4 @@ export const generateCalendarDays = (year: number, month: number) => {
     for(let d=1; d < lastDate; d++) days.push(d);
 
     return days;
-}
+};

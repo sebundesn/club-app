@@ -1,21 +1,23 @@
-package connection
+package utility
 
 import (
+	"club-app/SQLquery"
 	"database/sql"
-	"net/http"
 	"log"
-	"club-app/queries"
+	"net/http"
 
 	_ "github.com/lib/pq"
 )
 
 var DB *sql.DB
 
-func ConnectSql(){
+func ConnectSQL() {
 	//ここ本番なら変える
-	connStr := "user=postgres password=password dbname=club_db sslmode=disable"
+	connStr := "user=sebun password=password dbname=club_db sslmode=disable"
 
-	DB, err := sql.Open("postgres", connStr)
+	var err error
+
+	DB, err = sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -24,7 +26,7 @@ func ConnectSql(){
 		log.Fatal(err)
 	}
 
-	_, err = DB.Exec(queries.CreateEventsTable_Q)
+	_, err = DB.Exec(SQLquery.CreateEventsTable_Q)
 	if err != nil {
 		log.Fatal(err)
 	}
