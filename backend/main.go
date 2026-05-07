@@ -13,6 +13,7 @@ func main() {
 
 	http.Handle("/saveEvent", utility.AppHandler(function.SaveNote))
 	http.Handle("/getMonthEvents", utility.AppHandler(function.GetMonthNotes))
+	http.Handle("/getDateEvent", utility.AppHandler(function.GetDateEvent))
 
 	log.Printf("Server started at :8080")
 	err := http.ListenAndServe(":8080", nil)

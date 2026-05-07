@@ -1,49 +1,56 @@
 "use client";
 
 import { useEffect, useState} from "react";
-import { generateCalendarDays } from "../utils/calendar";
+import { generateCalendarDays, createEmptyEvents} from "../utils/calendar";
 import { getNowTime} from "../utils/getTime";
 
+interface DateTitle {
+  date: string;
+  title: string;
+};
+
+interface eventStruct {
+  Date: string;
+  Title: string;
+  Subtitle: string;
+  Content: string;
+  PDFPath: string;
+}
+
 export default function CalendarPage() {
-    const [isOpen, setIsOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [events, setEvents] = useState<any[]>([]);
-    //events = date: "2020-05-23" title: "森吉山" subtitle: "8:00~"
-    const [eventData, setEventData] = useState({
-      title: "",
-      subtitle: "",
-      pdf_path: "",
-      content: "",
+    const [eventMap, setEventMap] = useState<Record<string, DateTitle>>({});
+    const [eventData, setEventData] = useState<eventStruct>({
+      Date: "",
+      Title: "",
+      Subtitle: "",
+      PDFPath: "",
+      Content: "",
     });
 
-    //ほかの月もできるように
     const [year, month, today, dayNames] = getNowTime();
     const days = generateCalendarDays(year, month);
 
-    const fetchMonthEvents = async () => {                                  
+    const getMonthEvents = async () => {                                  
       const res = await fetch(`http://localhost:8080/getMonthEvents?month=${String(year)}-${String(month).padStart(2, '0')}`);
-      const data = await res.json();
-      setEvents(data);
-      console.log("monthData: ", data);
+      const data: DateTitle[] = await res.json();
+      data.forEach((d) => {
+        eventMap[d.date] = d;
+      });
+      setEventMap(eventMap);
     };
-
-    const eventMap = (events ?? []).reduce((acc, cur) => {
-      acc[cur.date] = cur;
-      return acc;
-    }, {});
 
     const handleDateClick = async (date: number) => {
-        const dateStr = `${String(year)}-${String(month).padStart(2, "0")}-${String(date).padStart(2, "0")}`;
-        setSelectedDate(dateStr);
-        setIsModalOpen(true);
+      const dateStr = `${String(year)}-${String(month).padStart(2, "0")}-${String(date).padStart(2, "0")}`;
+      setSelectedDate(dateStr);
+      setIsModalOpen(true);
 
-        // 本来はここでGoのAPI(GET /memo?date=...)を叩いて既存のメモを取得する
-    };
-
-    const closeModal = () => {
-      setIsModalOpen(false);
-      setSelectedDate("");
+      const res = await fetch(`http://localhost:8080/getDateEvent?date=${dateStr}`);
+      const data = await res.json();
+      const nextEventData: eventStruct = {...eventData, Subtitle: data.subtitle, Content: data.content, PDFPath: data.pdf_path};
+      setEventData(nextEventData);
+      console.log(eventData);
     };
 
     const saveEvent = async () => {
@@ -54,14 +61,23 @@ export default function CalendarPage() {
         },
         body: JSON.stringify({
           date: selectedDate,
-          title: eventData.title,
-          subtitle: eventData.subtitle,
-          content: eventData.content,
-          pdf_path: eventData.pdf_path 
+          title: eventData.Title,
+          subtitle: eventData.Subtitle,
+          content: eventData.Content,
+          pdf_path: eventData.PDFPath 
         }), 
       });
 
       if(res.ok){
+        const nextMap = {...eventMap};
+        nextMap[selectedDate] = {
+          ...nextMap[selectedDate],
+          title: eventData.Title
+        };
+        setEventMap(nextMap);
+
+        setEventData(eventData);
+
         alert("保存完了！");
         setIsModalOpen(false);
       }else{
@@ -70,8 +86,14 @@ export default function CalendarPage() {
     };
 
     useEffect(() => {
-      fetchMonthEvents();
-    }, []);
+      setEventMap(createEmptyEvents(year, month));
+      getMonthEvents();
+    }, [year, month]);
+
+    const closeModal = () => {
+      setIsModalOpen(false);
+      setSelectedDate("");
+    };
 
     return (
     <div className="container">
@@ -88,7 +110,6 @@ export default function CalendarPage() {
           {days.map((date, i) => {
             const isToday = date === today;
             const dateKey = `${String(year)}-${String(month).padStart(2, "0")}-${String(date).padStart(2, "0")}`;
-            const event = eventMap[dateKey];
 
             return (
               <div
@@ -100,38 +121,14 @@ export default function CalendarPage() {
               >
                 {date}
 
-                {event && (
-                    <div className="event-info">
-                      <p className="event-title">{event.title}</p>
-                      <p className="event-subtitle">{event.subtitle}</p>
-                    </div>
+                {eventMap[dateKey] && (
+                      <p className="event-title">{eventMap[dateKey].title}</p>
+
                 )}
               </div>
             );
           })}
         </div>
-      </div>
-
-      <div className="reservation-container">
-          <button onClick={()=> setIsOpen(!isOpen)}>
-            {isOpen ? "閉じる" : "体育館・レンタカー予約"}
-          </button>
-
-          {
-            isOpen && (
-              <ul>
-                <li>
-                  <a href="https://hirosaki.e-rev.jp/index.jsp">体育館予約サイト</a>
-                  <p>利用者ID: 69290365  パスワード: 1031</p>
-                </li>
-
-                <li>
-                  トヨタレンタカー弘前駅: 050-1712-2914
-                  {/* 定型文も入れる */}
-                </li>
-              </ul>
-            )
-          }
       </div>
 
       {/* -- modal part */}
@@ -144,19 +141,19 @@ export default function CalendarPage() {
                 <input
                   type="text"
                   placeholder="タイトル"
-                  value={eventData.title}
-                  onChange={(e) => setEventData({...eventData, title: e.target.value})}
+                  value={eventData.Title}
+                  onChange={(e) => setEventData({...eventData, Title: e.target.value})}
                 />
                 <input
                   type="text"
                   placeholder="サブタイトル"
-                  value={eventData.subtitle}
-                  onChange={(e) => setEventData({...eventData, subtitle: e.target.value})}
+                  value={eventData.Subtitle}
+                  onChange={(e) => setEventData({...eventData, Subtitle: e.target.value})}
                 />
                 <textarea
                   placeholder="内容"
-                  value={eventData.content}
-                  onChange={(e) => setEventData({...eventData, content: e.target.value})}
+                  value={eventData.Content}
+                  onChange={(e) => setEventData({...eventData, Content: e.target.value})}
                   rows={5}
                 />
               </div>
