@@ -12,11 +12,11 @@ const CreateEventsTable_Q = `
 	);
 `
 
-const accountLogTable = `
+const AccountLogTable = `
 	CREATE TABLE IF NOT EXISTS accountLog (
 		id SERIAL PRIMARY KEY,
 		date DATE NOT NULL,
-		content TEXT NOT NULL
+		content TEXT NOT NULL,
 		amount INTEGER NOT NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
 	);

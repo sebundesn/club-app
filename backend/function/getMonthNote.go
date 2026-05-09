@@ -40,6 +40,9 @@ func GetMonthNotes(w http.ResponseWriter, r *http.Request) error {
 
 		events = append(events, e)
 	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("failed to iterate rows: %w", err)
+	}
 
 	//      func (enc *Encoder) Encode(v any) error
 	w.Header().Set("Content-Type", "application/json")

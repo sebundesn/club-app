@@ -19,7 +19,7 @@ type EventDetail struct {
 
 func GetDateEvent(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodGet {
-		return fmt.Errorf("method not allowed: %s", r.Method)
+		return fmt.Errorf("method not allowed: %w", r.Method)
 	}
 
 	date := r.URL.Query().Get("date")
@@ -33,7 +33,7 @@ func GetDateEvent(w http.ResponseWriter, r *http.Request) error {
 			return json.NewEncoder(w).Encode(EventDetail{})
 		}
 
-		return fmt.Errorf("failed to scan row: %v", err)
+		return fmt.Errorf("failed to scan row: %w", err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")

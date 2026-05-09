@@ -141,6 +141,7 @@ export default function CalendarPage() {
                 <input
                   type="text"
                   placeholder="タイトル"
+                  required
                   value={eventData.Title}
                   onChange={(e) => setEventData({...eventData, Title: e.target.value})}
                 />

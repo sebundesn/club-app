@@ -30,6 +30,10 @@ func ConnectSQL() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	_, err = DB.Exec(SQLquery.AccountLogTable)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func SetCorsHeader(w http.ResponseWriter) {
