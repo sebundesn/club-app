@@ -20,20 +20,20 @@ export default function account (){
 
     const year = new Date().getFullYear();
     const getAccountInfo = async () => {
-        const res = await fetch(`http://localhost:8080/accountInfo?year=${year}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/accountInfo?year=${year}`);
 
         const data = await res.json();
         setMoneyLogs(data || []);
     };
 
     const getMoneySum = async () => {
-        const res = await fetch(`http://localhost:8080/getMoneySum`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getMoneySum`);
         const data = await res.json();
         setTotalSum(data);
     };
 
     const addAccountLog = async () => {
-        const res = await fetch(`http://localhost:8080/addMoneyLog`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addMoneyLog`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify(newLog),

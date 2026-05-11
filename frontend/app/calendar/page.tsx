@@ -33,7 +33,7 @@ export default function CalendarPage() {
     const days = generateCalendarDays(year, month);
 
     const getMonthEvents = async () => {                                  
-      const res = await fetch(`http://localhost:8080/getMonthEvents?month=${String(year)}-${String(month).padStart(2, '0')}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getMonthEvents?month=${String(year)}-${String(month).padStart(2, '0')}`);
       const data: DateTitle[] = await res.json();
       data.forEach((d) => {
         eventMap[d.date] = d;
@@ -46,7 +46,7 @@ export default function CalendarPage() {
       setSelectedDate(dateStr);
       setIsModalOpen(true);
 
-      const res = await fetch(`http://localhost:8080/getDateEvent?date=${dateStr}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getDateEvent?date=${dateStr}`);
       const data = await res.json();
       const nextEventData: eventStruct = {...eventData, Subtitle: data.subtitle, Content: data.content, PDFPath: data.pdf_path};
       setEventData(nextEventData);
@@ -54,7 +54,7 @@ export default function CalendarPage() {
     };
 
     const saveEvent = async () => {
-      const res = await fetch("http://localhost:8080/saveEvent", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/saveEvent`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
