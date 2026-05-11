@@ -5,18 +5,21 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"os"
 
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 var DB *sql.DB
 
 func ConnectSQL() {
+	_ = godotenv.Load()
+
 	//ここ本番なら変える
-	connStr := "user=sebun password=password dbname=club_db sslmode=disable"
+	connStr := os.Getenv("DATABASE_URL")
 
 	var err error
-
 	DB, err = sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal(err)

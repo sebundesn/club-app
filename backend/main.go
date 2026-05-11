@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"club-app/function"
 	"club-app/utility"
@@ -18,8 +19,13 @@ func main() {
 	http.Handle("/getMoneySum", utility.AppHandler(function.GetMoneyTotal))
 	http.Handle("/addMoneyLog", utility.AppHandler(function.SaveMoneyLog))
 
-	log.Printf("Server started at :8080")
-	err := http.ListenAndServe(":8080", nil)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Printf("Server started at :%s", port)
+	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
