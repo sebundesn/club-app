@@ -5,6 +5,8 @@ frontend/eslint.config.mjs
 frontend/next-env.d.ts
 frontend/next.config.ts
 frontend/package-lock.json
-frontend/package.json
 frontend/postcss.config.mjs
 frontend/tsconfig.json
+frontend/.env
+
+backend/.env
