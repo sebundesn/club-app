@@ -1,27 +1,18 @@
 "use client";
 
 import { useEffect, useState} from "react";
+import "./calendar.css"
 import { generateCalendarDays, createEmptyEvents} from "../utils/calendar";
 import { getNowTime} from "../utils/getTime";
+import {DateTitle, EventStruct} from "../utils/schema";
 
-interface DateTitle {
-  date: string;
-  title: string;
-};
-
-interface eventStruct {
-  Date: string;
-  Title: string;
-  Subtitle: string;
-  Content: string;
-  PDFPath: string;
-}
 
 export default function CalendarPage() {
     const [selectedDate, setSelectedDate] = useState("");
+    const [opinion, setOpinion] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [eventMap, setEventMap] = useState<Record<string, DateTitle>>({});
-    const [eventData, setEventData] = useState<eventStruct>({
+    const [eventData, setEventData] = useState<EventStruct>({
       Date: "",
       Title: "",
       Subtitle: "",
@@ -32,68 +23,118 @@ export default function CalendarPage() {
     const [year, month, today, dayNames] = getNowTime();
     const days = generateCalendarDays(year, month);
 
-    const getMonthEvents = async () => {                                  
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getMonthEvents?month=${String(year)}-${String(month).padStart(2, '0')}`);
-      const data: DateTitle[] = await res.json();
-      data.forEach((d) => {
-        eventMap[d.date] = d;
-      });
-      setEventMap(eventMap);
+    const getMonthEvents = async () => { 
+      try{
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getMonthEvents?month=${String(year)}-${String(month).padStart(2, '0')}`);
+        const data: DateTitle[] = await res.json();
+
+        const newMap = {...createEmptyEvents(year, month) };
+        data.forEach((d) => {
+          newMap[d.Date] = d;
+        });
+        setEventMap(newMap);
+      } catch (e){
+        console.error("event failed", e);
+      }                    
     };
 
     const handleDateClick = async (date: number) => {
       const dateStr = `${String(year)}-${String(month).padStart(2, "0")}-${String(date).padStart(2, "0")}`;
       setSelectedDate(dateStr);
-      setIsModalOpen(true);
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getDateEvent?date=${dateStr}`);
-      const data = await res.json();
-      const nextEventData: eventStruct = {...eventData, Subtitle: data.subtitle, Content: data.content, PDFPath: data.pdf_path};
-      setEventData(nextEventData);
-      console.log(eventData);
+      try{
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getDateEvent?date=${dateStr}`);
+        const data = await res.json();
+        setEventData({
+          Date: dateStr,
+          Title: eventMap[dateStr]?.Title || "",
+          Subtitle: data.subtitle || "",
+          Content: data.content || "",
+          PDFPath: data.pdf_path || "",
+      });
+
+      setIsModalOpen(true);
+      }catch (e) {
+        console.error("詳細取得失敗", e);
+      }
     };
 
     const saveEvent = async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/saveEvent`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          date: selectedDate,
-          title: eventData.Title,
-          subtitle: eventData.Subtitle,
-          content: eventData.Content,
-          pdf_path: eventData.PDFPath 
-        }), 
-      });
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/saveEvent`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            date: selectedDate,
+            title: eventData.Title,
+            subtitle: eventData.Subtitle,
+            content: eventData.Content,
+            pdf_path: eventData.PDFPath,
+          }), 
+        });
 
-      if(res.ok){
-        const nextMap = {...eventMap};
-        nextMap[selectedDate] = {
-          ...nextMap[selectedDate],
-          title: eventData.Title
+        if(res.ok){
+          setEventMap((prev)=> ({
+            ...prev,
+            [selectedDate]: {Date: selectedDate, Title: eventData.Title },
+          }));
+
+          setEventData(eventData);
+
+          alert("保存完了！");
+          setIsModalOpen(false);
+        }else{
+          alert("保存失敗ー")
         };
-        setEventMap(nextMap);
-
-        setEventData(eventData);
-
-        alert("保存完了！");
-        setIsModalOpen(false);
-      }else{
-        alert("保存失敗ー")
-      };
+      } catch (e) {
+        console.error("通信エラーが発生", e);
+      }
     };
 
     useEffect(() => {
-      setEventMap(createEmptyEvents(year, month));
       getMonthEvents();
     }, [year, month]);
 
     const closeModal = () => {
       setIsModalOpen(false);
       setSelectedDate("");
+
+      setEventData({
+        Date: "",
+        Title: "",
+        Subtitle: "",
+        PDFPath: "",
+        Content: "",
+      });
     };
+
+    const sendMessage = async () => {
+      if(!opinion.trim()){
+        alert("メッセージを入力してください");
+        return;
+      }
+
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sendMessage`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({opinion: opinion}),
+        });
+
+        if(res.ok){
+          alert("sending success!");
+          setOpinion("");
+        }else{
+          alert("sending failed");
+        };
+
+      } catch (e) {
+        console.error("failed to send message", e);
+        alert("通信エラーが発生しました。")
+      }
+    }
 
     return (
     <div className="container">
@@ -122,12 +163,28 @@ export default function CalendarPage() {
                 {date}
 
                 {eventMap[dateKey] && (
-                      <p className="event-title">{eventMap[dateKey].title}</p>
+                      <p className="event-title">{eventMap[dateKey].Title}</p>
 
                 )}
               </div>
             );
           })}
+        </div>
+      </div>
+
+      <div className="anonymous-opinion">
+        <h2 className="anonymous-title">匿名意見箱</h2>
+        
+        <div className="anonymous-form">
+          <textarea
+            placeholder="  行きたい場所・やりたいこと・意見等何でも書いてね"
+            value={opinion}
+            rows={5}
+            onChange={(e)=>{setOpinion(e.target.value)}}
+          >
+          </textarea>
+
+          <button onClick={sendMessage}>送信</button>
         </div>
       </div>
 

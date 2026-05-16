@@ -9,13 +9,9 @@ import (
 
 	"club-app/SQLquery"
 	"club-app/utility"
+	"club-app/schema"
 )
 
-type EventDetail struct {
-	Subtitle string `json:"subtitle"`
-	Content  string `json:"content"`
-	PDFPath  string `json:"pdf_path"`
-}
 
 func GetDateEvent(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodGet {
@@ -24,13 +20,13 @@ func GetDateEvent(w http.ResponseWriter, r *http.Request) error {
 
 	date := r.URL.Query().Get("date")
 
-	var event EventDetail
+	var event schema.EventDetail
 	row := utility.DB.QueryRow(SQLquery.GetDateEvent, date)
-	err := row.Scan(&event.Subtitle, &event.Content, &event.PDFPath)
+	err := row.Scan(&event.Title, &event.Subtitle, &event.Content, &event.PDFPath)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			w.Header().Set("Content-Type", "application/json")
-			return json.NewEncoder(w).Encode(EventDetail{})
+			return json.NewEncoder(w).Encode(schema.EventDetail{})
 		}
 
 		return fmt.Errorf("failed to scan row: %w", err)

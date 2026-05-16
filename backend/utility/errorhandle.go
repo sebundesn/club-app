@@ -8,11 +8,11 @@ import (
 // the handler that returns back error
 type AppHandler func(http.ResponseWriter, *http.Request) error
 
-func (fn AppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request){
+func (fn AppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	SetCorsHeader(w)
 
 	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 

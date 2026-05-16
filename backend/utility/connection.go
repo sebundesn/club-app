@@ -37,11 +37,15 @@ func ConnectSQL() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	_, err = DB.Exec(SQLquery.ReceiptImagesTable)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func SetCorsHeader(w http.ResponseWriter) {
 	//ここ本番なら変える
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept")
 }

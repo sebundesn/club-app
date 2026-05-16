@@ -1,6 +1,7 @@
 // frontend/app/layout.tsx
 
-import "./globals.css"
+import "./globals.css";
+import CheckoutButton from "@/app/utils/checkoutButton";
 
 export default function RootLayout({
   children,
@@ -12,6 +13,7 @@ export default function RootLayout({
       <body>
         {/* ここにページの中身が流し込まれます */}
         {children}
+        <CheckoutButton />
       </body>
     </html>
   )

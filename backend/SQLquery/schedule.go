@@ -23,6 +23,6 @@ const SelectMonthNotes = `
 `
 
 const GetDateEvent = `
-	SELECT subtitle, content, pdf_path
+	SELECT title, subtitle, content, pdf_path
 	FROM events WHERE date = $1;
 `

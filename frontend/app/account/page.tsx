@@ -1,57 +1,87 @@
 "use client";
 
-import {useState, useEffect} from "react";
+import { useState, useEffect } from "react";
 import   "./account.css";
+import { MoneyLogStruct } from "../utils/schema"
 
-interface MoneyLogStruct {
-    date: string;
-    content: string;
-    amount: number;
-}
-
-export default function account (){
+export default function Account (){
     const [moneyLogs, setMoneyLogs] = useState<MoneyLogStruct[]>([]);
     const [totalSum, setTotalSum] = useState<number>(0);
-    const [newLog, setNewLog] = useState<MoneyLogStruct>({
+    const [newLog, setNewLog] = useState<Omit<MoneyLogStruct, "amount"> & {amount: number | string}>({
         date: new Date().toISOString().split("T")[0],
         content: "",
-        amount: 0
+        amount: ""
     });
 
     const year = new Date().getFullYear();
-    const getAccountInfo = async () => {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/accountInfo?year=${year}`);
+    const howLongMonth = 1;
 
-        const data = await res.json();
-        setMoneyLogs(data || []);
+    const getReceipts = async () => {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getReceiptsInfo?howLongMonth=${howLongMonth}`);
+            const data = await res.json();
+            console.log("getReceipts, ", data);
+        } catch (e) {
+            console.error("failed to getReceipts:", e);
+            alert("通信に失敗しました。");
+        };
+    };
+
+    const getAccountInfo = async () => {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/accountInfo?year=${year}`);
+
+            const data = await res.json();
+            setMoneyLogs(data || []);
+        } catch (e) {
+            console.error("failed to getAccountInfo:", e)
+            alert("通信に失敗しました。")
+        };
     };
 
     const getMoneySum = async () => {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getMoneySum`);
-        const data = await res.json();
-        setTotalSum(data);
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getMoneySum`);
+            const data = await res.json();
+            setTotalSum(data);
+        } catch (e) {
+            console.error("failed to getMoneySum:", e)
+            alert("通信に失敗しました。")
+        };
     };
 
     const addAccountLog = async () => {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addMoneyLog`, {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify(newLog),
-        });
+        if(!newLog.content || !newLog.amount || newLog.amount === "-"){
+            alert("内容と金額を入力してください");
+            return;
+        };
 
-        if(res.ok){
-            alert("adding success");
-            getAccountInfo();
-            getMoneySum();
-            setNewLog({...newLog, content: "", amount: 0})
-        }else{
-            alert("adding failed!");
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addMoneyLog`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(newLog),
+            });
+
+            if(res.ok){
+                alert("adding success");
+                getAccountInfo();
+                getMoneySum();
+                setNewLog({...newLog, content: "", amount: ""})
+            }else{
+                alert("adding failed!");
+            }
+        } catch (e) {
+            console.error("failed to add account log:", e)
+            alert("通信にしっぱいしました。")
         }
+        
     }
 
     useEffect(()=>{
         getAccountInfo();
         getMoneySum();
+        getReceipts()
     }, []);
 
     return (
@@ -86,13 +116,25 @@ export default function account (){
             </div>
 
             <ul className="history-list">
-                {moneyLogs.map((oneMoneyLog, index)=> (
-                    <li key={index}>
-                        <span className="history-date">{oneMoneyLog.date}</span>
-                        <span className="history-content">{oneMoneyLog.content}</span>
-                        <span className="history-amount">{oneMoneyLog.amount}</span>
-                    </li>
-                ))}
+                {[...moneyLogs].reverse().map((oneMoneyLog, index)=> {
+                    const isPlus = Number(oneMoneyLog.amount) > 0;
+                    const statusClass = isPlus ? "text-plus" : "text-minus";
+                    const displayAmount = isPlus
+                        ? `▲  +${oneMoneyLog.amount.toLocaleString()}`
+                        : `▼  -${Math.abs(Number(oneMoneyLog.amount)).toLocaleString()}`;
+
+
+
+                    return (
+                        <li key={index}>
+                            <span className="history-date">{oneMoneyLog.date}</span>
+                            <span className="history-content">{oneMoneyLog.content}</span>
+                            <span className={`history-amount ${statusClass}`}>
+                                {displayAmount}
+                            </span>
+                        </li>
+                    );
+                })}
             </ul>
 
             <div className="input-form">
@@ -110,11 +152,24 @@ export default function account (){
                     onChange={(e)=> setNewLog({...newLog, content: e.target.value})}
                 />
                 <input
-                    type="number"
-                    placeholder="金額"
+                    type="text"
+                    placeholder="金額(出金の場合は'-'をつけて)"
+                    inputMode="numeric"
+                    pattern="\d*"
                     required
                     value={newLog.amount}
-                    onChange={(e)=> setNewLog({...newLog, amount: Number(e.target.value)})}
+                    onChange={(e)=> {
+                        const val = e.target.value;
+                        if(val === "" || val === "-"){
+                            setNewLog({...newLog, amount: val as any});
+                            return;
+                        }
+                        const num = Number(val);
+                        if(!isNaN(num)){
+                            setNewLog({ ...newLog, amount: num });
+                        }
+                    }}
+                    onFocus={(e) => e.target.select()}
                 />
 
                 <button onClick={addAccountLog}>追加</button>
