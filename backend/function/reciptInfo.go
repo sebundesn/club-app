@@ -12,7 +12,6 @@ import (
 )
 
 func GetMonthReceipts(w http.ResponseWriter, r *http.Request) error {
-	fmt.Printf("ここまで来た")
 	if r.Method != http.MethodGet {
 		return fmt.Errorf("Method not allowed: %s", r.Method)
 	}
@@ -22,7 +21,7 @@ func GetMonthReceipts(w http.ResponseWriter, r *http.Request) error {
 		howLongMonth = "1"
 	}
 
-	rows, err := utility.DB.Query(SQLquery.GetReciptLog, howLongMonth)
+	rows, err := utility.DB.Query(SQLquery.GetReciptsLog, howLongMonth)
 	if err != nil {
 		return fmt.Errorf("Failed to get rows: %w", err)
 	}

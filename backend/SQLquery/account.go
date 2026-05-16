@@ -13,11 +13,11 @@ const AddLog = `
 	VALUES ($1, $2, $3);
 `
 
-//To get recipt images for certain events
-const GetReciptLog = `
-	SELECT e.id e.title, e.date, ri.image_url
+// To get recipt images for certain events
+const GetReciptsLog = `
+	SELECT e.id, e.title, e.date, ri.image_url
 	FROM events e
-	LEFT JSON recipt_images ri ON e.id = ri.event_id
-	WHERE e.date >= (now() - interval "1 month" * $1)
+	LEFT JOIN receipt_images ri ON e.id = ri.event_id
+	WHERE e.date >= (now() - CAST($1 || ' month' AS INTERVAL))
 	ORDER BY e.date DESC;
 `
