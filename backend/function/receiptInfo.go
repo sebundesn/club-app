@@ -42,6 +42,7 @@ func GetMonthReceipts(w http.ResponseWriter, r *http.Request) error {
 
 		if _, ok := eventsMap[id]; !ok {
 			eventsMap[id] = &schema.EventReceipts{
+				ID:     id,
 				Title:  title,
 				Date:   date,
 				Images: []string{},
