@@ -12,7 +12,14 @@ export interface EventStruct {
 };
 
 export interface MoneyLogStruct {
-    date: string;
-    content: string;
-    amount: number | "";
+  date: string;
+  content: string;
+  amount: number | "";
+};
+
+export interface ReceiptDataStruct {
+  ID: number;
+  Title: string;
+  Date: string;
+  ImageURLs: string[];
 }

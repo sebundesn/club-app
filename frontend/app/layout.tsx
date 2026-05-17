@@ -1,7 +1,7 @@
 // frontend/app/layout.tsx
 
 import "./globals.css";
-import CheckoutButton from "@/app/utils/checkoutButton";
+import CheckoutButton from "./utils/CheckoutButton";
 
 export default function RootLayout({
   children,

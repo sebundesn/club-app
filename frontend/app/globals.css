@@ -4,7 +4,14 @@
     right: 10%;
     width: 100px;
     height: 50px;
-    opacity: 100%;
+    color: white;
+    background: black;
+    transition-delay: 0.3s;
+}
+.login-button-y:hover{
+    color: black;
+    background: white;
+    transition: 0.3s;
 }
 .login-button-n {
     position: fixed;
@@ -14,29 +21,48 @@
     height: 50px;
     opacity: 0%;
     transition: 0.3s;
+    color: white;
+    background: black;
 }
 
 .bottom-buttons-y{
     position: fixed;
     bottom: 5%;
-    right: 50%;
-    opacity: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    gap:  50px;
+    transition-delay: 0.3s;
 }
 
 .bottom-buttons-n{
     position: fixed;
     bottom: 5%;
-    right: 50%;
+    left: 50%;
     opacity: 0%;
     transition: 0.3s;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    gap: 50px;
 }
 
 .bottom-buttons-y button{
-    width: 100px;
-    height: 50px;
+    width: 20vw;
+    height: 8vh;
+    color: white;
+    background: black;
+}
+.bottom-buttons-y button:hover{
+    color: black;
+    background: white;
+    transition: 0.3s;
 }
 
 .bottom-buttons-n button{
-    width: 100px;
-    height: 50px;
+    width: 20vw;
+    height: 8vh;
+    color: white;
+    background: black;
 }

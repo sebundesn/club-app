@@ -188,6 +188,7 @@ textarea{
 }
 .anonymous-form{
     display: flex;
+    margin-bottom: 150px;
 }
 .anonymous-form button{
     margin-left: 10px;
