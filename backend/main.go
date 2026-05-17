@@ -19,6 +19,7 @@ func main() {
 	http.Handle("/getMoneySum", utility.AppHandler(function.GetMoneyTotal))
 	http.Handle("/addMoneyLog", utility.AppHandler(function.SaveMoneyLog))
 	http.Handle("/getReceiptsInfo", utility.AppHandler(function.GetMonthReceipts))
+	http.Handle("/uploadReceipt", utility.AppHandler(function.UploadReceipt))
 
 	port := os.Getenv("PORT")
 	if port == "" {

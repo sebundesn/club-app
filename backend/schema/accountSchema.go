@@ -8,7 +8,7 @@ type MoneyLogStruct struct {
 }
 
 // for club recipt info
-type EventRecipts struct {
+type EventReceipts struct {
 	ID     int     `json:"id"`
 	Title  string   `json:"title"`
 	Date   string   `json:"date"`

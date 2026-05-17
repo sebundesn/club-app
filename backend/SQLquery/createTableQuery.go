@@ -26,15 +26,18 @@ const ReceiptImagesTable = `
 	CREATE TABLE IF NOT EXISTS receipt_images (
 		id SERIAL PRIMARY KEY,
 		event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
-		image_url TEXT NOT NULL
+		image_url TEXT NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);
 `
 
+/*
 const UserTable = `
 	CREATE TABLE IF NOT EXISTS users  (
 		id SERIAL PRAIMARY KEY
 		user_name TEXT NOT NULL
 		password_hash TEXT NOT NULL
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	); 
+	);
 `
+*/

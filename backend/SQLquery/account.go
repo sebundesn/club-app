@@ -14,10 +14,15 @@ const AddLog = `
 `
 
 // To get recipt images for certain events
-const GetReciptsLog = `
+const GetReceiptsLog = `
 	SELECT e.id, e.title, e.date, ri.image_url
 	FROM events e
 	LEFT JOIN receipt_images ri ON e.id = ri.event_id
 	WHERE e.date >= (now() - CAST($1 || ' month' AS INTERVAL))
 	ORDER BY e.date DESC;
 `
+
+const InsertReceipts = `
+	INSERT INTO receipt_images (event_id, image_url)
+	VALUES ($1, $2);
+`;

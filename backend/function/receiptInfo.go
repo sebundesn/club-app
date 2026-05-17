@@ -21,13 +21,13 @@ func GetMonthReceipts(w http.ResponseWriter, r *http.Request) error {
 		howLongMonth = "1"
 	}
 
-	rows, err := utility.DB.Query(SQLquery.GetReciptsLog, howLongMonth)
+	rows, err := utility.DB.Query(SQLquery.GetReceiptsLog, howLongMonth)
 	if err != nil {
 		return fmt.Errorf("Failed to get rows: %w", err)
 	}
 	defer rows.Close()
 
-	eventsMap := make(map[int]*schema.EventRecipts)
+	eventsMap := make(map[int]*schema.EventReceipts)
 	var order []int
 
 	for rows.Next() {
@@ -41,7 +41,7 @@ func GetMonthReceipts(w http.ResponseWriter, r *http.Request) error {
 		}
 
 		if _, ok := eventsMap[id]; !ok {
-			eventsMap[id] = &schema.EventRecipts{
+			eventsMap[id] = &schema.EventReceipts{
 				Title:  title,
 				Date:   date,
 				Images: []string{},
@@ -57,11 +57,11 @@ func GetMonthReceipts(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("error during rows iteration: %w", err)
 	}
 
-	var recipts []schema.EventRecipts
+	var receipts []schema.EventReceipts
 	for _, id := range order {
-		recipts = append(recipts, *eventsMap[id])
+		receipts = append(receipts, *eventsMap[id])
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	return json.NewEncoder(w).Encode(recipts)
+	return json.NewEncoder(w).Encode(receipts)
 }
