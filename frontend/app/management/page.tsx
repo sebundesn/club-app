@@ -11,6 +11,25 @@ export default function Management() {
     const [isDriver, setIsDriver] = useState(false);
     const [members, setMembers] = useState<MemberInfo[]>([]);
 
+    const updateMembers = async () => {
+        try{
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/updateMembers`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(members),
+                credentials: "include",
+            });
+
+            if(!res.ok){
+                alert("Update failed")
+            }
+
+        } catch(error: any) {
+            alert(`failed to connect: ${error}`);
+            return;
+        };
+    };
+
     const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if(!file) return;
@@ -41,8 +60,9 @@ export default function Management() {
                 });
 
                 setMembers(parsedMembers);
-            },
 
+                updateMembers();
+            },
             error: (error: Error) => {
                 alert("CSVの読み込みに失敗しました:" + error.message);
             }

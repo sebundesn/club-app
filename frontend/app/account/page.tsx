@@ -186,7 +186,7 @@ export default function Account (){
                                     };
                                 }}
                             >
-                                削除
+                                <img src="/trash.svg" alt="削除"/>
                             </button>
 
                             <div className="history-item-content">
@@ -236,7 +236,7 @@ export default function Account (){
                     onFocus={(e) => e.target.select()}
                 />
 
-                <button onClick={addAccountLog}>追加</button>
+                <button onClick={addAccountLog}>+</button>
             </div>
         </div>
     );
