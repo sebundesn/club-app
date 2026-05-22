@@ -120,8 +120,7 @@ export default function Account (){
             console.error("failed to upload receipts: ", e);
             alert("画像のアップロードに失敗しました。")
         }
-    };
-        
+    };        
 
     useEffect(()=>{
         getAccountInfo();
@@ -166,7 +165,8 @@ export default function Account (){
 
 
             <div className="balance-cards">
-                <p>現在の部費残高:  ￥{totalSum.toLocaleString()}</p>
+                <p>現在の部費残高:</p>
+                <h1>￥{totalSum.toLocaleString()}</h1>
             </div>
 
             <ul className="history-list">
@@ -177,15 +177,25 @@ export default function Account (){
                         ? `▲  +${oneMoneyLog.amount.toLocaleString()}`
                         : `▼  -${Math.abs(Number(oneMoneyLog.amount)).toLocaleString()}`;
 
-
-
                     return (
                         <li key={index}>
-                            <span className="history-date">{oneMoneyLog.date}</span>
-                            <span className="history-content">{oneMoneyLog.content}</span>
-                            <span className={`history-amount ${statusClass}`}>
-                                {displayAmount}
-                            </span>
+                            <button className="delete-btn"
+                                onClick={() => {
+                                    if(window.confirm(`「${oneMoneyLog.content}」の履歴を削除しますか？`)) {
+                                        //ここに削除処理を入れる
+                                    };
+                                }}
+                            >
+                                削除
+                            </button>
+
+                            <div className="history-item-content">
+                                <span className="history-date">{oneMoneyLog.date}</span>
+                                <span className="history-content">{oneMoneyLog.content}</span>
+                                <span className={`history-amount ${statusClass}`}>
+                                    {displayAmount}
+                                </span>
+                            </div>
                         </li>
                     );
                 })}

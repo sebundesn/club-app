@@ -1,6 +1,6 @@
 export interface DateTitle {
-  Date: string;
-  Title: string;
+  date: string;
+  title: string;
 };
 
 export interface EventStruct {
@@ -22,4 +22,18 @@ export interface ReceiptDataStruct {
   Title: string;
   Date: string;
   ImageURLs: string[];
+};
+
+export interface CSVRow {
+  名前: string;
+  役職?: string;
+  運転可否?: string;
+  [key: string]: string | undefined;
+};
+
+export interface MemberInfo {
+  id: number;
+  name: string;
+  role: string;
+  isDriver: boolean;
 }

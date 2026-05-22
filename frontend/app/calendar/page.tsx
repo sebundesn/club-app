@@ -27,11 +27,13 @@ export default function CalendarPage() {
       try{
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getMonthEvents?month=${String(year)}-${String(month).padStart(2, '0')}`);
         const data: DateTitle[] = await res.json();
+        console.log(data);
 
         const newMap = {...createEmptyEvents(year, month) };
         data.forEach((d) => {
-          newMap[d.Date] = d;
+          newMap[d.date] = d;
         });
+        console.log(newMap);
         setEventMap(newMap);
       } catch (e){
         console.error("event failed", e);
@@ -47,7 +49,7 @@ export default function CalendarPage() {
         const data = await res.json();
         setEventData({
           Date: dateStr,
-          Title: eventMap[dateStr]?.Title || "",
+          Title: eventMap[dateStr]?.title || "",
           Subtitle: data.subtitle || "",
           Content: data.content || "",
           PDFPath: data.pdf_path || "",
@@ -78,7 +80,7 @@ export default function CalendarPage() {
         if(res.ok){
           setEventMap((prev)=> ({
             ...prev,
-            [selectedDate]: {Date: selectedDate, Title: eventData.Title },
+            [selectedDate]: {date: selectedDate, title: eventData.Title },
           }));
 
           setEventData(eventData);
@@ -116,6 +118,14 @@ export default function CalendarPage() {
         return;
       }
 
+      const isConfirmed = window.confirm("この内容で送信しますか？");
+
+      if(isConfirmed) {
+        console.log("sent message: ", opinion);
+        setOpinion("");
+      };
+
+      /*
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sendMessage`, {
           method: "POST",
@@ -134,6 +144,7 @@ export default function CalendarPage() {
         console.error("failed to send message", e);
         alert("通信エラーが発生しました。")
       }
+      */
     }
 
     return (
@@ -163,7 +174,7 @@ export default function CalendarPage() {
                 {date}
 
                 {eventMap[dateKey] && (
-                      <p className="event-title">{eventMap[dateKey].Title}</p>
+                      <p className="event-title">{eventMap[dateKey].title}</p>
 
                 )}
               </div>
@@ -172,7 +183,7 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      <div className="anonymous-opinion">
+      <div className="anonymous-opinion-container">
         <h2 className="anonymous-title">匿名意見箱</h2>
         
         <div className="anonymous-form">

@@ -26,3 +26,16 @@ const GetDateEvent = `
 	SELECT title, subtitle, content, pdf_path
 	FROM events WHERE date = $1;
 `
+
+const FetchTodos = `
+	SELECT id, title amount, due_date, is_completed FROM todos
+	WHERE user_id = $1
+		AND due_date >= CURRENT_DATE
+		AND is_completed = FALSE
+	ORDER BY due_date ASC;
+`
+
+const Updatetodos = `
+	INSERT INTO todos (user_id, title, amount, due_date)
+	VALUES ($1, $2, $3, $4);
+`

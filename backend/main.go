@@ -4,13 +4,21 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
+	"club-app/auth"
 	"club-app/function"
 	"club-app/utility"
 )
 
 func main() {
 	utility.ConnectSQL()
+	defer utility.DB.Close()
+	defer utility.Store.Close()
+	defer utility.Store.StopCleanup(utility.Store.Cleanup(time.Hour))
+
+	fs := http.FileServer(http.Dir("./uploads"))
+	http.Handle("/uploads/", http.StripPrefix("/uploads/", fs))
 
 	http.Handle("/saveEvent", utility.AppHandler(function.SaveNote))
 	http.Handle("/getMonthEvents", utility.AppHandler(function.GetMonthNotes))
@@ -20,6 +28,7 @@ func main() {
 	http.Handle("/addMoneyLog", utility.AppHandler(function.SaveMoneyLog))
 	http.Handle("/getReceiptsInfo", utility.AppHandler(function.GetMonthReceipts))
 	http.Handle("/uploadReceipt", utility.AppHandler(function.UploadReceipt))
+	http.Handle("/login", utility.AppHandler(auth.LoginHandler))
 
 	port := os.Getenv("PORT")
 	if port == "" {

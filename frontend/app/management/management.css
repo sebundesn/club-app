@@ -1,0 +1,51 @@
+h1{
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.csv-actions {
+    margin: 0 10px;
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 25px;
+    background: #e9ecef;
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.csv-label-btn {
+    background-color: #28a745;
+    color: white;
+    padding: 20px 25px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    display: inline-block;
+    border: none;
+    transition: 0.2s;
+}
+
+.csv-label-btn:hover {
+    background-color: #218838;
+}
+
+.csv-label-btn input[type="file"] {
+    display: none;
+}
+
+.export-btn {
+    background-color: #17a2b8;
+}
+
+.export-btn:hover {
+    background-color: #138496;
+}
+
+/*メンバー一覧 -----------------------------------     */
+.member-list-section {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 1.5rem;
+    background-color: #ffffff;
+}

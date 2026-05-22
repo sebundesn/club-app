@@ -24,8 +24,8 @@ func GetMonthNotes(w http.ResponseWriter, r *http.Request) error {
 	defer rows.Close()
 
 	type EventSummary struct {
-		Date     string `json:"date"`
-		Title    string `json:"title"`
+		Date  string `json:"date"`
+		Title string `json:"title"`
 	}
 
 	var events []EventSummary

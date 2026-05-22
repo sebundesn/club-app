@@ -31,13 +31,25 @@ const ReceiptImagesTable = `
 	);
 `
 
-/*
 const UserTable = `
 	CREATE TABLE IF NOT EXISTS users  (
-		id SERIAL PRAIMARY KEY
-		user_name TEXT NOT NULL
-		password_hash TEXT NOT NULL
+		id SERIAL PRIMARY KEY,
+		user_name TEXT NOT NULL,
+		password_hash TEXT NOT NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);
 `
-*/
+
+const Todotable = `
+	CREATE TABLE IF NOT EXISTS todos (
+		id SERIAL PRIMARY KEY,
+		user_id INT NOT NULL,
+		title VARCHAR(255) NOT NULL,
+		amount INT DEFAULT 0,
+		due_date DATE,
+		is_completed BOOLEAN DEFAULT FALSE,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+	)
+`
