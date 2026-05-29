@@ -56,10 +56,10 @@ func ConnectSQL() {
 		log.Fatal(err)
 	}
 
-	_, err = DB.Exec(SQLquery.Todotable)
+	/*_, err = DB.Exec(SQLquery.Todotable)
 	if err != nil {
 		log.Fatal(err)
-	}
+	}*/
 }
 
 func SetCorsHeader(w http.ResponseWriter) {
