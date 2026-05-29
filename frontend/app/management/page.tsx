@@ -18,7 +18,7 @@ export default function Management() {
         
             const data = await res.json();
 
-            setMembers(data);
+            setMembers(data || []);
 
         } catch (e: any) {
             alert(`Failed to connect: ${e}`);
@@ -171,7 +171,7 @@ export default function Management() {
                 ): (
                     <table className="member-table">
                         <thead>
-                            <tr><th>学籍番号</th><th>名前</th><th>役職</th><th>ユーザ名</th></tr>
+                            <tr><th>学籍番号</th><th>名前</th><th>役職</th></tr>
                         </thead>
                         <tbody>
                             {members.map((member, index) => (
