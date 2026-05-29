@@ -1,6 +1,7 @@
 package function
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -31,5 +32,5 @@ func FetchMembers(w http.ResponseWriter, r *http.Request) error {
 		members = append(members, row)
 	}
 
-	return nil
+	return json.NewEncoder(w).Encode(members)
 }
