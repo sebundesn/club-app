@@ -18,7 +18,8 @@ export default function Management() {
         
             const data = await res.json();
 
-            console.log(data);
+            setMembers(data);
+
         } catch (e: any) {
             alert(`Failed to connect: ${e}`);
         }
@@ -147,7 +148,7 @@ export default function Management() {
 
 
 
-            <h1>管理画面(CSV連携版)</h1>
+            <h1>管理画面</h1>
 
             {/* CSV file operation area */}
             <div className="csv-actions">              
