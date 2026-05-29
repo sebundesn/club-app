@@ -16,12 +16,12 @@ func GetMonthReceipts(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("Method not allowed: %s", r.Method)
 	}
 
-	howLongMonth := r.URL.Query().Get("howLongMonth")
-	if howLongMonth == "" {
-		howLongMonth = "1"
+	howLongWeek := r.URL.Query().Get("howLongWeek")
+	if howLongWeek == "" {
+		howLongWeek = "2"
 	}
 
-	rows, err := utility.DB.Query(SQLquery.GetReceiptsLog, howLongMonth)
+	rows, err := utility.DB.Query(SQLquery.GetReceiptsLog, howLongWeek)
 	if err != nil {
 		return fmt.Errorf("Failed to get rows: %w", err)
 	}

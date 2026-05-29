@@ -8,6 +8,8 @@ export default function Account (){
     const [moneyLogs, setMoneyLogs] = useState<MoneyLogStruct[]>([]);
     const [totalSum, setTotalSum] = useState<number>(0);
     const [receiptDatas, setReceiptDatas] = useState<ReceiptDataStruct[]>([]);
+    const [fullScreenImg, setFullScreenImg] = useState<string | null>(null);
+    const [receiptModal, setReceiptModal] = useState<any | null>(null);
     const [newLog, setNewLog] = useState<Omit<MoneyLogStruct, "amount"> & {amount: number | string}>({
         date: new Date().toISOString().split("T")[0],
         content: "",
@@ -15,11 +17,11 @@ export default function Account (){
     });
 
     const year = new Date().getFullYear();
-    const howLongMonth = 1;
+    const howLongWeek = 2;
 
     const getReceipts = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getReceiptsInfo?howLongMonth=${howLongMonth}`);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getReceiptsInfo?howLongMonth=${howLongWeek}`);
             const data = await res.json();
 
             const formattedData: ReceiptDataStruct[] = data.map((item: any) => ({
@@ -74,7 +76,6 @@ export default function Account (){
             });
 
             if(res.ok){
-                alert("adding success");
                 getAccountInfo();
                 getMoneySum();
                 setNewLog({...newLog, content: "", amount: ""})
@@ -114,13 +115,69 @@ export default function Account (){
             console.log("uploding succeeds");
             alert("uploading receipt succeeds");
 
-            window.location.reload();
-
         } catch (e) {
             console.error("failed to upload receipts: ", e);
             alert("画像のアップロードに失敗しました。")
         }
     };        
+
+
+    const deleteMoneyLog = async (oneMoneyLog: MoneyLogStruct) => {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/deleteMoneyLog`, {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(oneMoneyLog),
+                credentials: "include"
+            });
+
+            if(!res.ok){
+                alert("Failed to fetch");
+                return;
+            };
+
+            const date = oneMoneyLog.date;
+            const content = oneMoneyLog.content;
+
+            setMoneyLogs(prevLogs => {
+                return  prevLogs.filter((log: MoneyLogStruct) => log.content !== content && log.date !== date)
+            })
+
+            await getAccountInfo();
+            await getMoneySum();
+
+        } catch(error) {
+            alert("failed to delete image");
+        };
+    };
+
+    const deleteImage = async (date: string, url: string) => {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/deleteImage`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ "date": date, "url": url}),
+                credentials: "include"      
+            });
+
+            if(!res.ok){
+                alert("Failed to fetch");
+                return;
+            };
+
+            setReceiptModal((prevModal: any)=> {
+                return {
+                    ...prevModal,
+                    ImageURLs: prevModal.ImageURLs.filter((imgURL: any) => imgURL !== url)
+                }
+            })
+
+            await getReceipts();
+
+        } catch(error) {
+            alert("failed to delete image");
+        };
+    };
 
     useEffect(()=>{
         getAccountInfo();
@@ -131,10 +188,10 @@ export default function Account (){
     return (
         <div className="container">
             <div className="receipt-container">
-                <ul>
+                <div className="event-grid">
                     {
                         receiptDatas.map((event, index) => (
-                            <li key={index} className="event-item">
+                            <div key={index} className="event-item">
                                 <div className="event-info">
                                     <span className="event-date">{event.Date}</span>
                                     <p className="event-name">{event.Title}</p>
@@ -153,14 +210,55 @@ export default function Account (){
                                         />
                                     </label>
 
-                                    {event.ImageURLs.map((url, imgIndex) => (
-                                        <img key={imgIndex} src={url} alt={`${event.Title}-${imgIndex}`} className="receipt-img"/>
-                                    ))}
+                                    <button
+                                        type="button"
+                                        className="view-list-button"
+                                        onClick={() => setReceiptModal(event)}
+                                    >
+                                        レシート ➔
+                                        <span className="image-count">({event.ImageURLs.length}枚)</span>
+                                    </button>
+
+                                    {receiptModal && (
+                                        <div className="receipt-modal-overlay" onClick={()=> setReceiptModal(null)}>
+                                            <div className="receipt-modal-content" onClick={(e)=> e.stopPropagation()}>
+                                                <h4>{receiptModal.Title} ({receiptModal.Date})</h4>
+
+                                                {receiptModal.ImageURLs.length === 0 ? (
+                                                    <p className="no-images-text">登録されているレシート画像はありません。</p>
+                                                ): (
+                                                    <div className="receipt-modal-grid">
+                                                        {receiptModal.ImageURLs.map((url: string, idx: number) => (
+                                                            <div key={idx} className="modal-img-wrapper">
+                                                                <button className="delete-btn"
+                                                                    onClick={() => {
+                                                                        if(window.confirm("写真を削除しますか？")) {
+                                                                            deleteImage(receiptModal.Date, url);
+                                                                        };
+                                                                    }}
+                                                                >
+                                                                    <img src="/trash.svg" alt="削除"/>
+                                                                </button>
+                                                                <img src={url} alt="receipt" className="modal-receipt-img" onClick={()=>setFullScreenImg(url)}/>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                            </li>
+                            </div>
                         ))
                     }
-                </ul>
+                </div>
+
+                {fullScreenImg && (
+                    <div className="fullscreen-overlay" onClick={() => setFullScreenImg(null)}>
+                        <img src={fullScreenImg} alt="receiptImg" className="fullscreen-image" />
+                    </div>
+                )}
+
             </div>
 
 
@@ -182,7 +280,7 @@ export default function Account (){
                             <button className="delete-btn"
                                 onClick={() => {
                                     if(window.confirm(`「${oneMoneyLog.content}」の履歴を削除しますか？`)) {
-                                        //ここに削除処理を入れる
+                                        deleteMoneyLog(oneMoneyLog);
                                     };
                                 }}
                             >

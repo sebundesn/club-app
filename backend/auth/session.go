@@ -1,14 +1,15 @@
 package auth
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
+	"club-app/SQLquery"
 	"club-app/schema"
 	"club-app/utility"
 )
-
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
@@ -20,12 +21,25 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("Decoding request: %w", err)
 	}
 
-	session, err := utility.Store.Get(r, "club-app-session")
+	var Name string
+	err := utility.DB.QueryRow(SQLquery.AuthenticatingQuery, req.Password).Scan(&Name)
 	if err != nil {
-		return fmt.Errorf("didnt get session: %w", err)
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("invalid credentials")
+		}
+
+		return fmt.Errorf("database error: %w", err)
 	}
 
-	session.Values["name"] = req.Name
+	isInitial := req.Password == Name
+
+	session, err := utility.Store.Get(r, "club-app-session")
+	if err != nil {
+		return fmt.Errorf("didn`t get session: %w", err)
+	}
+
+	session.Values["authenticated"] = true
+	session.Values["name"] = Name
 
 	//Cookieのセキュリティ設定
 	session.Options.HttpOnly = true
@@ -38,5 +52,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	return json.NewEncoder(w).Encode(map[string]string{"message": "login success!"})
+	return json.NewEncoder(w).Encode(map[string]interface{}{
+		"message":    "login success!",
+		"is_initial": isInitial,
+		"name":       Name,
+	})
 }

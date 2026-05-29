@@ -25,15 +25,20 @@ export interface ReceiptDataStruct {
 };
 
 export interface CSVRow {
+  学籍番号: string;
   名前: string;
   役職?: string;
-  運転可否?: string;
   [key: string]: string | undefined;
 };
 
 export interface MemberInfo {
-  id: number;
+  student_id: string;
   name: string;
   role: string;
-  isDriver: boolean;
-}
+};
+
+export interface UserInfoStruct {
+  student_id: string;
+  userName: string;
+  isLoggedIn: boolean;
+};

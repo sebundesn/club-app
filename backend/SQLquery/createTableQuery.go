@@ -33,9 +33,9 @@ const ReceiptImagesTable = `
 
 const UserTable = `
 	CREATE TABLE IF NOT EXISTS users  (
-		id SERIAL PRIMARY KEY,
-		user_name TEXT NOT NULL,
-		password_hash TEXT NOT NULL,
+		student_id VARCHAR(7) PRIMARY KEY,
+		name TEXT NOT NULL,
+		role TEXT,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);
 `
@@ -50,6 +50,6 @@ const Todotable = `
 		is_completed BOOLEAN DEFAULT FALSE,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+		FOREIGN KEY (user_id) REFERENCES users(student_id) ON DELETE CASCADE
 	)
 `

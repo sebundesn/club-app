@@ -8,10 +8,14 @@ import {DateTitle, EventStruct} from "../utils/schema";
 
 
 export default function CalendarPage() {
+    const [thisYear, thisMonth, today, dayNames] = getNowTime();
+
+    const [year, setYear] = useState<number>(thisYear);
+    const [month, setMonth] = useState<number>(thisMonth);
     const [selectedDate, setSelectedDate] = useState("");
     const [opinion, setOpinion] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [eventMap, setEventMap] = useState<Record<string, DateTitle>>({});
+    const [eventMap, setEventMap] = useState<Record<string, DateTitle> | null>({});
     const [eventData, setEventData] = useState<EventStruct>({
       Date: "",
       Title: "",
@@ -20,20 +24,40 @@ export default function CalendarPage() {
       Content: "",
     });
 
-    const [year, month, today, dayNames] = getNowTime();
     const days = generateCalendarDays(year, month);
+
+    const handlePrevMonth = () => {
+      if (month === 1) {
+        setMonth(12);
+        setYear(year-1);
+      } else {
+        setMonth(month-1);
+      }
+    };
+
+    const handleNextMonth = () => {
+      if (month === 12) {
+        setMonth(1);
+        setYear(year+1);
+      } else {
+        setMonth(month+1);
+      }
+    };
 
     const getMonthEvents = async () => { 
       try{
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getMonthEvents?month=${String(year)}-${String(month).padStart(2, '0')}`);
         const data: DateTitle[] = await res.json();
-        console.log(data);
 
-        const newMap = {...createEmptyEvents(year, month) };
+        const newMap = {...createEmptyEvents(year, month)};
+        if(data === null || data.length === 0) {
+          setEventMap(newMap);
+          return;
+        };
+
         data.forEach((d) => {
           newMap[d.date] = d;
         });
-        console.log(newMap);
         setEventMap(newMap);
       } catch (e){
         console.error("event failed", e);
@@ -49,7 +73,7 @@ export default function CalendarPage() {
         const data = await res.json();
         setEventData({
           Date: dateStr,
-          Title: eventMap[dateStr]?.title || "",
+          Title: data.title || "",
           Subtitle: data.subtitle || "",
           Content: data.content || "",
           PDFPath: data.pdf_path || "",
@@ -62,6 +86,11 @@ export default function CalendarPage() {
     };
 
     const saveEvent = async () => {
+      if (eventData.Title.trim() === "") {
+        alert("タイトルをつけてください");
+        return;
+      };
+
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/saveEvent`, {
           method: "POST",
@@ -150,7 +179,14 @@ export default function CalendarPage() {
     return (
     <div className="container">
       <div className="calendar-container">
-        <h1 className="calendar-title">{year}年 {month}月</h1>
+        <div className="calendar-title-area">
+          <h1 className="calendar-title">{year}年 {month}月</h1>
+
+          <div className="calendar-nav-buttons">
+            <button onClick={handlePrevMonth} className="nav-btn" aria-label="前の月">◀</button>
+            <button onClick={handleNextMonth} className="nav-btn" aria-label="次の月">▶</button>
+          </div>
+        </div>
         
         {/* 曜日ヘッダー */}
         <div className="calendar-header">
@@ -173,7 +209,7 @@ export default function CalendarPage() {
               >
                 {date}
 
-                {eventMap[dateKey] && (
+                {eventMap?.[dateKey]  && (
                       <p className="event-title">{eventMap[dateKey].title}</p>
 
                 )}
@@ -181,6 +217,14 @@ export default function CalendarPage() {
             );
           })}
         </div>
+      </div>
+
+      <div className="todo-container">
+        <h2>TODO list</h2>
+        <ul className="todo-list-container">
+          <li>ワカサギ釣り：　　1000円支払いお願いします。</li>
+          <li>投票: スポーツ大会　　　 残り8日!</li>
+        </ul>
       </div>
 
       <div className="anonymous-opinion-container">

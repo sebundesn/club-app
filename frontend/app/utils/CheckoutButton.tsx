@@ -1,12 +1,22 @@
 "use client";
 
 import React, { useState, useEffect, useRef} from "react";
+import {UserInfoStruct} from "./schema";
 
 export default function CheckoutButton() {
     const [isVisible, setIsVisible] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [name, setName] = useState("");
     const [password, setPassword] = useState("");
+
+    //a user information management state
+    const [userInfo, setUserInfo] = useState<UserInfoStruct>({
+        student_id: "",
+        userName: "",
+        isLoggedIn: false,
+    });
+
+    //初期ログインかどうかの判定
+    const [isInitialLogin, setIsInitialLogin] = useState(false);
 
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const handleScroll = () => {
@@ -25,8 +35,8 @@ export default function CheckoutButton() {
     const handleLoginSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        if(name === "" || password === "") {
-            alert("空欄があります。");
+        if(password === "") {
+            alert("空欄です。");
             return;
         };
 
@@ -34,23 +44,45 @@ export default function CheckoutButton() {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
                 method: "POST",
                 headers: {"Content-Type": "application/json", },
-                body: JSON.stringify({name, password}),
+                body: JSON.stringify({password: password}),
                 credentials: "include",
             })
 
             if(!res.ok) {
                 const errorText = await res.text();
                 alert(errorText || "failed to login")
+                setPassword("");
                 return;
             }
 
-            alert("login success!")
+            const data = await res.json();
+            setUserInfo({
+                ...userInfo,
+                student_id: password, 
+                isLoggedIn: true, 
+                userName: data.name
+            });
+
+            if(data.is_initial) {
+                alert("名前(例： 山田 太郎)を記入してください。");
+            } else {
+            }
+
+            setPassword("");
             setIsModalOpen(false);
 
         } catch (error: any) {
             alert(error.message);
         }
     };
+
+    const handleLogout = () => {
+        setUserInfo({
+            student_id: "",
+            userName: "",
+            isLoggedIn: false,
+        });
+    }
 
     useEffect(()=> {
 
@@ -69,9 +101,9 @@ export default function CheckoutButton() {
         <>
             <button
              className={isVisible ? "login-button-y" : "login-button-n"}
-             onClick={() => setIsModalOpen(true)}
+             onClick={userInfo.isLoggedIn ? handleLogout : () => setIsModalOpen(true)}
             >
-                Login
+                {userInfo.isLoggedIn ? `${userInfo.userName}` : "Login"}
             </button>
 
             {isModalOpen && (
@@ -80,17 +112,7 @@ export default function CheckoutButton() {
                         <h3>Login</h3>
                         <form onSubmit={handleLoginSubmit}>
                             <div className="input-group">
-                                <label>Name</label>
-                                <input
-                                    type="text"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    required
-                                />
-                            </div>
-
-                            <div className="input-group">
-                                <label>Password</label>
+                                <label>学籍番号</label>
                                 <input
                                     type="password"
                                     value={password}
@@ -100,8 +122,8 @@ export default function CheckoutButton() {
                             </div>
 
                             <div className="modal-actions">
-                                <button type="submit" className="submit-btn">OK</button>
                                 <button type="button" className="cancel-btn" onClick={()=>setIsModalOpen(false)}>Cancel</button>
+                                <button type="submit" className="submit-btn">OK</button>
                             </div>
                         </form>
                     </div>

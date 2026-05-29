@@ -9,8 +9,19 @@ type MoneyLogStruct struct {
 
 // for club recipt info
 type EventReceipts struct {
-	ID     int     `json:"id"`
+	ID     int      `json:"id"`
 	Title  string   `json:"title"`
 	Date   string   `json:"date"`
 	Images []string `json:"images"`
+}
+
+type DeleteImageRequest struct {
+	Date string `json:"date"`
+	URL  string `json:"url"`
+}
+
+type MoneyLog struct {
+	Date    string `json:"date"`
+	Content string `json:"content"`
+	Amount  int    `json:"amount"`
 }
