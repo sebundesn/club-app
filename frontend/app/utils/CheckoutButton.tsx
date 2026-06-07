@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef} from "react";
-import {UserInfoStruct} from "./schema";
+import { UserInfoStruct } from "./schema";
+import { FetchTodos } from "./todo";
 
 export default function CheckoutButton() {
     const [isVisible, setIsVisible] = useState(false);
@@ -10,8 +11,9 @@ export default function CheckoutButton() {
 
     //a user information management state
     const [userInfo, setUserInfo] = useState<UserInfoStruct>({
-        student_id: "",
+        ID: null,
         userName: "",
+        role: "",
         isLoggedIn: false,
     });
 
@@ -58,36 +60,65 @@ export default function CheckoutButton() {
             const data = await res.json();
             setUserInfo({
                 ...userInfo,
-                student_id: password, 
+                ID: data.id, 
+                userName: data.name,
+                role: data.role,
                 isLoggedIn: true, 
-                userName: data.name
             });
 
             if(data.is_initial) {
                 alert("名前(例： 山田 太郎)を記入してください。");
-            } else {
             }
 
             setPassword("");
             setIsModalOpen(false);
+
+            if (window.location.pathname === '/calendar') {
+                await FetchTodos();
+            }
 
         } catch (error: any) {
             alert(error.message);
         }
     };
 
+    const checkAuth = async () => {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/checkAuth`, {
+                method: "GET",
+                credentials: "include",
+            });
+
+            if(res.ok){
+                const data = await res.json();
+                if(data.logged_in){
+                    setUserInfo({
+                        ID: data.id,
+                        userName: data.name,
+                        role: data.role,
+                        isLoggedIn: true,
+                    })
+                }
+            }
+
+        } catch (e) {
+            alert(`Failed to connect: ${e}`);
+        }
+    };
+
     const handleLogout = () => {
         setUserInfo({
-            student_id: "",
+            ID: null,
             userName: "",
+            role: "",
             isLoggedIn: false,
         });
     }
 
     useEffect(()=> {
 
+        checkAuth();
         window.addEventListener("scroll", handleScroll);
-
 
         return () => {
             window.removeEventListener("scroll", handleScroll);

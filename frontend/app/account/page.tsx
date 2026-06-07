@@ -16,6 +16,7 @@ export default function Account (){
         amount: ""
     });
 
+    const backendURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
     const year = new Date().getFullYear();
     const howLongWeek = 2;
 
@@ -31,7 +32,6 @@ export default function Account (){
                 ImageURLs: item.images || []
             }));
 
-            console.log(formattedData)
             setReceiptDatas(formattedData);
         } catch (e) {
             console.error("failed to getReceipts:", e);
@@ -73,6 +73,7 @@ export default function Account (){
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify(newLog),
+                credentials: "include",
             });
 
             if(res.ok){
@@ -99,6 +100,7 @@ export default function Account (){
         for(let i=0; i < files.length; i++){
             formData.append("images", files[i]);
         }
+        console.log(formData.getAll("images"));
 
         try{
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/uploadReceipt`, {
@@ -107,20 +109,16 @@ export default function Account (){
             });
 
             if(!res.ok){
-                console.error("failed for response for uploading files");
                 alert("画像のアップロードに失敗しました。");
                 return;
             }
 
-            console.log("uploding succeeds");
-            alert("uploading receipt succeeds");
+            await getReceipts();
 
         } catch (e) {
-            console.error("failed to upload receipts: ", e);
             alert("画像のアップロードに失敗しました。")
         }
     };        
-
 
     const deleteMoneyLog = async (oneMoneyLog: MoneyLogStruct) => {
         try {
@@ -166,17 +164,46 @@ export default function Account (){
             };
 
             setReceiptModal((prevModal: any)=> {
+                if(!prevModal || !prevModal.ImageURLs) return prevModal;
                 return {
                     ...prevModal,
                     ImageURLs: prevModal.ImageURLs.filter((imgURL: any) => imgURL !== url)
                 }
             })
 
-            await getReceipts();
+            setReceiptDatas((prevDatas) => 
+                prevDatas.map((item) => {
+                    if(item.Date === date.split("T")[0]) {
+                        return {
+                            ...item,
+                            ImageURLs: item.ImageURLs.filter((imgURL) => imgURL !== url)
+                        };
+                    }
+
+                    return item;
+                })
+            )
 
         } catch(error) {
             alert("failed to delete image");
         };
+    };
+
+    const fetchTodos = async () => {
+        try{
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getTodos`, {
+                method: "GET",
+                credentials: "include",
+            });
+
+            const data = await res.json();
+
+            console.log(data);
+
+        } catch(error) {
+            alert("Failed to connect");
+            return;
+        }
     };
 
     useEffect(()=>{
@@ -239,7 +266,7 @@ export default function Account (){
                                                                 >
                                                                     <img src="/trash.svg" alt="削除"/>
                                                                 </button>
-                                                                <img src={url} alt="receipt" className="modal-receipt-img" onClick={()=>setFullScreenImg(url)}/>
+                                                                <img src={`${backendURL}${url}`} alt="receipt" className="modal-receipt-img" onClick={()=>setFullScreenImg(url)}/>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -255,10 +282,9 @@ export default function Account (){
 
                 {fullScreenImg && (
                     <div className="fullscreen-overlay" onClick={() => setFullScreenImg(null)}>
-                        <img src={fullScreenImg} alt="receiptImg" className="fullscreen-image" />
+                        <img src={`${backendURL}${fullScreenImg}`} alt="receiptImg" className="fullscreen-image" />
                     </div>
                 )}
-
             </div>
 
 

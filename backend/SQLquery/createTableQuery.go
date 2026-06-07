@@ -33,7 +33,8 @@ const ReceiptImagesTable = `
 
 const UserTable = `
 	CREATE TABLE IF NOT EXISTS users  (
-		student_id VARCHAR(7) PRIMARY KEY,
+		id SERIAL PRIMARY KEY,
+		student_id VARCHAR(7),
 		name TEXT NOT NULL,
 		role TEXT,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

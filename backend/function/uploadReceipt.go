@@ -58,15 +58,12 @@ func UploadReceipt(w http.ResponseWriter, r *http.Request) error {
 			return fmt.Errorf("failed to save file: %w\n", err)
 		}
 
-		//database_url := os.Getenv("DATABASE_URL")
-		database_url := "http://localhost:8080"
-		imageURL := fmt.Sprintf(`%s/uploads/%s`, database_url, filename)
+		imageURL := fmt.Sprintf(`/uploads/%s`, filename)
 
 		_, err = utility.DB.Exec(SQLquery.InsertReceipts, eventID, imageURL)
 		if err != nil {
 			return fmt.Errorf("failed to execute query: %w\n", err)
 		}
-
 	}
 
 	w.Header().Set("Content-Type", "application/json")

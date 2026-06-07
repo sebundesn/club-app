@@ -1,0 +1,58 @@
+services:
+#========================================
+# database (PostgreSQL)
+#=======================================
+  db:
+    image: postgres:16-alpine
+    container_name: club-app-db
+    ports:
+      - "5432:5432"
+    environment: 
+      POSTGRES_USER: dev_user
+      POSTGRES_PASSWORD: dev_password
+      POSTGRES_DB: club_db
+      TZ: Asia/Tokyo
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+
+#==============================================
+# backend (Go)
+#===============================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: dockerfile
+    container_name: club-app-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=dev_user
+      - DB_PASSWORD=dev_password
+      - DB_NAME=club_db
+      - DB_SSLMODE=disable
+      - APP_ENV=development
+    depends_on:
+      db:
+        condition: service_healthy #wait until you can connect to DB
+
+#=================================================
+# frontend (Next.js)
+#=================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: dockerfile
+    container_name: club-app-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - NODE_ENV=development
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:   

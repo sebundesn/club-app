@@ -38,7 +38,8 @@ export interface MemberInfo {
 };
 
 export interface UserInfoStruct {
-  student_id: string;
+  ID: number | null;
   userName: string;
+  role: string;
   isLoggedIn: boolean;
 };
