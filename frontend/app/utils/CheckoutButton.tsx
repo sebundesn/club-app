@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect, useRef} from "react";
 import { UserInfoStruct } from "./schema";
-import { FetchTodos } from "./todo";
+//import { FetchTodos } from "./todo";
 
 export default function CheckoutButton() {
     const [isVisible, setIsVisible] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [password, setPassword] = useState("");
+    const [realname, setRealname] = useState("");
+    const [username, setUsername] = useState("");
 
     //a user information management state
     const [userInfo, setUserInfo] = useState<UserInfoStruct>({
@@ -34,7 +36,7 @@ export default function CheckoutButton() {
         }, 300);
     };
 
-    const handleLoginSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+    const handleLoginSubmitPassword = async (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         if(password === "") {
@@ -66,19 +68,46 @@ export default function CheckoutButton() {
                 isLoggedIn: true, 
             });
 
-            if(data.is_initial) {
-                alert("名前(例： 山田 太郎)を記入してください。");
-            }
+            data.is_initial ? setIsInitialLogin(true): setIsInitialLogin(false);
 
             setPassword("");
             setIsModalOpen(false);
 
-            if (window.location.pathname === '/calendar') {
-                await FetchTodos();
-            }
+//            if (window.location.pathname === '/calendar') {
+//               await FetchTodos();
+//           }
 
         } catch (error: any) {
             alert(error.message);
+        }
+    };
+
+    const handleLoginSubmitFirst = async (e: React.SubmitEvent<HTMLFormElement>) => {
+
+        if (username === "" || realname === "") {
+            alert("本名とユーザ名を書いてください。");
+            return;
+        }
+
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/firstLogin`, {
+                method: "POST",
+                credentials: "include",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    realname: realname,
+                    username: username,
+                }),
+            });
+
+            if(!res.ok) {
+                alert("保存に失敗しました。");
+                return;
+            }
+
+            setIsInitialLogin(false);
+        } catch(e) {
+            alert(`connection error: ${e}`)
         }
     };
 
@@ -106,14 +135,31 @@ export default function CheckoutButton() {
         }
     };
 
-    const handleLogout = () => {
-        setUserInfo({
-            ID: null,
-            userName: "",
-            role: "",
-            isLoggedIn: false,
-        });
-    }
+    const handleLogout = async () => {
+        if(!window.confirm("ログアウトしますか？")) return;
+
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/logout`, {
+                method: "GET",
+                credentials: "include", 
+            });
+
+            if(!res.ok){
+                alert("サーバーエラーです。");
+                return;
+            };
+
+            setUserInfo({
+                ID: null,
+                userName: "",
+                role: "",
+                isLoggedIn: false,
+            });
+
+        } catch (e) {
+            alert(`logout failed: ${e}`)
+        }
+    };
 
     useEffect(()=> {
 
@@ -131,17 +177,17 @@ export default function CheckoutButton() {
     return(
         <>
             <button
-             className={isVisible ? "login-button-y" : "login-button-n"}
+             className={isVisible ? (userInfo.isLoggedIn ? "login-name" : "login-icon") : "login-button-n"}
              onClick={userInfo.isLoggedIn ? handleLogout : () => setIsModalOpen(true)}
             >
-                {userInfo.isLoggedIn ? `${userInfo.userName}` : "Login"}
+                {userInfo.isLoggedIn ? `${userInfo.userName[0]}` : ""}
             </button>
 
             {isModalOpen && (
                 <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <h3>Login</h3>
-                        <form onSubmit={handleLoginSubmit}>
+                        <form onSubmit={handleLoginSubmitPassword}>
                             <div className="input-group">
                                 <label>学籍番号</label>
                                 <input
@@ -157,6 +203,7 @@ export default function CheckoutButton() {
                                 <button type="submit" className="submit-btn">OK</button>
                             </div>
                         </form>
+                        
                     </div>
                 </div>
             )}
@@ -166,6 +213,40 @@ export default function CheckoutButton() {
                 <button onClick={()=> window.location.href="/calendar"}>ホーム</button>
                 <button onClick={()=> window.location.href="/management"}>管理画面</button>
             </div>
+
+
+            {isInitialLogin && (
+                <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <h3>初期設定</h3>
+                        <form onSubmit={handleLoginSubmitFirst}>
+                            <div className="input-group">
+                                <label>本名</label>
+                                <input
+                                    type="name"
+                                    value={realname}
+                                    onChange={(e) => setRealname(e.target.value)}
+                                    required
+                                />
+                                <p>*名字と名前の間はスペースを空けてください！</p>
+
+                                <label>ユーザー名</label>
+                                <input
+                                    type="name"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    required
+                                />
+                            </div>
+
+                            <div className="modal-action">
+                                <button type="submit" className="submit-btn">OK</button>
+                            </div>
+                        </form>
+                        
+                    </div>
+                </div>
+            )}
         </>
     );
 };

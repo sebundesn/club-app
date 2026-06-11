@@ -21,8 +21,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("Decoding request: %w", err)
 	}
 
-	var Name string
-	err := utility.DB.QueryRow(SQLquery.AuthenticatingQuery, req.Password).Scan(&Name)
+	var userInfo schema.UserInfo
+	err := utility.DB.QueryRow(SQLquery.AuthenticatingQuery, req.Password).Scan(&userInfo.ID, &userInfo.Name, &userInfo.Role)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return fmt.Errorf("invalid credentials")
@@ -31,7 +31,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("database error: %w", err)
 	}
 
-	isInitial := req.Password == Name
+	isInitial := req.Password == userInfo.Name
 
 	session, err := utility.Store.Get(r, "club-app-session")
 	if err != nil {
@@ -39,7 +39,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	session.Values["authenticated"] = true
-	session.Values["name"] = Name
+	session.Values["id"] = userInfo.ID
+	session.Values["name"] = userInfo.Name
+	session.Values["role"] = userInfo.Role
 
 	//Cookieのセキュリティ設定
 	session.Options.HttpOnly = true
@@ -55,6 +57,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) error {
 	return json.NewEncoder(w).Encode(map[string]interface{}{
 		"message":    "login success!",
 		"is_initial": isInitial,
-		"name":       Name,
+		"name":       userInfo.Name,
 	})
 }

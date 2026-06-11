@@ -5,33 +5,61 @@ body::-webkit-scrollbar {
     display: none;
 }
 
-.login-button-y {
+.login-name {
     position: fixed;
     top: 5%;
-    right: 10%;
-    width: 100px;
-    height: 50px;
-    color: white;
-    background: black;
-    border-radius: 5px;
-    transition-delay: 0.3s;
-}
-.login-button-y:hover{
+    right: 7%;
+    width: 60px;
+    height: 60px;
     color: black;
     background: white;
-    transition: 0.3s;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #eaeded;
 }
+.login-icon {
+    position: fixed;
+    top: 5%;
+    right: 7%;
+    width: 60px;
+    height: 60px;
+    background: white;
+    color: black;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    background-image: url("/user-svgrepo-com.svg");
+    background-size: 70%;
+    background-repeat: no-repeat;
+    background-position: center;
+    box-shadow: 0 2px 5px 7px rgba(0, 0, 0, 0.3);
+    border: 1px solid #eaeded;
+    transition: box-shadow background-color transform border-color 0.2s ease-in-out;
+}
+
+.login-name:hover, .login-icon:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
+    background-color: #f8f9fa; 
+    border-color: #aab7b8;
+    transform: translateY(-1px);
+}
+
 .login-button-n {
     position: fixed;
     top: 5%;
-    right: 10%;
-    width: 100px;
-    height: 50px;
-    border-radius: 5px;
+    right: 7%;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
     opacity: 0%;
     transition: 0.3s;
     color: white;
-    background: black;
+    background: white;
+    pointer-events: none;
+    font-size: 1.2rem; 
 }
 
 .bottom-buttons-y{
@@ -76,6 +104,7 @@ body::-webkit-scrollbar {
     color: white;
     border-radius: 5px;
     background: black;
+    pointer-events: none;
 }
 
 /* login button modal part ------------------------------------*/
@@ -119,7 +148,7 @@ body::-webkit-scrollbar {
 }
 
 .input-group input {
-    width: 100%;
+    width: 80%;
     padding: 0.6rem;
     border: 1px solid #98a0aa;
     border-radius: 4px;

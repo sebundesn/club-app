@@ -11,7 +11,6 @@ import (
 )
 
 func GetMonthNotes(w http.ResponseWriter, r *http.Request) error {
-	fmt.Printf("here")
 	if r.Method != http.MethodGet {
 		return fmt.Errorf("method not allowed: %s", r.Method)
 	}
@@ -44,8 +43,6 @@ func GetMonthNotes(w http.ResponseWriter, r *http.Request) error {
 	if err := rows.Err(); err != nil {
 		return fmt.Errorf("failed to iterate rows: %w", err)
 	}
-
-	fmt.Printf("%v", events)
 
 	//      func (enc *Encoder) Encode(v any) error
 	w.Header().Set("Content-Type", "application/json")

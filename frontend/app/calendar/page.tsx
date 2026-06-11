@@ -103,7 +103,8 @@ export default function CalendarPage() {
             subtitle: eventData.Subtitle,
             content: eventData.Content,
             pdf_path: eventData.PDFPath,
-          }), 
+          }),
+          credentials: "include" 
         });
 
         if(res.ok){
@@ -114,10 +115,9 @@ export default function CalendarPage() {
 
           setEventData(eventData);
 
-          alert("保存完了！");
           setIsModalOpen(false);
         }else{
-          alert("保存失敗ー")
+          alert('保存失敗しました。保存には"部長、副部長"の権限が必要です')
         };
       } catch (e) {
         console.error("通信エラーが発生", e);
@@ -196,7 +196,7 @@ export default function CalendarPage() {
         {/* 日付グリッド */}
         <div className="calendar-grid">
           {days.map((date, i) => {
-            const isToday = date === today;
+            const isToday = (year === thisYear && month === thisMonth && date === today);
             const dateKey = `${String(year)}-${String(month).padStart(2, "0")}-${String(date).padStart(2, "0")}`;
 
             return (
@@ -220,7 +220,7 @@ export default function CalendarPage() {
       </div>
 
       <div className="todo-container">
-        <h2>TODO list</h2>
+        <h2>TODO list (開発中)</h2>
         <ul className="todo-list-container">
           <li>ワカサギ釣り：　　1000円支払いお願いします。</li>
           <li>投票: スポーツ大会　　　 残り8日!</li>

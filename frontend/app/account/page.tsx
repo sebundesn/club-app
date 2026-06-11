@@ -42,7 +42,6 @@ export default function Account (){
     const getAccountInfo = async () => {
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/accountInfo?year=${year}`);
-
             const data = await res.json();
             setMoneyLogs(data || []);
         } catch (e) {
@@ -81,7 +80,7 @@ export default function Account (){
                 getMoneySum();
                 setNewLog({...newLog, content: "", amount: ""})
             }else{
-                alert("adding failed!");
+                alert("追加できませんでした。会計権限のユーザのみが可能です。");
             }
         } catch (e) {
             console.error("failed to add account log:", e)

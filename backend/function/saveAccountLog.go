@@ -6,13 +6,27 @@ import (
 	"net/http"
 
 	"club-app/SQLquery"
-	"club-app/utility"
 	"club-app/schema"
+	"club-app/utility"
 )
 
 func SaveMoneyLog(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
 		return fmt.Errorf("method not allowed: %s", r.Method)
+	}
+
+	session, err := utility.Store.Get(r, "club-app-session")
+	if err != nil {
+		return fmt.Errorf("Failed to connect session: %w", err)
+	}
+
+	role, ok := session.Values["role"].(string)
+
+	if !ok || role == "" {
+		return fmt.Errorf("authorization error; ok: %v, role: %s", ok, role)
+	}
+	if role != "会計" {
+		return fmt.Errorf("authorization not allowed: %s", role)
 	}
 
 	var l schema.MoneyLogStruct

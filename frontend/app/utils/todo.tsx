@@ -1,4 +1,4 @@
-export const FetchTodos = async () => {
+/*export const FetchTodos = async () => {
     try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API}/getMyTodos`, {
             method: "GET",
@@ -13,4 +13,4 @@ export const FetchTodos = async () => {
     } catch(e) {
         alert(`Failed to connect ${e}`);
     }
-};
+};*/

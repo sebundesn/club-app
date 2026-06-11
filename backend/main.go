@@ -33,6 +33,9 @@ func main() {
 	http.Handle("/deleteImage", utility.AppHandler(function.DeleteImg))
 	http.Handle("/deleteMoneyLog", utility.AppHandler(function.DeleteMoneyLog))
 	http.Handle("/getMembers", utility.AppHandler(function.FetchMembers))
+	http.Handle("/checkAuth", utility.AppHandler(function.CheckAuthHandler))
+	http.Handle("/logout", utility.AppHandler(function.Logout))
+	http.Handle("/firstLogin", utility.AppHandler(function.FirstLogin))
 
 	port := os.Getenv("PORT")
 	if port == "" {

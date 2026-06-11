@@ -1,45 +1,47 @@
-# Club Management System App
+# 部活動運営支援システム
 
-A web application designed to streamline and simplifing club and circle management by solving two problems below.
+部活動の管理を円滑にし、運営側とメンバー間の情報共有やエンゲージメントを高めるためのWebアプリケーション
 
-## 1. Problem & Solution
+## 1. 開発の背景と解決したい課題
 
-1.  **Information Dissemination Gaps:**
-    It is difficult to relay important updates and schedules to every member accurately.
+サークル運営において、以下の2つの大きな課題を解決するためにこのアプリを開発
 
-2.  **Lack of Member Initiative:**
-    Members often remain passive because they do not know the club system and have no proper platform to suggest new event ideas.
+1. **情報共有の漏れ・認知ギャップの解消**
+   重要な連絡やスケジュールが全メンバーに正確に伝わらず、確認漏れが起きやすい課題を、リアルタイムに共有できるカレンダーと会計ログで解決
+2. **メンバーの主体性の向上**
+   「何を提案していいか分からない」「意見を言う心理的ハードルが高い」という受動的な状態を解消するため、イベントの提案やフィードバックを気軽に送れる**匿名意見箱（お便りポスト）機能**を実装
 
-To resolve these pain points, this app provides real-time access to club schedules and club accountting and 
-features an **Anonymous Opinion Box** to encourage feedback and event suggestions from members.
+---
 
-# 2. Demo
+## 2. デモ
 
-- **Demo URL:** [https://club-app-tdos.onrender.com/calendar]
-  > ⚠️ *Note: Hosted on Render`s free tier. The initial spin-up may take a few minutes, and database reflections might experience slight delays.*
+* **本番環境URL:** [https://club-app-tdos.onrender.com/calendar](https://club-app-tdos.onrender.com/calendar)
 
-アプリの実際の画面（スクリーンショット、または数秒の操作GIFアニメ）を載せて、パッと見でイメージが湧くようにします。
+---
 
-## 3. Tech Stack
+## 3. 技術スタック
 
-### Backend 
-- **Go**　
-  *Reason for adoption:*
+### バックエンド (Backend)
+* **Go**
+  * **採用理由:** 静的型付けによる堅牢性と、コンパイル・実行速度の速さから採用。シンプルでメンテナンス性の高いAPIサーバーを構築するのに最適であるため。
 
-### Database
-- **PostgreSQL**
-    *Reason for adoption:*
+### データベース (Database)
+* **PostgreSQL**
+  * **採用理由:** カレンダーのスケジュールデータや、会計ログなどの構造化されたデータを安全かつ正確に管理するために、信頼性の高いRDBであるから
 
-### Frontend
-- **React / TypeScript / Next.js**
-    *Reason for adoption:*
+### フロントエンド (Frontend)
+* **TypeScript / React / Next.js**
+  * **採用理由:** コンポーネント指向による画面開発の効率化と、TypeScriptによる型安全な開発を行うために採用
 
+---
 
+## 4. 主な機能 (Main Functions)
 
-## 4.  Main Fuctions
+* **リアルタイムカレンダー機能**
+  * サークルのイベントや活動スケジュールを一覧で確認・登録
+* **会計ログ・領収書アップロード機能**
+  * サークルの部費の使い道を透明化するための会計記録機能。領収書などの画像アップロードにも対応
+* **匿名意見箱 (Anonymous Opinion Box)**
+  * メンバーが名前を伏せて、新しいイベントのアイデアや運営へのフィードバックを気軽に送信できる機能
 
-
-## 6. Getting Started (Local Development)
-他のエンジニアが手元のPCで動かせるように、コマンドを順番に書いておきます。
-
-git clone から npm start（またはバックエンドの起動コマンド）までの手順、必要な環境変数（.env.example の用意）など。
+---

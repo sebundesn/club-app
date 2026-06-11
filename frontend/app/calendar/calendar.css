@@ -107,7 +107,8 @@
     font-weight: bold;
     font-size: 0.8rem;
     color: rgb(69, 69, 251);
-    margin: 0;
+    margin-top: 0;
+    margin-right: 1px;
 }
 .event-subtitle {
     font-size: 0.8rem;
