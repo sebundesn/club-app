@@ -45,3 +45,29 @@
   * メンバーが名前を伏せて、新しいイベントのアイデアや運営へのフィードバックを気軽に送信できる機能
 
 ---
+
+## ローカル環境での動かし方
+
+### 前提条件
+- Go (version 1.26.0)
+- Node.js (version 0.1.0)
+- Next.js (version 16.2.4)
+- PostgreSQL (version 16.13)
+
+### 手順
+#### ①
+```bash
+git clone github.com/sebundesn/club-app
+```
+#### ②
+```bash
+cd backend
+go run .
+```
+```bash
+cd frontend
+npm run dev
+```
+#### ③
+http://localhost:3000/calendar
+で閲覧できます
