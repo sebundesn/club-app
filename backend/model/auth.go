@@ -1,4 +1,4 @@
-package schema
+package model
 
 type LoginRequest struct {
 	Password string `json:"password"`

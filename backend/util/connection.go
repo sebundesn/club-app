@@ -1,4 +1,4 @@
-package utility
+package util
 
 import (
 	"database/sql"
@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"club-app/SQLquery"
+	"club-app/query"
 
 	"github.com/antonlindstrom/pgstore"
 	"github.com/joho/godotenv"
@@ -38,28 +38,23 @@ func ConnectSQL() {
 		log.Fatal(err)
 	}
 
-	_, err = DB.Exec(SQLquery.CreateEventsTable_Q)
+	_, err = DB.Exec(query.CreateEventsTable_Q)
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = DB.Exec(SQLquery.AccountLogTable)
+	_, err = DB.Exec(query.AccountLogTable)
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = DB.Exec(SQLquery.ReceiptImagesTable)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, err = DB.Exec(SQLquery.UserTable)
+	_, err = DB.Exec(query.ReceiptImagesTable)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	/*_, err = DB.Exec(SQLquery.Todotable)
+	_, err = DB.Exec(query.UserTable)
 	if err != nil {
 		log.Fatal(err)
-	}*/
+	}
 }
 
 func SetCorsHeader(w http.ResponseWriter) {

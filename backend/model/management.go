@@ -1,4 +1,4 @@
-package schema
+package model
 
 type Member struct {
 	StudentID string `json:"student_id"`

@@ -1,4 +1,4 @@
-package auth
+package middleware
 
 import (
 	"database/sql"
@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"club-app/SQLquery"
-	"club-app/schema"
-	"club-app/utility"
+	"club-app/query"
+	"club-app/model"
+	"club-app/util"
 )
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) error {
@@ -16,13 +16,13 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("Method not allowed: %s", r.Method)
 	}
 
-	var req schema.LoginRequest
+	var req model.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return fmt.Errorf("Decoding request: %w", err)
 	}
 
-	var userInfo schema.UserInfo
-	err := utility.DB.QueryRow(SQLquery.AuthenticatingQuery, req.Password).Scan(&userInfo.ID, &userInfo.Name, &userInfo.Role)
+	var userInfo model.UserInfo
+	err := util.DB.QueryRow(query.AuthenticatingQuery, req.Password).Scan(&userInfo.ID, &userInfo.Name, &userInfo.Role)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return fmt.Errorf("invalid credentials")
@@ -33,7 +33,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) error {
 
 	isInitial := req.Password == userInfo.Name
 
-	session, err := utility.Store.Get(r, "club-app-session")
+	session, err := util.Store.Get(r, "club-app-session")
 	if err != nil {
 		return fmt.Errorf("didn`t get session: %w", err)
 	}
@@ -58,5 +58,35 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) error {
 		"message":    "login success!",
 		"is_initial": isInitial,
 		"name":       userInfo.Name,
+	})
+}
+
+func CheckAuthHandler(w http.ResponseWriter, r *http.Request) error {
+	if r.Method != http.MethodGet {
+		return fmt.Errorf("Method not allowed: %s", r.Method)
+	}
+
+	session, err := util.Store.Get(r, "club-app-session")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return fmt.Errorf("session error: %w", err)
+	}
+
+	auth, ok := session.Values["authenticated"].(bool)
+	if !ok || !auth {
+		w.Header().Set("Content-Type", "application/json")
+		return json.NewEncoder(w).Encode(map[string]interface{}{"logged_in": false})
+	}
+
+	id := session.Values["id"].(int)
+	name := session.Values["name"].(string)
+	role := session.Values["role"].(string)
+
+	w.Header().Set("Content-Type", "application/json")
+	return json.NewEncoder(w).Encode(map[string]interface{}{
+		"id":        id,
+		"role":      role,
+		"name":      name,
+		"logged_in": true,
 	})
 }

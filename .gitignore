@@ -10,3 +10,4 @@ frontend/tsconfig.json
 frontend/.env
 
 backend/.env
+backend/uploads

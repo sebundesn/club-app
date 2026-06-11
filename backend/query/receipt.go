@@ -1,16 +1,12 @@
-package SQLquery
+package query
 
-const MoneyInfo = `
-	SELECT TO_CHAR(date, 'YYYY-MM-DD'), content, amount FROM accountLog WHERE CAST(date as TEXT) LIKE $1;
-`
-
-const MoneySum = `
-	SELECT SUM(amount) FROM accountLog;
-`
-
-const AddLog = `
-	INSERT INTO accountLog (date, content, amount)
-	VALUES ($1, $2, $3);
+const ReceiptImagesTable = `
+	CREATE TABLE IF NOT EXISTS receipt_images (
+		id SERIAL PRIMARY KEY,
+		event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
+		image_url TEXT NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	);
 `
 
 // To get recipt images for certain events
@@ -32,9 +28,4 @@ const DeleteImgQuery = `
 	DELETE FROM receipt_images
 	WHERE event_id = (SELECT id FROM events WHERE date = $1)
 	AND image_url = $2;
-`
-
-const DelMoneyLog = `
-	DELETE FROM accountLog
-	WHERE date = $1 AND content = $2 AND amount = $3
 `

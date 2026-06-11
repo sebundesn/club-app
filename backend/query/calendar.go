@@ -1,11 +1,15 @@
-package SQLquery
+package query
 
-const GeneratePDFPath_Q = `
-	INSERT events (date, pdf_path)
-	VALUES ($1, pdf_path)
-	ON CONFLICT(date)
-	DO UPDATE SET
-		pdf_path = EXCLUDED.pdf_path
+const CreateEventsTable_Q = `
+	CREATE TABLE IF NOT EXISTS events (
+		id SERIAL PRIMARY KEY,
+		date DATE UNIQUE NOT NULL,
+		title TEXT,
+		subtitle TEXT,
+		content TEXT,
+		pdf_path TEXT,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	);
 `
 
 const UpSertDateContent = `

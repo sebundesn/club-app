@@ -1,41 +1,42 @@
-package function
+package feature
 
 import (
 	"encoding/json"
 	"fmt"
 	"net/http"
 
-	"club-app/utility"
+	"club-app/query"
+	"club-app/util"
 )
 
-func CheckAuthHandler(w http.ResponseWriter, r *http.Request) error {
-	if r.Method != http.MethodGet {
+func FirstLogin(w http.ResponseWriter, r *http.Request) error {
+	if r.Method != http.MethodPost {
 		return fmt.Errorf("Method not allowed: %s", r.Method)
 	}
 
-	session, err := utility.Store.Get(r, "club-app-session")
+	var name map[string]string
+	if err := json.NewDecoder(r.Body).Decode(&name); err != nil {
+		return fmt.Errorf("Failed to encode: %w", err)
+	}
+	defer r.Body.Close()
+
+	session, err := util.Store.Get(r, "club-app-session")
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
 		return fmt.Errorf("session error: %w", err)
 	}
 
-	auth, ok := session.Values["authenticated"].(bool)
-	if !ok || !auth {
-		w.Header().Set("Content-Type", "application/json")
-		return json.NewEncoder(w).Encode(map[string]interface{}{"logged_in": false})
+	id, ok := session.Values["id"].(int)
+	if !ok {
+		return fmt.Errorf("session expires")
 	}
 
-	id := session.Values["id"].(int)
-	name := session.Values["name"].(string)
-	role := session.Values["role"].(string)
+	_, err = util.DB.Exec(query.NameChangeFirst, id, name["realname"], name["username"])
+	if err != nil {
+		return fmt.Errorf("SQL execution error: %w", err)
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	return json.NewEncoder(w).Encode(map[string]interface{}{
-		"id":        id,
-		"role":      role,
-		"name":      name,
-		"logged_in": true,
-	})
+	return json.NewEncoder(w).Encode(map[string]string{"message": "success"})
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) error {
@@ -43,7 +44,7 @@ func Logout(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("Method not allowed: %s", r.Method)
 	}
 
-	session, err := utility.Store.Get(r, "club-app-session")
+	session, err := util.Store.Get(r, "club-app-session")
 	if err != nil {
 		return fmt.Errorf("session error: %w", err)
 	}

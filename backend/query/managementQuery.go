@@ -1,4 +1,4 @@
-package SQLquery
+package query
 
 const UpsertMembersQuery = `
 	INSERT INTO users (student_id, name, role)
