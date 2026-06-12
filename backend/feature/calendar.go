@@ -55,7 +55,7 @@ func GetMonthNotes(w http.ResponseWriter, r *http.Request) error {
 
 func GetDateEvent(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodGet {
-		return fmt.Errorf("method not allowed: %w", r.Method)
+		return fmt.Errorf("method not allowed: %s", r.Method)
 	}
 
 	date := r.URL.Query().Get("date")
