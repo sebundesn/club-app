@@ -35,13 +35,13 @@ body::-webkit-scrollbar {
     background-size: 70%;
     background-repeat: no-repeat;
     background-position: center;
-    box-shadow: 0 2px 5px 7px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
     border: 1px solid #eaeded;
     transition: box-shadow background-color transform border-color 0.2s ease-in-out;
 }
 
 .login-name:hover, .login-icon:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 5px 5px rgba(34, 109, 9, 0.3);
     background-color: #f8f9fa; 
     border-color: #aab7b8;
     transform: translateY(-1px);

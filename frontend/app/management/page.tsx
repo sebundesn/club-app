@@ -28,7 +28,7 @@ export default function Management() {
     const handlePasswordSubmit = (e: React.SubmitEvent) => {
         e.preventDefault();
 
-        if(passwordInput === "24S4014") {
+        if(passwordInput === `${process.env.NEXT_PUBLIC_MANAGEMENT_PASSWORD}`) {
             setIsAuthorized(true);
         } else {
             alert("The password is wrong");
