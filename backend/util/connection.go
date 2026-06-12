@@ -17,12 +17,36 @@ var DB *sql.DB
 var Store *pgstore.PGStore
 
 func ConnectSQL() {
-	_ = godotenv.Load()
+	// .envファイルを読み込む（エラーハンドリング付き）
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("Warning: .env file not found, using environment variables")
+	}
 
-	//ここ本番なら変える
 	connStr := os.Getenv("DATABASE_URL")
+	if connStr == "" {
+		// DATABASE_URLがない場合は個別の環境変数から組み立てる
+		host := os.Getenv("DB_HOST")
+		if host == "" {
+			host = "localhost"
+		}
+		port := os.Getenv("DB_PORT")
+		if port == "" {
+			port = "5432"
+		}
+		user := os.Getenv("DB_USER")
+		if user == "" {
+			user = "yuito" // デフォルト（問題の原因だった箇所）
+		}
+		password := os.Getenv("DB_PASSWORD")
+		dbname := os.Getenv("DB_NAME")
+		if dbname == "" {
+			dbname = "club_db"
+		}
+		connStr = "postgres://" + user + ":" + password + "@" + host + ":" + port + "/" + dbname + "?sslmode=disable"
+		log.Println("Using constructed DATABASE_URL from individual env vars")
+	}
 
-	var err error
 	DB, err = sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal(err)

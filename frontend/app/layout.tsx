@@ -1,7 +1,7 @@
 // frontend/app/layout.tsx
 
 import "./globals.css";
-import CheckoutButton from "./utils/CheckoutButton";
+import Header from "../components/Header";
 
 export default function RootLayout({
   children,
@@ -11,9 +11,10 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body>
-        {/* ここにページの中身が流し込まれます */}
-        {children}
-        <CheckoutButton />
+        <Header />
+        <main className="min-h-screen">
+          {children}
+        </main>
       </body>
     </html>
   )
