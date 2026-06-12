@@ -1,179 +1,61 @@
-body {
-    overscroll-behavior: none;
-}
-body::-webkit-scrollbar {
-    display: none;
+@import "tailwindcss";
+
+@theme {
+  /* ワンゲル部のアースカラーシステム */
+  --color-earth-50: #f7f6ef;
+  --color-earth-100: #ece9db;
+  --color-earth-200: #d9d2b8;
+  --color-earth-300: #bfb38d;
+  --color-earth-400: #a79567;
+  --color-earth-500: #8f7c49;
+  --color-earth-600: #736037;
+  --color-earth-700: #5c4c2e;
+  --color-earth-800: #4b3f29;
+  --color-earth-900: #3f3625;
+  --color-earth-950: #231d14;
+
+  --color-forest-50: #f2f7f2;
+  --color-forest-100: #e2efe1;
+  --color-forest-200: #c5dfc4;
+  --color-forest-300: #9bc698;
+  --color-forest-400: #68a663;
+  --color-forest-500: #42873c;
+  --color-forest-600: #336c2e;
+  --color-forest-700: #2a5627;
+  --color-forest-800: #254623;
+  --color-forest-900: #203b1f;
+  --color-forest-950: #0d200d;
+
+  --color-accent-orange: #e67e22;
+  --color-accent-yellow: #f39c12;
+
+  --font-family-sans: system-ui, sans-serif;
 }
 
-.login-name {
-    position: fixed;
-    top: 5%;
-    right: 7%;
-    width: 60px;
-    height: 60px;
-    color: black;
-    background: white;
-    border-radius: 50%;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all 0.3s ease-in-out;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    border: 1px solid #eaeded;
-}
-.login-icon {
-    position: fixed;
-    top: 5%;
-    right: 7%;
-    width: 60px;
-    height: 60px;
-    background: white;
-    color: black;
-    border-radius: 50%;
-    font-size: 1.2rem;
-    cursor: pointer;
-    background-image: url("/user-svgrepo-com.svg");
-    background-size: 70%;
-    background-repeat: no-repeat;
-    background-position: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
-    border: 1px solid #eaeded;
-    transition: box-shadow background-color transform border-color 0.2s ease-in-out;
+@layer base {
+  body {
+    @apply bg-earth-50 text-forest-900;
+  }
 }
 
-.login-name:hover, .login-icon:hover {
-    box-shadow: 0 1px 5px 5px rgba(34, 109, 9, 0.3);
-    background-color: #f8f9fa; 
-    border-color: #aab7b8;
-    transform: translateY(-1px);
-}
+@layer components {
+  .btn-primary {
+    @apply px-6 py-3 bg-forest-600 text-white rounded-lg font-medium hover:bg-forest-700 transition-all duration-200 hover:shadow-md;
+  }
 
-.login-button-n {
-    position: fixed;
-    top: 5%;
-    right: 7%;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    opacity: 0%;
-    transition: 0.3s;
-    color: white;
-    background: white;
-    pointer-events: none;
-    font-size: 1.2rem; 
-}
+  .btn-secondary {
+    @apply px-6 py-3 bg-earth-200 text-forest-800 rounded-lg font-medium hover:bg-earth-300 transition-all duration-200;
+  }
 
-.bottom-buttons-y{
-    position: fixed;
-    bottom: 5%;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    justify-content: center;
-    gap:  50px;
-}
+  .btn-accent {
+    @apply px-6 py-3 bg-accent-orange text-white rounded-lg font-medium hover:bg-orange-600 transition-all duration-200 hover:shadow-md;
+  }
 
-.bottom-buttons-n{
-    position: fixed;
-    bottom: 5%;
-    left: 50%;
-    opacity: 0%;
-    transition: 0.2s;
-    transform: translateX(-50%);
-    display: flex;
-    justify-content: center;
-    gap: 50px;
-}
+  .input-field {
+    @apply w-full px-4 py-3 rounded-lg border-2 border-earth-300 focus:border-forest-500 focus:outline-none focus:ring-2 focus:ring-forest-200 transition-all;
+  }
 
-.bottom-buttons-y button{
-    width: 20vw;
-    height: 8vh;
-    color: white;
-    border-radius: 5px;
-    background: black;
-}
-.bottom-buttons-y button:hover{
-    color: black;
-    background: white;
-    transition: 0.3s;
-}
-
-.bottom-buttons-n button{
-    width: 20vw;
-    height: 8vh;
-    color: white;
-    border-radius: 5px;
-    background: black;
-    pointer-events: none;
-}
-
-/* login button modal part ------------------------------------*/
-
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    text-align: center;
-}
-.modal-content {
-    width: 70vw;
-    height: 70vh;
-    background-color: white;
-    border-radius: 8px;
-    padding: 30px;
-}
-
-.modal-content h3 {
-    font-size: 2rem;
-    margin: 3rem 0;
-    color: #184082;
-}
-
-.input-group {
-    margin-bottom: 2rem;
-}
-
-.input-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-size: 1.3rem;
-    color: #252c37;
-}
-
-.input-group input {
-    width: 80%;
-    padding: 0.6rem;
-    border: 1px solid #98a0aa;
-    border-radius: 4px;
-    box-sizing: border-box;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: space-between;
-    margin: 5rem 2rem;
-}
-
-.submit-btn {
-    background-color: #3b82f6;
-    color: white;
-    border: none;
-    padding: 0.6rem 1.2rem;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.cancel-btn {
-  background-color: #e2e8f0;
-  color: #334155;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 5px;
-  cursor: pointer;
+  .card {
+    @apply bg-white rounded-xl shadow-md border border-earth-200 overflow-hidden;
+  }
 }

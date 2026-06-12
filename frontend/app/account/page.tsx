@@ -1,366 +1,384 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import   "./account.css";
-import { ReceiptDataStruct, MoneyLogStruct } from "../utils/schema"
+import React, { useState, useEffect } from 'react';
+import { ReceiptDataStruct, MoneyLogStruct } from '../utils/schema';
 
-export default function Account (){
-    const [moneyLogs, setMoneyLogs] = useState<MoneyLogStruct[]>([]);
-    const [totalSum, setTotalSum] = useState<number>(0);
-    const [receiptDatas, setReceiptDatas] = useState<ReceiptDataStruct[]>([]);
-    const [fullScreenImg, setFullScreenImg] = useState<string | null>(null);
-    const [receiptModal, setReceiptModal] = useState<any | null>(null);
-    const [newLog, setNewLog] = useState<Omit<MoneyLogStruct, "amount"> & {amount: number | string}>({
-        date: new Date().toISOString().split("T")[0],
-        content: "",
-        amount: ""
-    });
+// 会計ページ：部費の管理とレシートのアップロード機能を提供
+export default function Account() {
+  const [moneyLogs, setMoneyLogs] = useState<MoneyLogStruct[]>([]);
+  const [totalSum, setTotalSum] = useState<number>(0);
+  const [receiptDatas, setReceiptDatas] = useState<ReceiptDataStruct[]>([]);
+  const [fullScreenImg, setFullScreenImg] = useState<string | null>(null);
+  const [receiptModal, setReceiptModal] = useState<ReceiptDataStruct | null>(null);
+  const [newLog, setNewLog] = useState<Omit<MoneyLogStruct, 'amount'> & { amount: number | string }>({
+    date: new Date().toISOString().split('T')[0],
+    content: '',
+    amount: '',
+  });
 
-    const backendURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-    const year = new Date().getFullYear();
-    const howLongWeek = 2;
+  const backendURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+  const year = new Date().getFullYear();
+  const howLongWeek = 2;
 
-    const getReceipts = async () => {
-        try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getReceiptsInfo?howLongMonth=${howLongWeek}`);
-            const data = await res.json();
+  // レシート情報を取得
+  const getReceipts = async () => {
+    try {
+      const res = await fetch(`${backendURL}/getReceiptsInfo?howLongMonth=${howLongWeek}`);
+      const data = await res.json();
 
-            const formattedData: ReceiptDataStruct[] = data.map((item: any) => ({
-                ID: item.id,
-                Title: item.title,
-                Date: item.date.split("T")[0],
-                ImageURLs: item.images || []
-            }));
+      const formattedData: ReceiptDataStruct[] = data.map((item: any) => ({
+        ID: item.id,
+        Title: item.title,
+        Date: item.date.split('T')[0],
+        ImageURLs: item.images || [],
+      }));
 
-            setReceiptDatas(formattedData);
-        } catch (e) {
-            console.error("failed to getReceipts:", e);
-            alert("通信に失敗しました。");
-        };
-    };
+      setReceiptDatas(formattedData);
+    } catch (e) {
+      console.error('failed to getReceipts:', e);
+      alert('通信に失敗しました。');
+    }
+  };
 
-    const getAccountInfo = async () => {
-        try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/accountInfo?year=${year}`);
-            const data = await res.json();
-            setMoneyLogs(data || []);
-        } catch (e) {
-            console.error("failed to getAccountInfo:", e)
-            alert("通信に失敗しました。")
-        };
-    };
+  // 会計情報を取得
+  const getAccountInfo = async () => {
+    try {
+      const res = await fetch(`${backendURL}/accountInfo?year=${year}`);
+      const data = await res.json();
+      setMoneyLogs(data || []);
+    } catch (e) {
+      console.error('failed to getAccountInfo:', e);
+      alert('通信に失敗しました。');
+    }
+  };
 
-    const getMoneySum = async () => {
-        try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getMoneySum`);
-            const data = await res.json();
-            setTotalSum(data);
-        } catch (e) {
-            console.error("failed to getMoneySum:", e)
-            alert("通信に失敗しました。")
-        };
-    };
+  // 合計金額を取得
+  const getMoneySum = async () => {
+    try {
+      const res = await fetch(`${backendURL}/getMoneySum`);
+      const data = await res.json();
+      setTotalSum(data);
+    } catch (e) {
+      console.error('failed to getMoneySum:', e);
+      alert('通信に失敗しました。');
+    }
+  };
 
-    const addAccountLog = async () => {
-        if(!newLog.content || !newLog.amount || newLog.amount === "-"){
-            alert("内容と金額を入力してください");
-            return;
-        };
+  // 会計ログを追加
+  const addAccountLog = async () => {
+    if (!newLog.content || !newLog.amount || newLog.amount === '-') {
+      alert('内容と金額を入力してください');
+      return;
+    }
 
-        try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addMoneyLog`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(newLog),
-                credentials: "include",
-            });
+    try {
+      const res = await fetch(`${backendURL}/addMoneyLog`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newLog),
+        credentials: 'include',
+      });
 
-            if(res.ok){
-                getAccountInfo();
-                getMoneySum();
-                setNewLog({...newLog, content: "", amount: ""})
-            }else{
-                alert("追加できませんでした。会計権限のユーザのみが可能です。");
-            }
-        } catch (e) {
-            console.error("failed to add account log:", e)
-            alert("通信にしっぱいしました。")
-        }
-        
-    };
-
-    const handleFileChange= async (e: React.ChangeEvent<HTMLInputElement>, eventID: number) => {
-        const files = e.target.files;
-        if(!files || files.length === 0) return;
-
-        const formData = new FormData();
-        formData.append("eventID", String(eventID));
-
-        for(let i=0; i < files.length; i++){
-            formData.append("images", files[i]);
-        }
-        console.log(formData.getAll("images"));
-
-        try{
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/uploadReceipt`, {
-                method: "POST",
-                body: formData,
-            });
-
-            if(!res.ok){
-                alert("画像のアップロードに失敗しました。");
-                return;
-            }
-
-            await getReceipts();
-
-        } catch (e) {
-            alert("画像のアップロードに失敗しました。")
-        }
-    };        
-
-    const deleteMoneyLog = async (oneMoneyLog: MoneyLogStruct) => {
-        try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/deleteMoneyLog`, {
-                method: "POST",
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(oneMoneyLog),
-                credentials: "include"
-            });
-
-            if(!res.ok){
-                alert("Failed to fetch");
-                return;
-            };
-
-            const date = oneMoneyLog.date;
-            const content = oneMoneyLog.content;
-
-            setMoneyLogs(prevLogs => {
-                return  prevLogs.filter((log: MoneyLogStruct) => log.content !== content && log.date !== date)
-            })
-
-            await getAccountInfo();
-            await getMoneySum();
-
-        } catch(error) {
-            alert("failed to delete image");
-        };
-    };
-
-    const deleteImage = async (date: string, url: string) => {
-        try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/deleteImage`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ "date": date, "url": url}),
-                credentials: "include"      
-            });
-
-            if(!res.ok){
-                alert("Failed to fetch");
-                return;
-            };
-
-            setReceiptModal((prevModal: any)=> {
-                if(!prevModal || !prevModal.ImageURLs) return prevModal;
-                return {
-                    ...prevModal,
-                    ImageURLs: prevModal.ImageURLs.filter((imgURL: any) => imgURL !== url)
-                }
-            })
-
-            setReceiptDatas((prevDatas) => 
-                prevDatas.map((item) => {
-                    if(item.Date === date.split("T")[0]) {
-                        return {
-                            ...item,
-                            ImageURLs: item.ImageURLs.filter((imgURL) => imgURL !== url)
-                        };
-                    }
-
-                    return item;
-                })
-            )
-
-        } catch(error) {
-            alert("failed to delete image");
-        };
-    };
-
-    const fetchTodos = async () => {
-        try{
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getTodos`, {
-                method: "GET",
-                credentials: "include",
-            });
-
-            const data = await res.json();
-
-            console.log(data);
-
-        } catch(error) {
-            alert("Failed to connect");
-            return;
-        }
-    };
-
-    useEffect(()=>{
+      if (res.ok) {
         getAccountInfo();
         getMoneySum();
-        getReceipts()
-    }, []);
+        setNewLog({ ...newLog, content: '', amount: '' });
+      } else {
+        alert('追加できませんでした。会計権限のユーザのみが可能です。');
+      }
+    } catch (e) {
+      console.error('failed to add account log:', e);
+      alert('通信に失敗しました。');
+    }
+  };
 
-    return (
-        <div className="container">
-            <div className="receipt-container">
-                <div className="event-grid">
-                    {
-                        receiptDatas.map((event, index) => (
-                            <div key={index} className="event-item">
-                                <div className="event-info">
-                                    <span className="event-date">{event.Date}</span>
-                                    <p className="event-name">{event.Title}</p>
-                                </div>
+  // ファイルアップロード処理
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, eventID: number) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-                                <div className="event-images">
-                                    <label className="upload-button">
-                                        画像を追加
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            multiple
-                                            className="file-input-hidden"
-                                            onChange={(e)=> handleFileChange(e, event.ID)}
-                                            hidden
-                                        />
-                                    </label>
+    const formData = new FormData();
+    formData.append('eventID', String(eventID));
 
-                                    <button
-                                        type="button"
-                                        className="view-list-button"
-                                        onClick={() => setReceiptModal(event)}
-                                    >
-                                        レシート ➔
-                                        <span className="image-count">({event.ImageURLs.length}枚)</span>
-                                    </button>
+    for (let i = 0; i < files.length; i++) {
+      formData.append('images', files[i]);
+    }
 
-                                    {receiptModal && (
-                                        <div className="receipt-modal-overlay" onClick={()=> setReceiptModal(null)}>
-                                            <div className="receipt-modal-content" onClick={(e)=> e.stopPropagation()}>
-                                                <h4>{receiptModal.Title} ({receiptModal.Date})</h4>
+    try {
+      const res = await fetch(`${backendURL}/uploadReceipt`, {
+        method: 'POST',
+        body: formData,
+      });
 
-                                                {receiptModal.ImageURLs.length === 0 ? (
-                                                    <p className="no-images-text">登録されているレシート画像はありません。</p>
-                                                ): (
-                                                    <div className="receipt-modal-grid">
-                                                        {receiptModal.ImageURLs.map((url: string, idx: number) => (
-                                                            <div key={idx} className="modal-img-wrapper">
-                                                                <button className="delete-btn"
-                                                                    onClick={() => {
-                                                                        if(window.confirm("写真を削除しますか？")) {
-                                                                            deleteImage(receiptModal.Date, url);
-                                                                        };
-                                                                    }}
-                                                                >
-                                                                    <img src="/trash.svg" alt="削除"/>
-                                                                </button>
-                                                                <img src={`${backendURL}${url}`} alt="receipt" className="modal-receipt-img" onClick={()=>setFullScreenImg(url)}/>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        ))
-                    }
-                </div>
+      if (!res.ok) {
+        alert('画像のアップロードに失敗しました。');
+        return;
+      }
 
-                {fullScreenImg && (
-                    <div className="fullscreen-overlay" onClick={() => setFullScreenImg(null)}>
-                        <img src={`${backendURL}${fullScreenImg}`} alt="receiptImg" className="fullscreen-image" />
-                    </div>
-                )}
-            </div>
+      await getReceipts();
+    } catch (e) {
+      alert('画像のアップロードに失敗しました。');
+    }
+  };
 
+  // 会計ログを削除
+  const deleteMoneyLog = async (oneMoneyLog: MoneyLogStruct) => {
+    try {
+      const res = await fetch(`${backendURL}/deleteMoneyLog`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(oneMoneyLog),
+        credentials: 'include',
+      });
 
-            <div className="balance-cards">
-                <p>現在の部費残高:</p>
-                <h1>￥{totalSum.toLocaleString()}</h1>
-            </div>
+      if (!res.ok) {
+        alert('Failed to fetch');
+        return;
+      }
 
-            <ul className="history-list">
-                {[...moneyLogs].reverse().map((oneMoneyLog, index)=> {
-                    const isPlus = Number(oneMoneyLog.amount) > 0;
-                    const statusClass = isPlus ? "text-plus" : "text-minus";
-                    const displayAmount = isPlus
-                        ? `▲  +${oneMoneyLog.amount.toLocaleString()}`
-                        : `▼  -${Math.abs(Number(oneMoneyLog.amount)).toLocaleString()}`;
+      await getAccountInfo();
+      await getMoneySum();
+    } catch (error) {
+      alert('failed to delete image');
+    }
+  };
 
-                    return (
-                        <li key={index}>
-                            <button className="delete-btn"
-                                onClick={() => {
-                                    if(window.confirm(`「${oneMoneyLog.content}」の履歴を削除しますか？`)) {
-                                        deleteMoneyLog(oneMoneyLog);
-                                    };
-                                }}
-                            >
-                                <img src="/trash.svg" alt="削除"/>
-                            </button>
+  // 画像を削除
+  const deleteImage = async (date: string, url: string) => {
+    try {
+      const res = await fetch(`${backendURL}/deleteImage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date, url }),
+        credentials: 'include',
+      });
 
-                            <div className="history-item-content">
-                                <span className="history-date">{oneMoneyLog.date}</span>
-                                <span className="history-content">{oneMoneyLog.content}</span>
-                                <span className={`history-amount ${statusClass}`}>
-                                    {displayAmount}
-                                </span>
-                            </div>
-                        </li>
-                    );
-                })}
-            </ul>
+      if (!res.ok) {
+        alert('Failed to fetch');
+        return;
+      }
 
-            <div className="input-form">
-                <input
-                    type="date"
-                    value={newLog.date}
-                    required
-                    onChange={(e)=> setNewLog({...newLog, date: e.target.value})}
-                />
-                <input
-                    type="text"
-                    placeholder="内容（例：熊スプレー購入）"
-                    required
-                    value={newLog.content}
-                    onChange={(e)=> setNewLog({...newLog, content: e.target.value})}
-                />
-                <input
-                    type="text"
-                    placeholder="金額(出金の場合は'-'をつけて)"
-                    inputMode="numeric"
-                    pattern="\d*"
-                    required
-                    value={newLog.amount}
-                    onChange={(e)=> {
-                        const val = e.target.value;
-                        if(val === "" || val === "-"){
-                            setNewLog({...newLog, amount: val as any});
-                            return;
-                        }
-                        const num = Number(val);
-                        if(!isNaN(num)){
-                            setNewLog({ ...newLog, amount: num });
-                        }
-                    }}
-                    onFocus={(e) => e.target.select()}
-                />
+      setReceiptModal((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          ImageURLs: prev.ImageURLs.filter((imgUrl) => imgUrl !== url),
+        };
+      });
 
-                <button onClick={addAccountLog}>+</button>
-            </div>
-        </div>
+      setReceiptDatas((prev) =>
+        prev.map((item) => {
+          if (item.Date === date.split('T')[0]) {
+            return {
+            ...item,
+            ImageURLs: item.ImageURLs.filter((imgUrl) => imgUrl !== url),
+          };
+        }
+        return item;
+      })
     );
-};
+
+      await getReceipts();
+    } catch (error) {
+      alert('failed to delete image');
+    }
+  };
+
+  useEffect(() => {
+    getAccountInfo();
+    getMoneySum();
+    getReceipts();
+  }, []);
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* レシートエリア */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="card p-6">
+            <h2 className="text-2xl font-bold text-forest-800 mb-6">レシート管理</h2>
+            <div className="grid md:grid-cols-2 gap-4">
+              {receiptDatas.map((event, index) => (
+                <div key={index} className="bg-earth-50 rounded-xl p-5 border border-earth-200">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <span className="text-sm text-earth-600 font-medium">{event.Date}</span>
+                      <h3 className="text-lg font-bold text-forest-800">{event.Title}</h3>
+                    </div>
+                    <span className="px-3 py-1 bg-forest-100 text-forest-700 text-sm rounded-full font-medium">
+                      {event.ImageURLs.length}枚
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <label className="flex-1">
+                      <div className="w-full px-4 py-2 bg-forest-600 text-white text-center rounded-lg font-medium cursor-pointer hover:bg-forest-700 transition-all">
+                        画像を追加
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => handleFileChange(e, event.ID)}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setReceiptModal(event)}
+                      className="flex-1 px-4 py-2 bg-earth-200 text-forest-800 rounded-lg font-medium hover:bg-earth-300 transition-all"
+                    >
+                      レシートを見る
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* レシートモーダル */}
+          {receiptModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setReceiptModal(null)}>
+              <div className="bg-earth-50 rounded-2xl p-6 max-w-3xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold text-forest-800">
+                    {receiptModal.Title} ({receiptModal.Date})
+                  </h3>
+                  <button
+                    onClick={() => setReceiptModal(null)}
+                    className="text-earth-600 hover:text-forest-800 text-2xl"
+                  >
+                    ×
+                  </button>
+                </div>
+                {receiptModal.ImageURLs.length === 0 ? (
+                  <p className="text-center text-earth-600 py-8">登録されているレシート画像はありません。</p>
+                ) : (
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {receiptModal.ImageURLs.map((url, idx) => (
+                      <div key={idx} className="relative group">
+                        <img
+                          src={`${backendURL}${url}`}
+                          alt="receipt"
+                          className="w-full h-48 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-all"
+                          onClick={() => setFullScreenImg(url)}
+                        />
+                        <button
+                          className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm('写真を削除しますか？')) {
+                              deleteImage(receiptModal.Date, url);
+                            }
+                          }}
+                        >
+                          <img src="/trash.svg" alt="削除" className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* フルスクリーン画像 */}
+          {fullScreenImg && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90" onClick={() => setFullScreenImg(null)}>
+              <img
+                src={`${backendURL}${fullScreenImg}`}
+                alt="receiptImg"
+                className="max-w-[90vw] max-h-[90vh] object-contain"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* 会計エリア */}
+        <div className="space-y-6">
+          {/* 残高カード */}
+          <div className="card p-6 bg-gradient-to-br from-forest-600 to-forest-800">
+            <p className="text-earth-100 text-lg mb-2">現在の部費残高</p>
+            <p className="text-4xl font-bold text-white">
+              ￥{totalSum.toLocaleString()}
+            </p>
+          </div>
+
+          {/* 新規追加フォーム */}
+          <div className="card p-6">
+            <h3 className="text-xl font-bold text-forest-800 mb-4">新規登録</h3>
+            <div className="space-y-3">
+              <input
+                type="date"
+                value={newLog.date}
+                onChange={(e) => setNewLog({ ...newLog, date: e.target.value })}
+                className="input-field"
+              />
+              <input
+                type="text"
+                placeholder="内容（例：熊スプレー購入）"
+                value={newLog.content}
+                onChange={(e) => setNewLog({ ...newLog, content: e.target.value })}
+                className="input-field"
+              />
+              <input
+                type="text"
+                placeholder="金額(出金の場合は'-'をつけて)"
+                inputMode="numeric"
+                value={newLog.amount}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || val === '-') {
+                    setNewLog({ ...newLog, amount: val as any });
+                    return;
+                  }
+                  const num = Number(val);
+                  if (!isNaN(num)) {
+                    setNewLog({ ...newLog, amount: num });
+                  }
+                }}
+                onFocus={(e) => e.target.select()}
+                className="input-field"
+              />
+              <button onClick={addAccountLog} className="btn-primary w-full">
+                追加
+              </button>
+            </div>
+          </div>
+
+          {/* 履歴リスト */}
+          <div className="card p-6">
+            <h3 className="text-xl font-bold text-forest-800 mb-4">履歴</h3>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {[...moneyLogs].reverse().map((oneMoneyLog, index) => {
+                const isPlus = Number(oneMoneyLog.amount) > 0;
+                return (
+                  <div key={index} className="flex items-center gap-3 p-3 bg-earth-50 rounded-lg border border-earth-200">
+                    <button
+                      onClick={() => {
+                        if (window.confirm(`「${oneMoneyLog.content}」の履歴を削除しますか？`)) {
+                          deleteMoneyLog(oneMoneyLog);
+                        }
+                      }}
+                      className="w-8 h-8 flex-shrink-0 rounded-lg bg-red-100 hover:bg-red-200 flex items-center justify-center"
+                    >
+                      <img src="/trash.svg" alt="削除" className="w-4 h-4" />
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm text-earth-600 font-medium">{oneMoneyLog.date}</span>
+                        <span className={`font-bold ${isPlus ? 'text-green-600' : 'text-red-600'}`}>
+                          {isPlus ? '▲ ' : '▼ '}
+                          {Math.abs(Number(oneMoneyLog.amount)).toLocaleString()}円
+                        </span>
+                      </div>
+                      <p className="text-forest-800 font-medium truncate">{oneMoneyLog.content}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
