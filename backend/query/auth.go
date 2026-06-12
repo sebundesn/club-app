@@ -7,5 +7,4 @@ const UserTable = `
 		name TEXT NOT NULL,
 		role TEXT,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	);
-`
+	);`

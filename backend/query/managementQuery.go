@@ -17,6 +17,7 @@ const SelectMembers = `
 	SELECT student_id, name, role FROM users;
 `
 const NameChangeFirst = `
-	UPDATE users VALUES(realname, username)
-	SET ($2, $3) WHERE id = $1;
+	UPDATE users 
+	SET name = $2 
+	WHERE id = $1;
 `

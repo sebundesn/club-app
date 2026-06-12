@@ -30,7 +30,7 @@ func FirstLogin(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("session expires")
 	}
 
-	_, err = util.DB.Exec(query.NameChangeFirst, id, name["realname"], name["username"])
+	_, err = util.DB.Exec(query.NameChangeFirst, id, name["name"])
 	if err != nil {
 		return fmt.Errorf("SQL execution error: %w", err)
 	}

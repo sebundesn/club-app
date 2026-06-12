@@ -8,8 +8,7 @@ export default function CheckoutButton() {
     const [isVisible, setIsVisible] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [password, setPassword] = useState("");
-    const [realname, setRealname] = useState("");
-    const [username, setUsername] = useState("");
+    const [name, setName] = useState("");
 
     //a user information management state
     const [userInfo, setUserInfo] = useState<UserInfoStruct>({
@@ -84,8 +83,8 @@ export default function CheckoutButton() {
 
     const handleLoginSubmitFirst = async (e: React.SubmitEvent<HTMLFormElement>) => {
 
-        if (username === "" || realname === "") {
-            alert("本名とユーザ名を書いてください。");
+        if (name === "") {
+            alert("本名を書いてください。");
             return;
         }
 
@@ -95,8 +94,7 @@ export default function CheckoutButton() {
                 credentials: "include",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({
-                    realname: realname,
-                    username: username,
+                    name: name,
                 }),
             });
 
@@ -224,19 +222,11 @@ export default function CheckoutButton() {
                                 <label>本名</label>
                                 <input
                                     type="name"
-                                    value={realname}
-                                    onChange={(e) => setRealname(e.target.value)}
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
                                     required
                                 />
                                 <p>*名字と名前の間はスペースを空けてください！</p>
-
-                                <label>ユーザー名</label>
-                                <input
-                                    type="name"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                    required
-                                />
                             </div>
 
                             <div className="modal-action">
