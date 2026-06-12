@@ -3,16 +3,15 @@ package feature
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
-	"errors"
 
+	"club-app/model"
 	"club-app/query"
 	"club-app/util"
-	"club-app/model"
 )
-
 
 func GetMonthNotes(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodGet {

@@ -56,7 +56,7 @@
 
 ### 前提条件
 - Go (version 1.26.0)
-- Node.js (version 0.1.0)
+- Node.js (version 20.20.0)
 - Next.js (version 16.2.4)
 - PostgreSQL (version 16.13)
 
