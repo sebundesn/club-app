@@ -16,7 +16,7 @@ body::-webkit-scrollbar {
     border-radius: 50%;
     font-size: 1.2rem;
     cursor: pointer;
-    transition: all 0.2s ease-in-out;
+    transition: all 0.3s ease-in-out;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     border: 1px solid #eaeded;
 }
@@ -70,7 +70,6 @@ body::-webkit-scrollbar {
     display: flex;
     justify-content: center;
     gap:  50px;
-    transition-delay: 0.3s;
 }
 
 .bottom-buttons-n{
@@ -78,7 +77,7 @@ body::-webkit-scrollbar {
     bottom: 5%;
     left: 50%;
     opacity: 0%;
-    transition: 0.3s;
+    transition: 0.2s;
     transform: translateX(-50%);
     display: flex;
     justify-content: center;
