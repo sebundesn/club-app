@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ReceiptDataStruct, MoneyLogStruct } from '../utils/schema';
+import "./account.css"
 
 // 会計ページ：部費の管理とレシートのアップロード機能を提供
 export default function Account() {
@@ -191,27 +192,27 @@ export default function Account() {
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="grid lg:grid-cols-3 gap-8">
+    <div className="account-container max-w-6xl mx-auto px-4 py-8">
+      <div className="main-grid grid lg:grid-cols-3 gap-8">
         {/* レシートエリア */}
         <div className="lg:col-span-2 space-y-6">
           <div className="card p-6">
             <h2 className="text-2xl font-bold text-forest-800 mb-6">レシート管理</h2>
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="receipt-grid grid md:grid-cols-2 gap-4">
               {receiptDatas.map((event, index) => (
-                <div key={index} className="bg-earth-50 rounded-xl p-5 border border-earth-200">
-                  <div className="flex items-start justify-between mb-3">
+                <div key={index} className="receipt-item-card bg-earth-50 rounded-xl p-5 border border-earth-200">
+                  <div className="receipt-card-top flex items-start justify-between mb-3">
                     <div>
                       <span className="text-sm text-earth-600 font-medium">{event.Date}</span>
                       <h3 className="text-lg font-bold text-forest-800">{event.Title}</h3>
                     </div>
-                    <span className="px-3 py-1 bg-forest-100 text-forest-700 text-sm rounded-full font-medium">
+                    <span className="badge-count px-3 py-1 bg-forest-100 text-forest-700 text-sm rounded-full font-medium">
                       {event.ImageURLs.length}枚
                     </span>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex-actions flex gap-2">
                     <label className="flex-1">
-                      <div className="w-full px-4 py-2 bg-forest-600 text-white text-center rounded-lg font-medium cursor-pointer hover:bg-forest-700 transition-all">
+                      <div className="btn-add-image w-full px-4 py-2 bg-forest-600 text-white text-center rounded-lg font-medium cursor-pointer hover:bg-forest-700 transition-all">
                         画像を追加
                       </div>
                       <input
@@ -225,7 +226,7 @@ export default function Account() {
                     <button
                       type="button"
                       onClick={() => setReceiptModal(event)}
-                      className="flex-1 px-4 py-2 bg-earth-200 text-forest-800 rounded-lg font-medium hover:bg-earth-300 transition-all"
+                      className="btn-view-receipt flex-1 px-4 py-2 bg-earth-200 text-forest-800 rounded-lg font-medium hover:bg-earth-300 transition-all"
                     >
                       レシートを見る
                     </button>
@@ -236,25 +237,25 @@ export default function Account() {
           </div>
           {/* レシートモーダル */}
           {receiptModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setReceiptModal(null)}>
-              <div className="bg-earth-50 rounded-2xl p-6 max-w-3xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
+            <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setReceiptModal(null)}>
+              <div className="modal-content bg-earth-50 rounded-2xl p-6 max-w-3xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header flex items-center justify-between mb-6">
                   <h3 className="text-2xl font-bold text-forest-800">
                     {receiptModal.Title} ({receiptModal.Date})
                   </h3>
                   <button
                     onClick={() => setReceiptModal(null)}
-                    className="text-earth-600 hover:text-forest-800 text-2xl"
+                    className="btn-close-modal text-earth-600 hover:text-forest-800 text-2xl"
                   >
                     ×
                   </button>
                 </div>
                 {receiptModal.ImageURLs.length === 0 ? (
-                  <p className="text-center text-earth-600 py-8">登録されているレシート画像はありません。</p>
+                  <p className="modal-empty-text text-center text-earth-600 py-8">登録されているレシート画像はありません。</p>
                 ) : (
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="image-thumbnail-grid grid md:grid-cols-2 gap-4">
                     {receiptModal.ImageURLs.map((url, idx) => (
-                      <div key={idx} className="relative group">
+                      <div key={idx} className="image-wrapper relative group">
                         <img
                           src={`${backendURL}${url}`}
                           alt="receipt"
@@ -262,7 +263,7 @@ export default function Account() {
                           onClick={() => setFullScreenImg(url)}
                         />
                         <button
-                          className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center"
+                          className="btn-delete-image absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center"
                           onClick={(e) => {
                             e.stopPropagation();
                             if (window.confirm('写真を削除しますか？')) {
@@ -270,7 +271,7 @@ export default function Account() {
                             }
                           }}
                         >
-                          <img src="/trash.svg" alt="削除" className="w-4 h-4" />
+                          <img src="/trash.svg" alt="削除" className="icon-trash w-4 h-4" />
                         </button>
                       </div>
                     ))}
@@ -282,11 +283,11 @@ export default function Account() {
 
           {/* フルスクリーン画像 */}
           {fullScreenImg && (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90" onClick={() => setFullScreenImg(null)}>
+            <div className="fullscreen-overlay fixed inset-0 z-[60] flex items-center justify-center bg-black/90" onClick={() => setFullScreenImg(null)}>
               <img
                 src={`${backendURL}${fullScreenImg}`}
                 alt="receiptImg"
-                className="max-w-[90vw] max-h-[90vh] object-contain"
+                className="fullscreen-image max-w-[90vw] max-h-[90vh] object-contain"
               />
             </div>
           )}
@@ -295,16 +296,50 @@ export default function Account() {
         {/* 会計エリア */}
         <div className="space-y-6">
           {/* 残高カード */}
-          <div className="card p-6 bg-gradient-to-br from-forest-600 to-forest-800">
+          <div className="card p-6 balance-card bg-gradient-to-br from-forest-600 to-forest-800">
             <p className="text-earth-100 text-lg mb-2">現在の部費残高</p>
             <p className="text-4xl font-bold text-white">
               ￥{totalSum.toLocaleString()}
             </p>
           </div>
 
+          {/* 履歴リスト */}
+          <div className="card p-6">
+            <h3 className="text-xl font-bold text-forest-800 mb-4">部費</h3>
+            <div className="space-y-3 history-list max-h-96 overflow-y-auto">
+              {[...moneyLogs].reverse().map((oneMoneyLog, index) => {
+                const isPlus = Number(oneMoneyLog.amount) > 0;
+                return (
+                  <div key={index} className="history-item flex items-center gap-3 p-3 bg-earth-50 rounded-lg border border-earth-200">
+                    <button
+                      onClick={() => {
+                        if (window.confirm(`「${oneMoneyLog.content}」の履歴を削除しますか？`)) {
+                          deleteMoneyLog(oneMoneyLog);
+                        }
+                      }}
+                      className="btn-history-delete w-8 h-8 flex-shrink-0 rounded-lg bg-red-100 hover:bg-red-200 flex items-center justify-center"
+                    >
+                      <img src="/trash.svg" alt="削除" className="w-4 h-4" />
+                    </button>
+                    <div className="history-content-wrap flex-1 min-w-0">
+                      <div className="history-header-row flex items-center justify-between gap-2">
+                        <span className="text-sm text-earth-600 font-medium">{oneMoneyLog.date}</span>
+                        <span className={`font-bold ${isPlus ? 'text-green-600' : 'text-red-600'}`}>
+                          {isPlus ? '▲ ' : '▼ '}
+                          {Math.abs(Number(oneMoneyLog.amount)).toLocaleString()}円
+                        </span>
+                      </div>
+                      <p className="text-forest-800 font-medium truncate">{oneMoneyLog.content}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           {/* 新規追加フォーム */}
           <div className="card p-6">
-            <h3 className="text-xl font-bold text-forest-800 mb-4">新規登録</h3>
+            <h3 className="text-xl font-bold text-forest-800 mb-4">部費：支出・収益</h3>
             <div className="space-y-3">
               <input
                 type="date"
@@ -341,40 +376,6 @@ export default function Account() {
               <button onClick={addAccountLog} className="btn-primary w-full">
                 追加
               </button>
-            </div>
-          </div>
-
-          {/* 履歴リスト */}
-          <div className="card p-6">
-            <h3 className="text-xl font-bold text-forest-800 mb-4">履歴</h3>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {[...moneyLogs].reverse().map((oneMoneyLog, index) => {
-                const isPlus = Number(oneMoneyLog.amount) > 0;
-                return (
-                  <div key={index} className="flex items-center gap-3 p-3 bg-earth-50 rounded-lg border border-earth-200">
-                    <button
-                      onClick={() => {
-                        if (window.confirm(`「${oneMoneyLog.content}」の履歴を削除しますか？`)) {
-                          deleteMoneyLog(oneMoneyLog);
-                        }
-                      }}
-                      className="w-8 h-8 flex-shrink-0 rounded-lg bg-red-100 hover:bg-red-200 flex items-center justify-center"
-                    >
-                      <img src="/trash.svg" alt="削除" className="w-4 h-4" />
-                    </button>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm text-earth-600 font-medium">{oneMoneyLog.date}</span>
-                        <span className={`font-bold ${isPlus ? 'text-green-600' : 'text-red-600'}`}>
-                          {isPlus ? '▲ ' : '▼ '}
-                          {Math.abs(Number(oneMoneyLog.amount)).toLocaleString()}円
-                        </span>
-                      </div>
-                      <p className="text-forest-800 font-medium truncate">{oneMoneyLog.content}</p>
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           </div>
         </div>

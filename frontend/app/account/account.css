@@ -1,362 +1,410 @@
-.container {
-    max-width: 1000px;
-    width: 100%;
-    padding: 5%;
-    margin: 0 auto;
+/* 全体コンテナ */
+.account-container {
+  max-width: 1152px; /* max-w-6xl */
+  margin: 0 auto;
+  padding: 2rem 1rem; /* py-8 px-4 */
+  font-family: sans-serif;
 }
 
-/*  receipt-images area ---------------------------------------------- */
-
-
-.receipt-container {
-    width: 100%;
-    margin-bottom: 150px;
+/* メインレイアウトグリッド */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
 }
 
-.event-grid {
-    display: grid;
+@media (min-width: 1024px) {
+  .main-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .lg-col-span-2 {
+    grid-column: span 2 / span 2;
+  }
+}
+
+/* 共通コンポーネント */
+.card {
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.p-6 {
+  padding: 1.5rem;
+}
+
+.p-5 {
+  padding: 1.25rem;
+}
+
+.p-3 {
+  padding: 0.75rem;
+}
+
+.space-y-6 > * + * {
+  margin-top: 1.5rem;
+}
+
+.space-y-4 > * + * {
+  margin-top: 1rem;
+}
+
+.space-y-3 > * + * {
+  margin-top: 0.75rem;
+}
+
+/* タイトル・テキスト */
+.text-2xl {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.text-xl {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+.mb-3 {
+  margin-bottom: 0.75rem;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.text-forest-800 { color: #2d4a22; }
+.text-earth-600 { color: #7a6253; }
+.text-white { color: #ffffff; }
+
+/* レシートリストのグリッド */
+.receipt-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .receipt-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-    width: 100%;
+  }
 }
 
-.event-item{
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 12px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-.event-info  {
-    display: flex;
-    flex-direction: column;
-    align-items: baseline;
-    gap: 12px;
-    border-bottom: 1px solid #cfcfd0;
-    padding-bottom: 8px;
-}
-.event-date {
-    font-size: 0.85rem;
-    color: #718096;
-    font-weight: 500;
-}
-.event-name {
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: #186053;
-    text-decoration: underline;
-    margin: 0;
+.receipt-item-card {
+  background-color: #faf9f8; /* earth-50 */
+  border: 1px solid #f7f4f2; /* earth-200 */
+  border-radius: 0.75rem;
 }
 
-.event-images {
-    display: flex;
-    flex-direction: row;
-    gap: 12px;
-    width: 100%;
+.receipt-card-top {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
 }
 
-.upload-button, .view-list-button {
-    width: 45%;
-    aspect-ratio: 1 / 1;
-    box-sizing: border-box;
+.badge-count {
+  padding: 0.25rem 0.75rem;
+  background-color: #e2ede0; /* forest-100 */
+  color: #3b5e2f; /* forest-700 */
+  border-radius: 9999px;
 }
 
-.upload-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px dashed #bcd7f5;
-    border-radius: 8px;
-    background-color: #f4f9fc;
-    color: #64728a;
-    cursor: pointer;
-    transition: 0.2s ease-in-out;
-}
-.upload-button:hover {
-    background-color: #edf2f7;
-    border-color: #4a5568;
-    color: #2d3748;
+/* ボタン・アクションエリア */
+.flex-actions {
+  display: flex;
+  gap: 0.5rem;
 }
 
-.view-list-button {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    background-color: #ffffff;
-    color: #186035;
-    font-weight: bold;
-    font-size: 0.9rem;
-    cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-    transition: 0.2s ease-in-out;
-}
-.view-list-button:hover{
-    background-color: #f8f7f7;
-    border-color: #186053;
-}
-.image-count {
-    color: #57647a;
+.flex-1 {
+  flex: 1 1 0%;
 }
 
-/*  modal style of receipt list --------------------------------- */
-.receipt-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    backdrop-filter: blur(1px);
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
+.hidden {
+  display: none;
 }
 
-.receipt-modal-content {
-    background-color: #ffffff;
-    width: 85%;
-    max-width: 800px;
-    max-height: 80vh;
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.25);
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    text-align: center;
+.btn-add-image {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  background-color: #4c7c3e; /* forest-600 */
+  color: #ffffff;
+  text-align: center;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background-color 0.2s;
 }
 
-.receipt-modal-content h4 {
-    margin: 0;
-    font-size: 1.25rem;
-    color: #0f172a;
+.btn-add-image:hover {
+  background-color: #3b5e2f; /* forest-700 */
 }
 
-.receipt-modal-grid {
-    display: grid;
+.btn-view-receipt {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  background-color: #f0e6df; /* earth-200 */
+  color: #2d4a22; /* forest-800 */
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-view-receipt:hover {
+  background-color: #e6d5cb; /* earth-300 */
+}
+
+/* モーダル */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 1rem;
+}
+
+.modal-content {
+  background-color: #faf9f8; /* earth-50 */
+  border-radius: 1rem;
+  padding: 1.5rem;
+  max-width: 48rem; /* max-w-3xl */
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.btn-close-modal {
+  background: none;
+  border: none;
+  color: #7a6253; /* earth-600 */
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.btn-close-modal:hover {
+  color: #2d4a22;
+}
+
+.modal-empty-text {
+  text-align: center;
+  color: #7a6253;
+  padding: 2rem 0;
+}
+
+/* モーダル内画像グリッド */
+.image-thumbnail-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .image-thumbnail-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-    overflow-y: auto;
-    padding-right: 8px;
+  }
 }
 
-.modal-img-wrapper {
-    aspect-ratio: 1/1;
-    overflow: hidden;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    background-color: #f8fafc;
+.image-wrapper {
+  position: relative;
 }
 
-.modal-receipt-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    transition: transform 0.3s ease;
-}
-.modal-img-wrapper:hover .modal-receipt-img {
-    transform: scale(1.05);
-}
-
-.no-images-text {
-    text-align: center;
-    color: #505c6d;
-    padding: 40px 0;
+.receipt-thumbnail {
+  width: 100%;
+  height: 12rem; /* h-48 */
+  object-fit: cover;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
 }
 
+.receipt-thumbnail:hover {
+  opacity: 0.9;
+}
+
+/* 削除ボタン（グループホバー風の実装） */
+.btn-delete-image {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 2rem;
+  height: 2rem;
+  background-color: #ef4444;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.image-wrapper:hover .btn-delete-image {
+  opacity: 1;
+}
+
+.icon-trash {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* フルスクリーン画像 */
 .fullscreen-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.95);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 3000;
-    cursor: zoom-out;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.9);
 }
 
 .fullscreen-image {
-    max-width: 95vw;
-    max-height: 95vh;
-    object-fit: contain;
-    border-radius: 4px;
-    animation: fadeIn 0.2s ease-out;
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+/* 残高カード（グラデーション） */
+.balance-card {
+  background: linear-gradient(135deg, #4c7c3e, #2d4a22); /* from-forest-600 to-forest-800 */
 }
 
-
-/* club fund area----------------------------------- */
-
-
-.balance-cards{
-    text-align: center;
-    font-size: 1.2rem;
-    font-weight: bold;
-    margin-bottom: 50px;
+.text-earth-100 {
+  color: #f7f4f2;
 }
 
+.text-4xl {
+  font-size: 2.25rem;
+  font-weight: 700;
+}
+
+/* フォーム入力 */
+.input-field {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e6d5cb;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  font-size: 1rem;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input-field:focus {
+  border-color: #4c7c3e;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #4c7c3e;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: #3b5e2f;
+}
+
+/* 履歴リスト */
 .history-list {
-    width: 90%;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    border: 3px solid teal;
-    border-radius: 10px;
-    max-height: 250px;
-    overflow-y: auto;
-    margin-bottom: 50px;
+  max-height: 24rem; /* max-h-96 */
+  overflow-y: auto;
 }
 
-.history-list::-webkit-scrollbar {
-    width: 10px;
-    height: 3px;
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: #faf9f8;
+  border: 1px solid #f7f4f2;
+  border-radius: 0.5rem;
 }
 
-.history-list::-webkit-scrollbar-track {
-    background: transparent;
+.btn-history-delete {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 0.5rem;
+  background-color: #fee2e2; /* bg-red-100 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
-.history-list::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 10px; 
-    transition: background-color 0.5s ease;
+.btn-history-delete:hover {
+  background-color: #fecaca; /* bg-red-200 */
 }
 
-.history-list::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(0, 0, 0, 0.4); 
+.history-content-wrap {
+  flex: 1 1 0%;
+  min-width: 0;
+  width: 100%;
 }
 
-
-.history-list li {
-    position: relative;
-    overflow: hidden;
-    border-bottom: 1px solid black;
-    padding: 0;
+.history-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
-.history li:last-child{
-    border-bottom: none;
-}
+.text-green-600 { color: #16a34a; }
+.text-red-600 { color: #dc2626; }
 
-.history-item-content {
-    display: grid;
-    grid-template-columns: 100px 1fr 200px;
-    align-items: center;
-    padding: 12px 16px;
-    background-color: white;
-    width: 100%;
-}
-
-.history-date{
-    font-size: 0.85rem;
-    color: #64748b;
-}
-.history-content{
-    font-size: 1.1rem;
-    font-weight: bold;
-}
-.history-amount{
-    text-align: center;
-    font-weight: bold;
-    font-family: "Courier New", monospace;
-}
-
-.text-plus {
-    color: #007bff;
-    font-weight: bold;
-}
-
-.text-minus {
-    color: #de3545;
-    font-weight: bold;
-}
-
-/* money log -------------------------------------------------------*/
-
-.input-form {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    width: 90%;
-    padding: 20px;
-    background-color: #f7f8f8;
-    border-radius: 12px;
-    box-shadow: 10px 10px 10px #3d78f733;
-    margin-bottom: 200px;
-}
-
-.input-form input {
-    width: 100%;
-    height: 7vh;
-    padding: 10px 14px;
-    font-size: 15px;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    background-color: #f8fafc;
-    color: #1e293b;
-    box-sizing: border-box;
-    transition: all 0.2s ease;
-}
-
-.input-form input:focus {
-    outline: none;
-    border-color: #3b82f6;
-    background-color: #ffffff;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-}
-
-.input-form input::placeholder {
-  color: #94a3b8;
-}
-
-.input-form button {
-    margin: 0 auto;
-    width: 30%;
-    padding: 2px;
-    font-size: 30px;
-    font-weight: 600;
-    color: #ffffff;
-    background-color: #3674f9;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-}
-
-.input-form button:hover{
-    background-color: #3658b6;
-}
-
-.delete-btn {
-    background-color: #ea3f3f;
-    border: none;
-    color: #f92222;
-    padding: 8px 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.delete-btn:hover {
-    background-color: #ef4444;
-    color: #ffffff;
-}
-
-.delete-btn img {
-    filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(93deg) brightness(103%) contrast(103%);
+.truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
 }

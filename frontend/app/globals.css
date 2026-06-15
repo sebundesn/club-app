@@ -1,7 +1,5 @@
-@import "tailwindcss";
-
-@theme {
-  /* ワンゲル部のアースカラーシステム */
+/* ワンゲル部のアースカラーシステム（CSS変数定義） */
+:root {
   --color-earth-50: #f7f6ef;
   --color-earth-100: #ece9db;
   --color-earth-200: #d9d2b8;
@@ -27,35 +25,104 @@
   --color-forest-950: #0d200d;
 
   --color-accent-orange: #e67e22;
+  --color-accent-orange-hover: #d35400; /* hover:bg-orange-600 の代替 */
   --color-accent-yellow: #f39c12;
 
-  --font-family-sans: system-ui, sans-serif;
+  --font-family-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-@layer base {
-  body {
-    @apply bg-earth-50 text-forest-900;
-  }
+main {
+  min-height: 100vh; /* min-h-screen の再現 */
 }
 
-@layer components {
-  .btn-primary {
-    @apply px-6 py-3 bg-forest-600 text-white rounded-lg font-medium hover:bg-forest-700 transition-all duration-200 hover:shadow-md;
-  }
+/* ベーススタイル (@layer base の代替) */
+body {
+  background-color: var(--color-earth-50);
+  color: var(--color-forest-900);
+  font-family: var(--font-family-sans);
+  margin: 0;
+  padding: 0;
+}
 
-  .btn-secondary {
-    @apply px-6 py-3 bg-earth-200 text-forest-800 rounded-lg font-medium hover:bg-earth-300 transition-all duration-200;
-  }
+/* 共通コンポーネントクラス (@layer components の代替) */
 
-  .btn-accent {
-    @apply px-6 py-3 bg-accent-orange text-white rounded-lg font-medium hover:bg-orange-600 transition-all duration-200 hover:shadow-md;
-  }
+/* メインボタン（緑） */
+.btn-primary {
+  padding: 0.75rem 1.5rem; /* py-3 px-6 */
+  background-color: var(--color-forest-600);
+  color: #ffffff;
+  border: none;
+  border-radius: 0.5rem; /* rounded-lg */
+  font-weight: 500; /* font-medium */
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: all 0.2s ease-in-out; /* transition-all duration-200 */
+}
 
-  .input-field {
-    @apply w-full px-4 py-3 rounded-lg border-2 border-earth-300 focus:border-forest-500 focus:outline-none focus:ring-2 focus:ring-forest-200 transition-all;
-  }
+.btn-primary:hover {
+  background-color: var(--color-forest-700);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* hover:shadow-md */
+}
 
-  .card {
-    @apply bg-white rounded-xl shadow-md border border-earth-200 overflow-hidden;
-  }
+/* サブボタン（ベージュ） */
+.btn-secondary {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--color-earth-200);
+  color: var(--color-forest-800);
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-earth-300);
+}
+
+/* アクセントボタン（オレンジ） */
+.btn-accent {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--color-accent-orange);
+  color: #ffffff;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-accent:hover {
+  background-color: var(--color-accent-orange-hover);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* 入力フォーム設定 */
+.input-field {
+  width: 100%;
+  padding: 0.75rem 1rem; /* py-3 px-4 */
+  border-radius: 0.5rem;
+  border: 2px solid var(--color-earth-300);
+  background-color: #ffffff;
+  font-size: 1rem;
+  box-sizing: border-box;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.input-field:focus {
+  border-color: var(--color-forest-500);
+  /* Tailwindの ring-2 ring-forest-200 の再現 */
+  box-shadow: 0 0 0 2px var(--color-forest-200);
+}
+
+/* 共通カードコンポーネント */
+.card {
+  background-color: #ffffff;
+  border-radius: 0.75rem; /* rounded-xl */
+  border: 1px solid var(--color-earth-200);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+  overflow: hidden;
 }

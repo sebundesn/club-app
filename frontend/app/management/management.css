@@ -1,220 +1,281 @@
-/* password 認証画面------------------------------------*/
+.management-container {
+  max-width: 896px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  font-family: sans-serif;
+}
+
+.btn-home-absolute {
+  padding: 0.6rem 1rem;
+  background-color: #4d6844;
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  cursor: pointer;
+  box-sizing: border-box;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s, transform 0.2s;
+  z-index: 10;
+}
+
+.btn-home-absolute:hover {
+  background-color: #35472f;
+  transform: translateY(-1px);
+}
+
+.card {
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.p-8 {
+  padding: 2rem;
+}
+
+.p-6 {
+  padding: 1.5rem;
+}
+
+.text-3xl {
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+
+.text-2xl {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.text-xl {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.mb-8 {
+  margin-bottom: 2rem;
+}
+
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+.text-forest-800 { color: #2d4a22; }
+.text-earth-700 { color: #5c4638; }
+.text-earth-600 { color: #7a6253; }
+.text-white { color: #ffffff; }
+
 .auth-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(255,255,255,0.7);
-    backdrop-filter: blur(4px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
 }
 
-.auth-card {
-    background: #ffffff;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 32px;
-    width: 75%;
-    max-width: 800px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    text-align: center;
-}
-.auth-card h2 {
-    margin: 0;
-    font-size: 1.5rem;
-    color: #202124;
-    font-weight: 500;
+.auth-modal {
+  background-color: #faf9f8;
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 28rem;
+  width: 100%;
+  margin: 0 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
 }
 
-.auth-card p {
-    margin-bottom: 30px;
+.space-y-4 > * + * {
+  margin-top: 1rem;
 }
 
-.auth-card input[type="password"] {
-    width: 100%;
-    padding: 10px 4px;
-    font-size: 1.2rem;
-    border: none;
-    border-bottom: 2px solid #e0e0e0;
-    outline: none;
-    transition: border-color 0.2s;
-    text-align: center;
-    cursor: pointer;
-}
-.auth-card input[type="password"]:focus {
-    border-bottom-color: #1a73e8; /* フォーカス時に青い線に */
+.space-y-3 > * + * {
+  margin-top: 0.75rem;
 }
 
-.auth-card button {
-    margin: 30px auto;
-    background-color: #1a73e8;
-    width: 50%;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 10px 25px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3);
-}
-.auth-card button:hover {
-    background-color: #1557b0;
-}
-.auth-card button:active {
-    background-color: #162f88;
+.input-field {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e6d5cb;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  font-size: 1rem;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s;
 }
 
-
-
-
-/*管理画面　認証後*/
-h1{
-    text-align: center;
-    margin-bottom: 50px;
+.input-field:focus {
+  border-color: #4c7c3e;
 }
 
-.csv-actions {
-    margin: 0 10px;
-    display: flex;
-    justify-content: space-around;
-    margin-bottom: 25px;
-    background: #e9ecef;
-    padding: 15px;
-    border-radius: 6px;
-    margin-bottom: 50px;
+.w-full {
+  width: 100%;
 }
 
-.csv-label-btn {
-    background-color: #28a745;
-    color: white;
-    padding: 20px 25px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 14px;
-    display: inline-block;
-    border: none;
-    transition: 0.2s;
+.btn-primary {
+  padding: 0.75rem;
+  background-color: #4c7c3e;
+  color: #ffffff;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background-color 0.2s;
 }
 
-.csv-label-btn:hover {
-    background-color: #218838;
+.btn-primary:hover {
+  background-color: #3b5e2f;
 }
 
-.csv-label-btn input[type="file"] {
-    display: none;
+.csv-action-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.export-btn {
-    background-color: #17a2b8;
+@media (min-width: 640px) {
+  .csv-action-row {
+    flex-direction: row;
+  }
 }
 
-.export-btn:hover {
-    background-color: #138496;
+.flex-1 {
+  flex: 1 1 0%;
 }
 
-/*メンバー一覧 -----------------------------------     */
-.member-list-section {
-    width: 60vw;
-    margin: 0 auto;
-    text-align: center;
-    background-color: #ffffff;
-    padding: 24px;
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    border-radius: 12px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-    margin-top: 20px;
-    margin-bottom: 150px;
+.hidden {
+  display: none;
 }
 
-.member-list-section h3 {
-    margin-top: 0;
-    font-size: 1.25rem;
-    color: #374151;
-    border-bottom: 2px solid #f3f4f6;
-    padding-bottom: 12px;
-    margin-bottom: 30px;
+.btn-csv-import {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background-color: #4c7c3e;
+  color: #ffffff;
+  text-align: center;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background-color 0.2s;
 }
 
-.empty-message {
-    padding: 3.5rem 2rem;
-    color: #94a3b8;
-    background-color: #f1f3f6;
-    border-radius: 12px;
-    margin: 0;
-    font-size: 0.95rem;
-    font-style: italic;
+.btn-csv-import:hover {
+  background-color: #3b5e2f;
+}
+
+.btn-accent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background-color: #f0e6df;
+  color: #2d4a22;
+  border: none;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background-color 0.2s;
+}
+
+.btn-accent:hover {
+  background-color: #e6d5cb;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 0;
+  background-color: #faf9f8;
+  border-radius: 0.75rem;
+  border: 2px dashed #e6d5cb;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 0.75rem;
+  border: 1px solid #f7f4f2;
 }
 
 .member-table {
-    width: 100%;
-    border-collapse: collapse;
-    border-spacing: 0;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-thead-bg {
+  background-color: #e2ede0;
 }
 
 .member-table th {
-    color: #6b7280;
-    padding: 12px;
-    background: #f1f7fc;
+  padding: 1rem 1.5rem;
+  text-align: left;
+  color: #2d4a22;
+  font-weight: 700;
 }
 
 .member-table td {
-    padding: 16px 12px;
-    border-bottom: 1px solid #f3f4f6;
+  padding: 1rem 1.5rem;
+  color: #2d4a22;
+  border-top: 1px solid #f7f4f2;
 }
 
-.member-table tr:hover {
-    background-color: #fcf8f8;
+.table-row {
+  transition: background-color 0.2s;
 }
 
-.badge {
-    padding: 4px 8px;
-    border-radius: 999px;
-    font-weight: 600;
-    text-transform: uppercase;
+.table-row:hover {
+  background-color: #faf9f8;
 }
 
-.role-部長 {
-  background-color: #fef2f2;
-  color: #ef4444;
-  border: 1px solid #fee2e2;
-}
-
-.role-副部長 {
-  background-color: #f0f9ff;
-  color: #0284c7;
-  border: 1px solid #e0f2fe;
-}
-
-.role-会計 {
-  background-color: #fefce8;
-  color: #ca8a04;
-  border: 1px solid #fef9c3;
-}
-
-.role-広報 {
-  background-color: #fee9f8;
-  color: #da1d98;
-  border: 1px solid #f9cfec;
-}
-
-.member-table th:last-child,
-.member-table td:last-child {
-  text-align: center;
-  width: 100px;
-}
-
-/* 運転可否セル（文字ではなく小さなインジケーターのように見せる） */
-.member-table td:last-child {
-  font-size: 1.1rem;
-  user-select: none; /* 記号が選択されないようにしてアプリ感を出す */
+.role-badge {
+  padding: 0.25rem 0.75rem;
+  background-color: #f0e6df;
+  color: #5c4638;
+  font-size: 0.875rem;
+  border-radius: 9999px;
+  font-weight: 500;
 }

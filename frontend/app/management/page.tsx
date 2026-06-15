@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { CSVRow, MemberInfo } from '../../utils/schema';
+import { CSVRow, MemberInfo } from '../utils/schema';
 import Papa from 'papaparse';
+import './management.css';
 
 // 管理ページ：メンバー管理とCSVのインポート/エクスポート機能を提供
 export default function Management() {
@@ -24,7 +25,7 @@ export default function Management() {
   };
 
   // パスワード認証
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = (e: React.SubmitEvent) => {
     e.preventDefault();
     if (passwordInput === `${process.env.NEXT_PUBLIC_MANAGEMENT_PASSWORD}`) {
       setIsAuthorized(true);
@@ -67,7 +68,7 @@ export default function Management() {
       encoding: 'SJIS',
       complete: (results) => {
         console.log('データ: ', results.data);
-        const hasInvalidMember = results.data.some((row) => !row['名前']);
+        const hasInvalidMember = results.data.some((row) => !row['学生氏名']);
 
         if (hasInvalidMember) {
           alert('名前がない欄があります。');
@@ -76,10 +77,9 @@ export default function Management() {
 
         const parsedMembers = results.data.map((row) => ({
           student_id: row['学籍番号'],
-          name: row['名前'],
+          name: row['学生氏名'] || "",
           role: row['役職'] || '',
         }));
-
         setMembers(parsedMembers);
         updateMembers(parsedMembers);
       },
@@ -99,7 +99,7 @@ export default function Management() {
     const csvData = members.map((m, index) => ({
       '整理番号': index + 1,
       '学籍番号': m.student_id,
-      '名前': m.name,
+      '学生氏名': m.name,
       '役職': m.role,
     }));
 
@@ -120,16 +120,19 @@ export default function Management() {
   }, []);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="management-container">
       {/* パスワード認証モーダル */}
       {!isAuthorized && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-earth-50 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+        <div className="auth-overlay">
+          <div className="auth-modal">
+            <button className="btn-home-absolute" onClick={() => {window.location.href = "/calendar"}}>
+              HOME へ
+            </button>
             <h2 className="text-2xl font-bold text-forest-800 mb-4 text-center">
               管理画面ロック 🔒
             </h2>
-            <p className="text-earth-700 mb-6 text-center">
-              この画面にアクセスするには、管理者パスワードを入力してください。
+            <p className="text-earth-700 mb-6 text-center text-sm">
+              管理者パスワードを入力
             </p>
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
               <input
@@ -152,9 +155,9 @@ export default function Management() {
         <h1 className="text-3xl font-bold text-forest-800 mb-8">管理画面</h1>
 
         {/* CSV操作エリア */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+        <div className="csv-action-row mb-8">
           <label className="flex-1">
-            <div className="w-full px-6 py-4 bg-forest-600 text-white text-center rounded-xl font-medium cursor-pointer hover:bg-forest-700 transition-all flex items-center justify-center gap-2">
+            <div className="btn-csv-import">
               📁 CSVインポート
             </div>
             <input
@@ -166,7 +169,7 @@ export default function Management() {
           </label>
           <button
             onClick={handleCSVDownload}
-            className="flex-1 btn-accent flex items-center justify-center gap-2"
+            className="btn-accent flex-1"
           >
             📥 CSVエクスポート
           </button>
@@ -178,27 +181,27 @@ export default function Management() {
             メンバーリスト ({members.length}名)
           </h2>
           {members.length === 0 ? (
-            <div className="text-center py-12 bg-earth-50 rounded-xl border-2 border-dashed border-earth-300">
+            <div className="empty-state">
               <p className="text-earth-600 text-lg">データがありません。CSVを読み込んでください。</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-earth-200">
-              <table className="w-full">
-                <thead className="bg-forest-100">
+            <div className="table-responsive">
+              <table className="member-table">
+                <thead className="table-thead-bg">
                   <tr>
-                    <th className="px-6 py-4 text-left text-forest-800 font-bold">学籍番号</th>
-                    <th className="px-6 py-4 text-left text-forest-800 font-bold">名前</th>
-                    <th className="px-6 py-4 text-left text-forest-800 font-bold">役職</th>
+                    <th className="text-left font-bold">学籍番号</th>
+                    <th className="text-left font-bold">名前</th>
+                    <th className="text-left font-bold">役職</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-earth-200">
+                <tbody>
                   {members.map((member, index) => (
-                    <tr key={index} className="hover:bg-earth-50 transition-all">
-                      <td className="px-6 py-4 text-forest-800">{member.student_id}</td>
-                      <td className="px-6 py-4 text-forest-800 font-medium">{member.name}</td>
-                      <td className="px-6 py-4">
+                    <tr key={index} className="table-row">
+                      <td className="text-forest-800">{member.student_id}</td>
+                      <td className="text-forest-800 font-medium">{member.name}</td>
+                      <td>
                         {member.role && (
-                          <span className="px-3 py-1 bg-earth-200 text-earth-800 text-sm rounded-full font-medium">
+                          <span className="role-badge">
                             {member.role}
                           </span>
                         )}

@@ -30,10 +30,12 @@ func FirstLogin(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("session expires")
 	}
 
-	_, err = util.DB.Exec(query.NameChangeFirst, id, name["name"])
+	_, err = util.DB.Exec(query.NameChangeFirst, id, name["realname"])
 	if err != nil {
 		return fmt.Errorf("SQL execution error: %w", err)
 	}
+
+	session.Values["name"] = name["realname"]
 
 	w.Header().Set("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(map[string]string{"message": "success"})

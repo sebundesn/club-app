@@ -1,0 +1,179 @@
+/* ヘッダー全体の基盤 */
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background-color: var(--color-earth-50);
+  padding: 1rem 0; /* py-4 */
+  transition: all 0.3s ease;
+}
+
+/* スクロール検知時のスタイリング */
+.site-header.scrolled {
+  background-color: rgba(247, 246, 239, 0.95); /* earth-50/95 */
+  backdrop-filter: blur(4px); /* backdrop-blur-sm */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: 0.75rem 0; /* py-3 */
+}
+
+/* ヘッダー内インナーコンテナ */
+.header-container {
+  max-width: 1152px; /* max-w-6xl */
+  margin: 0 auto;
+  padding: 0 1rem; /* px-4 */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+/* ロゴリンク */
+.header-logo {
+  font-size: 1.5rem; /* text-2xl */
+  font-weight: 700;
+  color: var(--color-forest-700);
+  text-decoration: none;
+}
+
+/* デスクトップ用ナビゲーション */
+.nav-desktop {
+  display: none;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .nav-desktop {
+    display: flex;
+  }
+}
+
+/* ナビゲーションリンク */
+.nav-link {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  color: var(--color-forest-800);
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  background-color: var(--color-forest-100);
+}
+
+.nav-link.active {
+  background-color: var(--color-forest-600);
+  color: #ffffff;
+  font-weight: 1000;
+}
+
+/* ユーザー丸型ボタン */
+.user-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+  background-color: var(--color-forest-100);
+  border: 2px solid var(--color-forest-300);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.user-menu-btn:hover {
+  background-color: var(--color-forest-200);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.user-avatar-text {
+  font-size: 1.125rem; /* text-lg */
+  font-weight: 700;
+  color: var(--color-forest-700);
+}
+
+.user-icon-svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--color-forest-600);
+}
+
+/* モバイル用ナビゲーション */
+.nav-mobile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0 1rem;
+  margin-top: 0.75rem;
+  font-weight: 700;
+}
+
+@media (min-width: 768px) {
+  .nav-mobile {
+    display: none;
+  }
+}
+
+.nav-link-mobile {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  font-size: 0.875rem;
+  color: var(--color-forest-800);
+  transition: all 0.2s ease;
+}
+
+.nav-link-mobile:hover {
+  background-color: var(--color-forest-100);
+}
+
+.nav-link-mobile.active {
+  background-color: var(--color-forest-600);
+  color: #ffffff;
+  font-weight: 1000;
+}
+
+/* ヘッダー背後のスペース埋め用ブロック */
+.header-offset {
+  height: 6rem; /* h-24 (モバイル時) */
+}
+
+@media (min-width: 768px) {
+  .header-offset {
+    height: 5rem; /* md:h-20 (PC時) */
+  }
+}
+
+/* モーダル基本設定 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5); /* bg-black/50 */
+}
+
+.modal-content {
+  background-color: var(--color-earth-50);
+  border-radius: 1rem; /* rounded-2xl */
+  padding: 2rem; /* p-8 */
+  max-width: 28rem; /* max-w-md */
+  width: 100%;
+  margin: 0 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); /* shadow-2xl */
+  box-sizing: border-box;
+}
+
+/* ユーティリティ系 */
+.block { display: block; }
+.flex { display: flex; }
+.gap-3 { gap: 0.75rem; }
+.mt-1 { margin-top: 0.25rem; }

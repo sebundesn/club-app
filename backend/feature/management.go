@@ -44,6 +44,7 @@ func UpdateMembers(w http.ResponseWriter, r *http.Request) error {
 	if err := json.NewDecoder(r.Body).Decode(&members); err != nil {
 		return fmt.Errorf("failed to decode: %w", err)
 	}
+	defer r.Body.Close()
 
 	for _, m := range members {
 		_, err := util.DB.Exec(query.UpsertMembersQuery, m.StudentID, m.Name, m.Role)
