@@ -80,6 +80,7 @@ func SaveNote(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("method not allowed: %s", r.Method)
 	}
 
+	fmt.Printf("1")
 	session, err := util.Store.Get(r, "club-app-session")
 	if err != nil {
 		return fmt.Errorf("session failure: %w", err)
@@ -89,6 +90,7 @@ func SaveNote(w http.ResponseWriter, r *http.Request) error {
 	if !ok {
 		return fmt.Errorf("authorization error: %v", ok)
 	}
+
 	if !(userRole == "部長" || userRole == "副部長") {
 		return fmt.Errorf("authorization not allowed: %s", userRole)
 	}
@@ -111,4 +113,46 @@ func SaveNote(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	return nil
+}
+
+//自分の通知を取得する関数
+func GetNotificate(w http.ResponseWriter, r *http.Request) error {
+	if r.Method != http.MethodGet {
+		return fmt.Errorf("Method not allowed: %s", r.Method)
+	}
+
+	session, err := util.Store.Get(r, "club-app-session")
+	if err != nil {
+		return fmt.Errorf("session failure: %w", err)
+	}
+	id, ok := session.Values["id"]
+	if !ok {
+		return fmt.Errorf("Failed to fetch session values")
+	}
+
+	rows, err := util.DB.Query(query.FetchNotificates, id)
+	if err != nil {
+		return fmt.Errorf("Failed to execute in sql: %w", err)
+	}
+	defer rows.Close()
+
+	var notificates []model.Notificate
+	for rows.Next() {
+		var n model.Notificate
+
+		err = rows.Scan(&n.ID, &n.Title, &n.DueDate)
+		if err != nil {
+			return fmt.Errorf("row scan error: %w", err)
+		}
+
+		notificates = append(notificates, n)
+	}
+	fmt.Printf("notificates: %v", notificates)
+
+	if err = rows.Err(); err != nil {
+		return fmt.Errorf("Rows iteration error: %w", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	return json.NewEncoder(w).Encode(notificates)
 }

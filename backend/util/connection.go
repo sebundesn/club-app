@@ -17,7 +17,6 @@ var DB *sql.DB
 var Store *pgstore.PGStore
 
 func ConnectSQL() {
-	// .envファイルを読み込む（エラーハンドリング付き）
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("Warning: .env file not found, using environment variables")
@@ -25,7 +24,6 @@ func ConnectSQL() {
 
 	connStr := os.Getenv("DATABASE_URL")
 	if connStr == "" {
-		// DATABASE_URLがない場合は個別の環境変数から組み立てる
 		host := os.Getenv("DB_HOST")
 		if host == "" {
 			host = "localhost"
@@ -35,9 +33,6 @@ func ConnectSQL() {
 			port = "5432"
 		}
 		user := os.Getenv("DB_USER")
-		if user == "" {
-			user = "yuito" // デフォルト（問題の原因だった箇所）
-		}
 		password := os.Getenv("DB_PASSWORD")
 		dbname := os.Getenv("DB_NAME")
 		if dbname == "" {
@@ -79,11 +74,14 @@ func ConnectSQL() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	_, err = DB.Exec(query.CreateNotificateTable)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func SetCorsHeader(w http.ResponseWriter) {
-	//ここ本番なら変える
-
 	frontend := os.Getenv("FRONTEND_URL")
 	if frontend == "" {
 		frontend = "http://localhost:3000"

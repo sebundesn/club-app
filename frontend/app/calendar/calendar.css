@@ -1,6 +1,6 @@
 /* カレンダー全体のコンテナ */
 .calendar-container {
-  max-w: 1152px; /* max-w-6xl */
+  max-width: 1152px; /* max-w-6xl */
   margin: 0 auto;
   padding: 2rem 1rem; /* py-8 px-4 */
   font-family: sans-serif;
@@ -219,14 +219,22 @@
 /* フォーム要素 */
 .input-field {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.8rem;
   border: 1px solid #e6d5cb;
   border-radius: 0.5rem;
   background-color: #ffffff;
-  font-size: 1rem;
   box-sizing: border-box;
   outline: none;
   transition: border-color 0.2s;
+}
+.modal-overlay .input-field:first-child {
+  font-size: 1.7rem;
+}
+.modal-overlay .input-field:nth-of-type(2) {
+  font-size: 1.5rem;
+}
+.modal-overlay .input-field:last-child {
+  font-size: 1rem;
 }
 
 .input-field:focus {

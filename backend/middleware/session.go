@@ -45,7 +45,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) error {
 
 	//Cookieのセキュリティ設定
 	session.Options.HttpOnly = true
-	session.Options.Secure = false                  // Https connection(true in release)
+	session.Options.Secure = true                  // Https connection(true in release)
 	session.Options.SameSite = http.SameSiteLaxMode //CSRF対策
 	session.Options.MaxAge = 86400 * 7
 

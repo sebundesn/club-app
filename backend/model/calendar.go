@@ -17,3 +17,12 @@ type CreateTodoRequest struct {
 	Amount  int       `json:"amount"`
 	DueDate time.Time `json:"due_date"`
 }
+
+
+// ------------notificate section-------------------------
+
+type Notificate struct {
+	ID int `json:"id"`
+	Title string `json:"title"`
+	DueDate *time.Time `json:"due_date"`
+}

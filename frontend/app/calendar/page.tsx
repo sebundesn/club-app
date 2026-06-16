@@ -23,6 +23,7 @@ export default function CalendarPage() {
     PDFPath: '',
     Content: '',
   });
+  const [notificate, setNotificate] = useState([]);
 
   const days = generateCalendarDays(year, month);
 
@@ -97,11 +98,6 @@ export default function CalendarPage() {
 
   // イベント保存
   const saveEvent = async () => {
-    if (eventData.Title.trim() === '') {
-      alert('タイトルをつけてください');
-      return;
-    }
-
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/saveEvent`, {
         method: 'POST',
@@ -117,6 +113,8 @@ export default function CalendarPage() {
         }),
         credentials: 'include',
       });
+
+      console.log(eventData);
 
       if (res.ok) {
         setEventMap((prev) => ({
@@ -146,6 +144,28 @@ export default function CalendarPage() {
       PDFPath: '',
       Content: '',
     });
+  };
+  
+  // 通知取得
+  const getNotification = async () => {
+    try{
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getNotification`, {
+        method: "GET",
+        credentials: "include",
+      })
+
+      if(!res.ok){
+        alert("response error")
+        return;
+      }
+
+      const data = await res.json();
+      console.log(data);
+      setNotificate(data);
+
+    } catch (e) {
+      alert(`Failed to get notification: ${e}`);
+    };
   };
 
   // メッセージ送信（TODO: 実装中）
@@ -250,19 +270,22 @@ export default function CalendarPage() {
       </div>
 
       <div className="bottom-grid">
-        {/* TODOリスト */}
+        {/* 通知 */}
         <div className="card">
-          <h2 className="section-title">TODO list (開発中)</h2>
-          <ul className="todo-list">
-            <li className="todo-item">
-              <span className="todo-dot orange" />
-              <span className="todo-text">ワカサギ釣り：  1000円支払いお願いします。</span>
-            </li>
-            <li className="todo-item">
-              <span className="todo-dot yellow" />
-              <span className="todo-text">投票: キャンプ    残り8日!</span>
-            </li>
-          </ul>
+          <h2 className="section-title">通知 (開発中)</h2>
+          {
+            !notificate ? <p>報告はないです!</p> : 
+            <ul className="todo-list">
+              <li className="todo-item">
+                <span className="todo-dot orange" />
+                <span className="todo-text">ワカサギ釣り：  1000円支払いお願いします。</span>
+              </li>
+              <li className="todo-item">
+                <span className="todo-dot yellow" />
+                <span className="todo-text">投票: キャンプ    残り8日!</span>
+              </li>
+            </ul>
+          }
         </div>
 
         {/* 匿名意見箱 */}

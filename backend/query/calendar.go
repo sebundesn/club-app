@@ -31,15 +31,24 @@ const GetDateEvent = `
 	FROM events WHERE date = $1;
 `
 
-const FetchTodos = `
-	SELECT id, title amount, due_date, is_completed FROM todos
-	WHERE user_id = $1
-		AND due_date >= CURRENT_DATE
-		AND is_completed = FALSE
-	ORDER BY due_date ASC;
+//notificate section
+const CreateNotificateTable = `
+	CREATE TABLE IF NOT EXISTS notificate (
+		id SERIAL PRIMARY KEY,
+		user_id INT NOT NULL,
+		title TEXT NOT NULL,
+		is_completed BOOLEAN DEFAULT FALSE,
+		due_date DATE,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+	);
 `
 
-const Updatetodos = `
-	INSERT INTO todos (user_id, title, amount, due_date)
-	VALUES ($1, $2, $3, $4);
-`
+const FetchNotificates = `
+	SELECT id, title, due_date FROM notificate
+	WHERE user_id = $1
+		AND (due_date >= CURRENT_DATE OR due_date IS NULL)
+		AND is_completed = FALSE
+	ORDER BY created_at ASC;
+` 
