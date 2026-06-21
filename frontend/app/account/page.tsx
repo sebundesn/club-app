@@ -195,7 +195,7 @@ export default function Account() {
     <div className="account-container max-w-6xl mx-auto px-4 py-8">
       <div className="main-grid grid lg:grid-cols-3 gap-8">
         {/* レシートエリア */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6">
           <div className="card p-6">
             <h2 className="text-2xl font-bold text-forest-800 mb-6">レシート管理</h2>
             <div className="receipt-grid grid md:grid-cols-2 gap-4">
@@ -259,7 +259,7 @@ export default function Account() {
                         <img
                           src={`${backendURL}${url}`}
                           alt="receipt"
-                          className="w-full h-48 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-all"
+                          className="receipt-thumbnail w-full h-48 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-all"
                           onClick={() => setFullScreenImg(url)}
                         />
                         <button

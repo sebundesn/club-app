@@ -1,8 +1,8 @@
 /* 全体コンテナ */
 .account-container {
-  max-width: 1152px; /* max-w-6xl */
+  max-width: 1152px;
   margin: 0 auto;
-  padding: 2rem 1rem; /* py-8 px-4 */
+  padding: 2rem 1rem;
   font-family: sans-serif;
 }
 
@@ -17,7 +17,8 @@
   .main-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  .lg-col-span-2 {
+
+  .main-grid > div:first-child {
     grid-column: span 2 / span 2;
   }
 }
@@ -115,8 +116,8 @@
 }
 
 .receipt-item-card {
-  background-color: #faf9f8; /* earth-50 */
-  border: 1px solid #f7f4f2; /* earth-200 */
+  background-color: #faf9f8;
+  border: 1px solid #f7f4f2;
   border-radius: 0.75rem;
 }
 
@@ -128,8 +129,8 @@
 
 .badge-count {
   padding: 0.25rem 0.75rem;
-  background-color: #e2ede0; /* forest-100 */
-  color: #3b5e2f; /* forest-700 */
+  background-color: #e2ede0;
+  color: #3b5e2f;
   border-radius: 9999px;
 }
 
@@ -151,7 +152,7 @@
   display: block;
   width: 100%;
   padding: 0.5rem 1rem;
-  background-color: #4c7c3e; /* forest-600 */
+  background-color: #4c7c3e;
   color: #ffffff;
   text-align: center;
   border-radius: 0.5rem;
@@ -161,14 +162,14 @@
 }
 
 .btn-add-image:hover {
-  background-color: #3b5e2f; /* forest-700 */
+  background-color: #3b5e2f;
 }
 
 .btn-view-receipt {
   width: 100%;
   padding: 0.5rem 1rem;
-  background-color: #f0e6df; /* earth-200 */
-  color: #2d4a22; /* forest-800 */
+  background-color: #f0e6df;
+  color: #2d4a22;
   border: none;
   border-radius: 0.5rem;
   cursor: pointer;
@@ -176,7 +177,7 @@
 }
 
 .btn-view-receipt:hover {
-  background-color: #e6d5cb; /* earth-300 */
+  background-color: #e6d5cb;
 }
 
 /* モーダル */
@@ -195,10 +196,10 @@
 }
 
 .modal-content {
-  background-color: #faf9f8; /* earth-50 */
+  background-color: #faf9f8;
   border-radius: 1rem;
   padding: 1.5rem;
-  max-width: 48rem; /* max-w-3xl */
+  max-width: 48rem;
   width: 100%;
   max-height: 80vh;
   overflow-y: auto;
@@ -214,7 +215,7 @@
 .btn-close-modal {
   background: none;
   border: none;
-  color: #7a6253; /* earth-600 */
+  color: #7a6253;
   font-size: 1.5rem;
   cursor: pointer;
 }
@@ -232,13 +233,13 @@
 /* モーダル内画像グリッド */
 .image-thumbnail-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
 }
 
 @media (min-width: 768px) {
   .image-thumbnail-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -248,7 +249,7 @@
 
 .receipt-thumbnail {
   width: 100%;
-  height: 12rem; /* h-48 */
+  height: 20rem;
   object-fit: cover;
   border-radius: 0.5rem;
   cursor: pointer;
@@ -262,23 +263,28 @@
 /* 削除ボタン（グループホバー風の実装） */
 .btn-delete-image {
   position: absolute;
-  top: 0.5rem;
+  top: 1rem;
   right: 0.5rem;
   width: 2rem;
   height: 2rem;
-  background-color: #ef4444;
-  border: none;
+  background-color: #fee2e2;
+  border: 1px solid white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity 0.4s;
 }
 
 .image-wrapper:hover .btn-delete-image {
   opacity: 1;
+}
+
+.btn-delete-image:hover {
+    background-color: #fdaaaa;
+    transition: background-color 0.2s;
 }
 
 .icon-trash {
@@ -308,7 +314,7 @@
 
 /* 残高カード（グラデーション） */
 .balance-card {
-  background: linear-gradient(135deg, #4c7c3e, #2d4a22); /* from-forest-600 to-forest-800 */
+  background: linear-gradient(135deg, #4c7c3e, #2d4a22);
 }
 
 .text-earth-100 {
@@ -355,7 +361,7 @@
 
 /* 履歴リスト */
 .history-list {
-  max-height: 24rem; /* max-h-96 */
+  max-height: 24rem;
   overflow-y: auto;
 }
 
@@ -374,7 +380,7 @@
   flex-shrink: 0;
   border: none;
   border-radius: 0.5rem;
-  background-color: #fee2e2; /* bg-red-100 */
+  background-color: #fee2e2;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -383,7 +389,7 @@
 }
 
 .btn-history-delete:hover {
-  background-color: #fecaca; /* bg-red-200 */
+  background-color: #fecaca;
 }
 
 .history-content-wrap {
