@@ -6,23 +6,23 @@
   right: 0;
   z-index: 50;
   background-color: var(--color-earth-50);
-  padding: 1rem 0; /* py-4 */
+  padding: 1rem 0;
   transition: all 0.3s ease;
 }
 
 /* スクロール検知時のスタイリング */
 .site-header.scrolled {
   background-color: rgba(247, 246, 239, 0.95); /* earth-50/95 */
-  backdrop-filter: blur(4px); /* backdrop-blur-sm */
+  backdrop-filter: blur(4px);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  padding: 0.75rem 0; /* py-3 */
+  padding: 0.75rem 0;
 }
 
 /* ヘッダー内インナーコンテナ */
 .header-container {
-  max-width: 1152px; /* max-w-6xl */
+  max-width: 1152px;
   margin: 0 auto;
-  padding: 0 1rem; /* px-4 */
+  padding: 0 1rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -100,6 +100,10 @@
   color: var(--color-forest-600);
 }
 
+.password-form {
+  margin-bottom: 30px;
+}
+
 /* モバイル用ナビゲーション */
 .nav-mobile {
   display: flex;
@@ -138,12 +142,12 @@
 
 /* ヘッダー背後のスペース埋め用ブロック */
 .header-offset {
-  height: 6rem; /* h-24 (モバイル時) */
+  height: 6rem;
 }
 
 @media (min-width: 768px) {
   .header-offset {
-    height: 5rem; /* md:h-20 (PC時) */
+    height: 5rem;
   }
 }
 
@@ -163,12 +167,12 @@
 
 .modal-content {
   background-color: var(--color-earth-50);
-  border-radius: 1rem; /* rounded-2xl */
-  padding: 2rem; /* p-8 */
-  max-width: 28rem; /* max-w-md */
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 28rem;
   width: 100%;
   margin: 0 1rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); /* shadow-2xl */
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   box-sizing: border-box;
 }
 

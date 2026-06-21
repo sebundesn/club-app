@@ -145,28 +145,6 @@ export default function CalendarPage() {
       Content: '',
     });
   };
-  
-  // 通知取得
-  const getNotification = async () => {
-    try{
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getNotification`, {
-        method: "GET",
-        credentials: "include",
-      })
-
-      if(!res.ok){
-        alert("response error")
-        return;
-      }
-
-      const data = await res.json();
-      console.log(data);
-      setNotificate(data);
-
-    } catch (e) {
-      alert(`Failed to get notification: ${e}`);
-    };
-  };
 
   // メッセージ送信（TODO: 実装中）
   const sendMessage = async () => {
@@ -274,17 +252,20 @@ export default function CalendarPage() {
         <div className="card">
           <h2 className="section-title">通知 (開発中)</h2>
           {
-            !notificate ? <p>報告はないです!</p> : 
-            <ul className="todo-list">
-              <li className="todo-item">
-                <span className="todo-dot orange" />
-                <span className="todo-text">ワカサギ釣り：  1000円支払いお願いします。</span>
-              </li>
-              <li className="todo-item">
-                <span className="todo-dot yellow" />
-                <span className="todo-text">投票: キャンプ    残り8日!</span>
-              </li>
-            </ul>
+            !notificate || notificate.length === 0 ? (
+              <p>報告はないです!</p>
+            ) : (
+              <ul className="todo-list">
+                <li className="todo-item">
+                  <span className="todo-dot orange" />
+                  <span className="todo-text">ワカサギ釣り：  1000円支払いお願いします。</span>
+                </li>
+                <li className="todo-item">
+                  <span className="todo-dot yellow" />
+                  <span className="todo-text">投票: キャンプ    残り8日!</span>
+                </li>
+              </ul>
+             )
           }
         </div>
 

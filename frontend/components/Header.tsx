@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserInfoStruct } from '../app/utils/schema';
+import { GetNotification } from '../app/utils/notification'
 import './header.css'; // Vanilla CSSの読み込み
 
 // ヘッダーコンポーネント：ナビゲーションとユーザー認証機能を提供
@@ -62,6 +63,11 @@ export default function Header() {
 
       data.is_initial ? setIsInitialLogin(true) : setIsInitialLogin(false);
 
+      if(pathname === "/calendar"){
+          const data = await GetNotification();
+          console.log("notification(login):",data);
+      };
+
       setPassword('');
       setIsModalOpen(false);
     } catch (error: any) {
@@ -100,7 +106,7 @@ export default function Header() {
     }
   };
 
-  // 認証状態の確認
+  // 認証状態の確認(ページ遷移ごとに)
   const checkAuth = async () => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/checkAuth`, {
@@ -117,6 +123,11 @@ export default function Header() {
             role: data.role,
             isLoggedIn: true,
           });
+
+          if(pathname === '/calendar'){
+            const notificates = await GetNotification();
+            console.log("notification(checkAuth):", notificates);
+          }
         }
       }
     } catch (e) {
@@ -226,10 +237,10 @@ export default function Header() {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-2xl font-bold text-forest-800 mb-6 text-center">Login</h3>
             <form onSubmit={handleLoginSubmitPassword}>
-              <div className="mb-6">
+              <div className="password-form">
                 <label className="block text-forest-700 mb-2 font-medium">学籍番号</label>
                 <input
-                  type="password"
+                  type="text"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
