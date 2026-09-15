@@ -414,3 +414,57 @@
   text-overflow: ellipsis;
   margin: 0;
 }
+
+/*  event_participant section*/
+
+.participants-list-container {
+  background-color: #ffffff;
+  border: 1px solid #e7e5e4;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* データがないときのテキスト */
+.participants-list-container .empty-msg {
+  display: block;
+  text-align: center;
+  color: #78716c;
+  font-size: 14px;
+  padding: 16px 0;
+}
+
+.participants-list-container ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.participants-list-container li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid #f5f5f4;
+  font-size: 14px;
+}
+
+.participants-list-container li:last-child {
+  border-bottom: none;
+}
+
+.participants-list-container .participant_name {
+  font-weight: 500;
+  color: #292524;
+}
+
+.participants-list-container .participant_amount {
+  font-weight: 600;
+  color: #15803d;
+  background-color: #f0fdf4;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+}

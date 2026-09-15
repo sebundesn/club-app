@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { ReceiptDataStruct, MoneyLogStruct } from '../utils/schema';
+import React, { useState, useEffect, useRef } from 'react';
+import { ReceiptDataStruct, MoneyLogStruct, MemberOption } from '../utils/schema';
 import "./account.css"
+import Select from 'react-select';
 
 // 会計ページ：部費の管理とレシートのアップロード機能を提供
 export default function Account() {
@@ -17,9 +18,13 @@ export default function Account() {
     amount: '',
   });
 
+  const [isMembersMenuOpen, setIsMembersMenuOpen] = useState(false);
+  const [allClubMembers, setAllClubMembers] = useState<MemberOption[]>([]);
+  const [selectedOptions, setSelectedOptions] = useState<MemberOption[]>([]);
   const backendURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
   const year = new Date().getFullYear();
   const howLongWeek = 2;
+  const selectRef = useRef<any>(null);
 
   // レシート情報を取得
   const getReceipts = async () => {
@@ -185,11 +190,87 @@ export default function Account() {
     }
   };
 
+  // fetch participants
+  const fetchCurrentParticipants = async () => {
+    try {
+      const res = await fetch(`${backendURL}/fetchMembersAndPayment?event_id=${receiptModal?.ID}`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if(res.ok) {
+        const data = await res.json();
+
+        const formatted = data.map((m: any) => ({
+          value: m.UserID,
+          label: m.UserName
+        })) as MemberOption[];
+
+        setSelectedOptions(formatted);
+      }
+    } catch (e) {
+      alert(`Failed to fetchEventMembers: ${e}`)
+    }
+  };
+
+  const getAllClubMembers = async () => {
+    try{
+      const res = await fetch(`${backendURL}/getClubMembers`, {
+        method: "GET",
+        credentials: "include",
+      });
+      if(res.ok){
+        const data = await res.json();
+
+        console.log(data);
+        setAllClubMembers(data);
+      } else {
+        alert("取得に失敗しました。")
+        console.error("getAllClubMembers response error")
+      }
+    } catch (e) {
+      alert("通信エラーが起きました。")
+      console.error(`getAllClubMembers connection error: ${e}`);
+    }
+  };
+
+  //　button that preserve participants
+  const takePartInButton = async () => {
+    try{
+      const userIDs = selectedOptions.map(opt => opt.ID);
+
+      const res = await fetch(`${backendURL}/takePartIn`, {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_id: receiptModal?.ID,
+          user_ids: userIDs,
+        }),
+        credentials: "include",
+      })
+
+      if(!res.ok){
+        alert("participants preservation error")
+      }
+
+      alert("response success")
+      setIsMembersMenuOpen(false);
+    } catch (e) {
+      alert(`connection error: ${e}`);
+    }
+  };
+
   useEffect(() => {
     getAccountInfo();
     getMoneySum();
     getReceipts();
   }, []);
+
+  useEffect(() => {
+    if(!receiptModal) return;
+    fetchCurrentParticipants();
+    getAllClubMembers();
+  }, [receiptModal]);
 
   return (
     <div className="account-container max-w-6xl mx-auto px-4 py-8">
@@ -250,6 +331,83 @@ export default function Account() {
                     ×
                   </button>
                 </div>
+
+                {/* participants section */}
+                <div className="bg-white p-5 rounded-xl border border-earth-200 mb-6 shadow-sm">
+                  <h4 className="text-lg font-bold text-forest-700 mb-3">👥 参加者</h4>
+
+                  <div className="participants-list-container">
+                      {(!selectedOptions || selectedOptions.length === 0) ? (
+                        <span>参加者はいません。</span>
+                      ) : (
+                        <ul>
+                          {selectedOptions.map((m: any) => (
+                            <li key={m.user_id}>
+                              <span className="participant_name">{m.user_name}</span>
+                              <span className="participant_amount">{m.amount}円</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                  </div>
+
+                  <div className="flex justify-between items-center gap-2 mb-3">
+                    <div className="flex gap-2 text-xs">
+                      {/* participants addition section */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsMembersMenuOpen(!isMembersMenuOpen);
+                          if(!isMembersMenuOpen) {
+                            //reactが反応するように、50ms待ってから検索窓にfocusするようにした
+                            setTimeout(() => selectRef.current?.focus(), 50);
+                          }
+                        }}
+                      >
+                        {isMembersMenuOpen ? "▲ リストを閉じる": "参加者を追加"}
+                      </button>
+                    </div>
+
+                    {/* select box */}
+                    <div className="mb-4">
+                      <Select
+                        ref={selectRef}
+                        isMulti
+                        name="members"
+                        options={allClubMembers}
+                        value={selectedOptions}
+                        onChange={(newValue) => {
+                          setSelectedOptions(newValue as MemberOption[]);
+                        }}
+                        menuIsOpen={isMembersMenuOpen}
+                        onMenuClose={() => setIsMembersMenuOpen(false)}
+                        placeholder="メンバー検索"
+                        noOptionsMessage={() => "部員が見つかりません"}
+                        theme={(theme) => ({
+                          ...theme,
+                          colors: {
+                            ...theme.colors,
+                            primary: '#15803d'
+                          },
+                        })}
+                      />
+                    </div>
+
+                    {/* participants preservation button */}
+                    <div>
+                      <button
+                        type="button"
+                        onClick = {takePartInButton}
+                      >
+                        参加者を保存
+                      </button>
+                    </div>
+                  </div>
+
+                  <hr className="border-earth-200 mb-6" />
+                </div>
+
+                
                 {receiptModal.ImageURLs.length === 0 ? (
                   <p className="modal-empty-text text-center text-earth-600 py-8">登録されているレシート画像はありません。</p>
                 ) : (

@@ -79,6 +79,8 @@ func ConnectSQL() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	_, err = DB.Exec(query.CreateEventMembers)
 }
 
 func SetCorsHeader(w http.ResponseWriter) {

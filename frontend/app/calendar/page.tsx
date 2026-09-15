@@ -24,7 +24,7 @@ export default function CalendarPage() {
     Content: '',
   });
   const [notificate, setNotificate] = useState([]);
-
+  const backendURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
   const days = generateCalendarDays(year, month);
 
   // 前月へ移動
@@ -51,7 +51,7 @@ export default function CalendarPage() {
   const getMonthEvents = async () => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/getMonthEvents?month=${String(year)}-${String(month).padStart(2, '0')}`
+        `${backendURL}/getMonthEvents?month=${String(year)}-${String(month).padStart(2, '0')}`
       );
       const data: DateTitle[] = await res.json();
 
@@ -79,7 +79,7 @@ export default function CalendarPage() {
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/getDateEvent?date=${dateStr}`
+        `${backendURL}/getDateEvent?date=${dateStr}`
       );
       const data = await res.json();
       setEventData({
@@ -99,7 +99,7 @@ export default function CalendarPage() {
   // イベント保存
   const saveEvent = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/saveEvent`, {
+      const res = await fetch(`${backendURL}/saveEvent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

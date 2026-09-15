@@ -37,6 +37,8 @@ func main() {
 	http.Handle("/logout", util.AppHandler(feature.Logout))
 	http.Handle("/firstLogin", util.AppHandler(feature.FirstLogin))
 	http.Handle("/getNotification", util.AppHandler(feature.GetNotificate))
+	http.Handle("/fetchMembersAndPayment", util.AppHandler(feature.GetMembersWithPayment))
+	http.Handle("/getClubMembers", util.AppHandler(feature.GetAllClubMembers))
 
 	port := os.Getenv("PORT")
 	if port == "" {

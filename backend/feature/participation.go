@@ -3,6 +3,7 @@ package feature
 import (
 	"fmt"
 	"net/http"
+	"encoding/json"
 
 	"club-app/util"
 	"club-app/query"
@@ -26,7 +27,7 @@ func GetMembersWithPayment (w http.ResponseWriter, r *http.Request) error {
 	}
 	defer rows.Close()
 
-	var eventMembers []model.EventMember{}
+	eventMembers := []model.EventMember{}
 	for rows.Next() {
 		var em model.EventMember
 		err := rows.Scan(&em.EventID, &em.UserID, &em.UserName, &em.Amount)
@@ -42,4 +43,8 @@ func GetMembersWithPayment (w http.ResponseWriter, r *http.Request) error {
 
 	w.Header().Set("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(eventMembers)
+}
+
+func GetAllClubMembers (w http.ResponseWriter, r *http.Request) error {
+	
 }

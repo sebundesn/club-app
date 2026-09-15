@@ -43,3 +43,8 @@ export interface UserInfoStruct {
   role: string;
   isLoggedIn: boolean;
 };
+
+export interface MemberOption {
+  ID: number;
+  name: string;
+}

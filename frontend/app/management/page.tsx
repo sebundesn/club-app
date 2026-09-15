@@ -12,11 +12,12 @@ export default function Management() {
   const [members, setMembers] = useState<MemberInfo[]>([]);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
+  const backendURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
   // メンバー情報を取得
   const getMembers = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getMembers`);
+      const res = await fetch(`${backendURL}/getMembers`);
       const data = await res.json();
       setMembers(data || []);
     } catch (e: any) {
@@ -38,7 +39,7 @@ export default function Management() {
   // メンバー情報を更新
   const updateMembers = async (currentMembers: MemberInfo[]) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/updateMembers`, {
+      const res = await fetch(`${backendURL}/updateMembers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(currentMembers),
