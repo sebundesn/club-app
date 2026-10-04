@@ -1,20 +1,24 @@
-// 通知取得
-  export const GetNotification = async () => {
-    try{
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getNotification`, {
-        method: "GET",
-        credentials: "include",
-      });
+import { backendURL } from './api';
+import { NotificateStruct } from './schema';
 
-      if(!res.ok){
-        alert("response error")
-        return;
-      };
+// 通知取得。失敗しても画面は動かせるので、詳細は console に出して空配列を返す。
+export const GetNotification = async (): Promise<NotificateStruct[]> => {
+  try {
+    const res = await fetch(`${backendURL}/getNotification`, {
+      method: 'GET',
+      credentials: 'include',
+    });
 
-      const data = await res.json();
+    if (!res.ok) {
+      console.error('failed to get notification:', res.status);
+      return [];
+    }
 
-      return data;
-    } catch (e) {
-      alert(`Failed to get notification: ${e}`);
-    };
-  };
+    const data = await res.json();
+
+    return data ?? [];
+  } catch (e) {
+    console.error('failed to get notification:', e);
+    return [];
+  }
+};

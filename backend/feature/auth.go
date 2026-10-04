@@ -2,40 +2,45 @@ package feature
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
+	"strings"
 
 	"club-app/query"
 	"club-app/util"
 )
 
+// FirstLogin は初回ログイン時に本名を登録する。
 func FirstLogin(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
-		return fmt.Errorf("Method not allowed: %s", r.Method)
+		return util.MethodNotAllowed(r.Method)
 	}
 
-	var name map[string]string
-	if err := json.NewDecoder(r.Body).Decode(&name); err != nil {
-		return fmt.Errorf("Failed to encode: %w", err)
+	user, err := util.RequireLogin(r)
+	if err != nil {
+		return err
+	}
+
+	var body map[string]string
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		return util.BadRequest("入力内容を確認してください。", err)
 	}
 	defer r.Body.Close()
 
-	session, err := util.Store.Get(r, "club-app-session")
-	if err != nil {
-		return fmt.Errorf("session error: %w", err)
+	realname := strings.TrimSpace(body["realname"])
+	if realname == "" {
+		return util.BadRequest("名前を入力してください。", errors.New("realname is empty"))
 	}
 
-	id, ok := session.Values["id"].(int)
-	if !ok {
-		return fmt.Errorf("session expires")
+	if _, err := util.DB.Exec(query.NameChangeFirst, user.ID, realname); err != nil {
+		return util.Internal("保存に失敗しました。", err)
 	}
 
-	_, err = util.DB.Exec(query.NameChangeFirst, id, name["realname"])
-	if err != nil {
-		return fmt.Errorf("SQL execution error: %w", err)
+	// DBを更新したらセッション上の名前も合わせて保存し直す
+	user.Name = realname
+	if err := util.Login(w, r, user); err != nil {
+		return err
 	}
-
-	session.Values["name"] = name["realname"]
 
 	w.Header().Set("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(map[string]string{"message": "success"})
@@ -43,22 +48,25 @@ func FirstLogin(w http.ResponseWriter, r *http.Request) error {
 
 func Logout(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodGet {
-		return fmt.Errorf("Method not allowed: %s", r.Method)
+		return util.MethodNotAllowed(r.Method)
 	}
 
-	session, err := util.Store.Get(r, "club-app-session")
+	session, err := util.Store.Get(r, util.SessionName)
 	if err != nil {
-		return fmt.Errorf("session error: %w", err)
+		// Cookieが壊れていてもログアウトは成功扱いでよい
+		w.Header().Set("Content-Type", "application/json")
+		return json.NewEncoder(w).Encode(map[string]string{"message": "logout success"})
 	}
 
-	session.Values["authenticated"] = false
-	session.Values["id"] = ""
-	session.Values["name"] = ""
-	session.Values["role"] = ""
+	// 値を空文字で上書きすると型アサーションが壊れるので、キーごと消す
+	for key := range session.Values {
+		delete(session.Values, key)
+	}
+	util.ApplyCookieOptions(session.Options)
 	session.Options.MaxAge = -1
 
 	if err := session.Save(r, w); err != nil {
-		return fmt.Errorf("Failed to save session")
+		return util.Internal("ログアウトに失敗しました。", err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")

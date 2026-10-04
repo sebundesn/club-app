@@ -1,92 +1,52 @@
 package middleware
 
 import (
-	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
-	"club-app/query"
-	"club-app/model"
 	"club-app/util"
 )
 
-func LoginHandler(w http.ResponseWriter, r *http.Request) error {
-	if r.Method != http.MethodPost {
-		return fmt.Errorf("Method not allowed: %s", r.Method)
+// CheckAuthHandler は現在のログイン状態を返す。
+// セッションの値はログアウト後などに期待した型でないことがあるため、
+// チェックなしの型アサーションはせず util.CurrentUser 経由で読む。
+func CheckAuthHandler(w http.ResponseWriter, r *http.Request) error {
+	if r.Method != http.MethodGet {
+		return util.MethodNotAllowed(r.Method)
 	}
 
-	var req model.LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return fmt.Errorf("Decoding request: %w", err)
-	}
+	w.Header().Set("Content-Type", "application/json")
 
-	var userInfo model.UserInfo
-	err := util.DB.QueryRow(query.AuthenticatingQuery, req.Password).Scan(&userInfo.ID, &userInfo.Name, &userInfo.Role)
+	user, err := util.CurrentUser(r)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return fmt.Errorf("invalid credentials")
-		}
-
-		return fmt.Errorf("database error: %w", err)
+		return err
 	}
 
-	isInitial := req.Password == userInfo.Name
-
-	session, err := util.Store.Get(r, "club-app-session")
-	if err != nil {
-		return fmt.Errorf("didn`t get session: %w", err)
+	if user == nil {
+		// LINE認証は通ったが学籍番号との紐づけがまだ、という状態をフロントに伝える
+		return json.NewEncoder(w).Encode(map[string]interface{}{
+			"logged_in":  false,
+			"needs_link": hasPendingLineAccount(r),
+		})
 	}
 
-	session.Values["authenticated"] = true
-	session.Values["id"] = userInfo.ID
-	session.Values["name"] = userInfo.Name
-	session.Values["role"] = userInfo.Role
-
-	//Cookieのセキュリティ設定
-	session.Options.HttpOnly = true
-	session.Options.Secure = true                  // Https connection(true in release)
-	session.Options.SameSite = http.SameSiteLaxMode //CSRF対策
-	session.Options.MaxAge = 86400 * 7
-
-	if err := session.Save(r, w); err != nil {
-		return fmt.Errorf("Couldn`t save session: %w", err)
-	}
-
-	w.WriteHeader(http.StatusOK)
+	// 名前が未設定なら初期設定モーダルを出してもらう
 	return json.NewEncoder(w).Encode(map[string]interface{}{
-		"message":    "login success!",
-		"is_initial": isInitial,
-		"name":       userInfo.Name,
+		"id":         user.ID,
+		"role":       user.Role,
+		"name":       user.Name,
+		"logged_in":  true,
+		"needs_link": false,
+		"is_initial": user.Name == "",
 	})
 }
 
-func CheckAuthHandler(w http.ResponseWriter, r *http.Request) error {
-	if r.Method != http.MethodGet {
-		return fmt.Errorf("Method not allowed: %s", r.Method)
-	}
-
-	session, err := util.Store.Get(r, "club-app-session")
+func hasPendingLineAccount(r *http.Request) bool {
+	session, err := util.Store.Get(r, util.SessionName)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return fmt.Errorf("session error: %w", err)
+		return false
 	}
 
-	auth, ok := session.Values["authenticated"].(bool)
-	if !ok || !auth {
-		w.Header().Set("Content-Type", "application/json")
-		return json.NewEncoder(w).Encode(map[string]interface{}{"logged_in": false})
-	}
-
-	id := session.Values["id"].(int)
-	name := session.Values["name"].(string)
-	role := session.Values["role"].(string)
-
-	w.Header().Set("Content-Type", "application/json")
-	return json.NewEncoder(w).Encode(map[string]interface{}{
-		"id":        id,
-		"role":      role,
-		"name":      name,
-		"logged_in": true,
-	})
+	pending, ok := session.Values[util.PendingLineIDKey].(string)
+	return ok && pending != ""
 }

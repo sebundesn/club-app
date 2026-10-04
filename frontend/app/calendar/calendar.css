@@ -140,8 +140,12 @@
 }
 
 /* イベントタイトル*/
+/* 1日に複数イベントを持てるので、バッジは縦に積む */
 .event-badge-container {
   margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
 }
 
 .event-badge {
@@ -322,4 +326,50 @@
 .flex-gap-3 {
   display: flex;
   gap: 0.75rem;
+}
+
+/* モーダル内のその日のイベント一覧 */
+.day-event-list {
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 45vh;
+  overflow-y: auto;
+}
+
+.day-event-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #eaeaea;
+  border-radius: 0.5rem;
+  background-color: #faf9f8;
+}
+
+.day-event-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.day-event-title {
+  font-weight: 700;
+  color: #2d4a22;
+}
+
+.day-event-subtitle {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.day-event-content {
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: #4b5563;
+  white-space: pre-wrap;
+  word-break: break-word;
 }

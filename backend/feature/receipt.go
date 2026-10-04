@@ -3,8 +3,10 @@ package feature
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -18,19 +20,37 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	// 1リクエスト全体のサイズ上限。ディスクを埋められないよう必ず頭打ちにする。
+	maxUploadSize = 20 << 20 // 20MB
+	// メモリに載せる上限。超えた分はテンポラリファイルに落ちる。
+	maxUploadMemory = 10 << 20 // 10MB
+	maxUploadFiles  = 10
+)
+
+// 保存を許可する画像形式。拡張子はここの値だけを使い、
+// ユーザーが送ってきたファイル名は一切使わない。
+var allowedImageTypes = map[string]string{
+	"image/jpeg": ".jpg",
+	"image/png":  ".png",
+}
+
 func GetMonthReceipts(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodGet {
-		return fmt.Errorf("Method not allowed: %s", r.Method)
+		return utility.MethodNotAllowed(r.Method)
 	}
 
 	howLongWeek := r.URL.Query().Get("howLongWeek")
 	if howLongWeek == "" {
 		howLongWeek = "2"
 	}
+	if _, err := strconv.Atoi(howLongWeek); err != nil {
+		return utility.BadRequest("期間の指定が不正です。", err)
+	}
 
 	rows, err := utility.DB.Query(SQLquery.GetReceiptsLog, howLongWeek)
 	if err != nil {
-		return fmt.Errorf("Failed to get rows: %w", err)
+		return utility.Internal("レシートの取得に失敗しました。", err)
 	}
 	defer rows.Close()
 
@@ -39,18 +59,19 @@ func GetMonthReceipts(w http.ResponseWriter, r *http.Request) error {
 
 	for rows.Next() {
 		var id int
-		var title, date string
+		var title sql.NullString
+		var date string
 		var imgURL sql.NullString
 
 		err := rows.Scan(&id, &title, &date, &imgURL)
 		if err != nil {
-			return err
+			return utility.Internal("レシートの取得に失敗しました。", err)
 		}
 
 		if _, ok := eventsMap[id]; !ok {
 			eventsMap[id] = &schema.EventReceipts{
 				ID:     id,
-				Title:  title,
+				Title:  title.String,
 				Date:   date,
 				Images: []string{},
 			}
@@ -62,10 +83,10 @@ func GetMonthReceipts(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 	if err := rows.Err(); err != nil {
-		return fmt.Errorf("error during rows iteration: %w", err)
+		return utility.Internal("レシートの取得に失敗しました。", fmt.Errorf("error during rows iteration: %w", err))
 	}
 
-	var receipts []schema.EventReceipts
+	receipts := []schema.EventReceipts{}
 	for _, id := range order {
 		receipts = append(receipts, *eventsMap[id])
 	}
@@ -76,77 +97,134 @@ func GetMonthReceipts(w http.ResponseWriter, r *http.Request) error {
 
 func UploadReceipt(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
-		return fmt.Errorf("Method not allowed: %s", r.Method)
+		return utility.MethodNotAllowed(r.Method)
 	}
+
+	if _, err := utility.RequireLogin(r); err != nil {
+		return err
+	}
+
+	// ParseMultipartForm より先に包むことで、巨大なボディを読み切る前に打ち切れる
+	r.Body = http.MaxBytesReader(w, r.Body, maxUploadSize)
+	if err := r.ParseMultipartForm(maxUploadMemory); err != nil {
+		return utility.BadRequest("ファイルが大きすぎるか、形式が不正です。", err)
+	}
+	defer r.MultipartForm.RemoveAll()
 
 	//to check if the uploads file exists
 	uploadDir := "./uploads"
-	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
-		os.Mkdir(uploadDir, os.ModePerm)
+	if err := os.MkdirAll(uploadDir, 0o755); err != nil {
+		return utility.Internal("アップロードに失敗しました。", err)
 	}
 
 	eventID, err := strconv.Atoi(r.FormValue("eventID"))
 	if err != nil {
-		return fmt.Errorf("failed to convert string to integer: %w\n", err)
+		return utility.BadRequest("イベントが指定されていません。", err)
 	}
 
 	files := r.MultipartForm.File["images"]
+	if len(files) == 0 {
+		return utility.BadRequest("画像が選択されていません。", errors.New("no files"))
+	}
+	if len(files) > maxUploadFiles {
+		return utility.BadRequest(
+			fmt.Sprintf("一度にアップロードできるのは%d枚までです。", maxUploadFiles),
+			fmt.Errorf("too many files: %d", len(files)),
+		)
+	}
 
 	for _, fileHeader := range files {
-
-		file, err := fileHeader.Open()
-		if err != nil {
-			return fmt.Errorf("failed to open file: %w\n", err)
-		}
-		defer file.Close()
-
-		timestamp := time.Now().Format("20060102_150405")
-		shortUUID := uuid.New().String()[:8]
-		ext := filepath.Ext(fileHeader.Filename)
-		filename := timestamp + shortUUID + ext
-		savePath := filepath.Join(uploadDir, filename)
-
-		out, err := os.Create(savePath)
-		if err != nil {
-			return fmt.Errorf("failed to create local file: %w\n", err)
-		}
-		defer out.Close()
-
-		_, err = io.Copy(out, file)
-		if err != nil {
-			return fmt.Errorf("failed to save file: %w\n", err)
-		}
-
-		imageURL := fmt.Sprintf(`/uploads/%s`, filename)
-
-		_, err = utility.DB.Exec(SQLquery.InsertReceipts, eventID, imageURL)
-		if err != nil {
-			return fmt.Errorf("failed to execute query: %w\n", err)
+		if err := saveReceiptFile(uploadDir, eventID, fileHeader); err != nil {
+			return err
 		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"message": "upload successful"}`))
+	_, err = w.Write([]byte(`{"message": "upload successful"}`))
+	return err
+}
+
+// saveReceiptFile は1枚分の検証と保存を行う。
+// ループ内で defer を積むと全ファイル処理後までクローズされないため関数に切り出した。
+func saveReceiptFile(uploadDir string, eventID int, fileHeader *multipart.FileHeader) error {
+	file, err := fileHeader.Open()
+	if err != nil {
+		return utility.Internal("アップロードに失敗しました。", fmt.Errorf("failed to open file: %w", err))
+	}
+	defer file.Close()
+
+	// ファイル名の拡張子は信用できないので、中身の先頭512バイトから形式を判定する
+	head := make([]byte, 512)
+	n, err := io.ReadFull(file, head)
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) && !errors.Is(err, io.EOF) {
+		return utility.Internal("アップロードに失敗しました。", err)
+	}
+
+	ext, ok := allowedImageTypes[contentTypeOf(head[:n])]
+	if !ok {
+		return utility.BadRequest("JPEGまたはPNGの画像のみアップロードできます。", errors.New("disallowed content type"))
+	}
+
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
+		return utility.Internal("アップロードに失敗しました。", err)
+	}
+
+	// 保存名はサーバー生成の値だけで作る（ユーザー由来のファイル名は使わない）
+	filename := time.Now().Format("20060102_150405") + uuid.New().String()[:8] + ext
+	savePath := filepath.Join(uploadDir, filename)
+
+	out, err := os.Create(savePath)
+	if err != nil {
+		return utility.Internal("アップロードに失敗しました。", fmt.Errorf("failed to create local file: %w", err))
+	}
+	defer out.Close()
+
+	if _, err := io.Copy(out, file); err != nil {
+		return utility.Internal("アップロードに失敗しました。", fmt.Errorf("failed to save file: %w", err))
+	}
+
+	imageURL := fmt.Sprintf(`/uploads/%s`, filename)
+
+	if _, err := utility.DB.Exec(SQLquery.InsertReceipts, eventID, imageURL); err != nil {
+		return utility.Internal("アップロードに失敗しました。", fmt.Errorf("failed to execute query: %w", err))
+	}
 
 	return nil
 }
 
+func contentTypeOf(head []byte) string {
+	detected := http.DetectContentType(head)
+	// "image/jpeg; charset=..." のようにパラメータが付くことがあるので落とす
+	for i := 0; i < len(detected); i++ {
+		if detected[i] == ';' {
+			return detected[:i]
+		}
+	}
+	return detected
+}
+
 func DeleteImg(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
-		return fmt.Errorf("Method not allowed: %s", r.Method)
+		return utility.MethodNotAllowed(r.Method)
+	}
+
+	if _, err := utility.RequireRole(r, utility.RoleTreasurer); err != nil {
+		return err
 	}
 
 	var res schema.DeleteImageRequest
-	err := json.NewDecoder(r.Body).Decode(&res)
-	if err != nil {
-		return fmt.Errorf("Failed to decode: %s", err)
+	if err := json.NewDecoder(r.Body).Decode(&res); err != nil {
+		return utility.BadRequest("入力内容を確認してください。", err)
 	}
 	defer r.Body.Close()
 
-	_, err = utility.DB.Exec(SQLquery.DeleteImgQuery, res.Date, res.URL)
-	if err != nil {
-		return fmt.Errorf("Failed to delete url: %s", res.URL)
+	if res.EventID == 0 || res.URL == "" {
+		return utility.BadRequest("削除する画像が指定されていません。", errors.New("event_id and url are required"))
+	}
+
+	if _, err := utility.DB.Exec(SQLquery.DeleteImgQuery, res.EventID, res.URL); err != nil {
+		return utility.Internal("削除に失敗しました。", fmt.Errorf("failed to delete url %s: %w", res.URL, err))
 	}
 
 	return nil

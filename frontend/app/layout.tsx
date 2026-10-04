@@ -2,6 +2,7 @@
 
 import "./globals.css";
 import Header from "../components/Header";
+import { ToastProvider } from "../components/Toast";
 
 export default function RootLayout({
   children,
@@ -11,10 +12,12 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body>
-        <Header />
-        <main>
-          {children}
-        </main>
+        <ToastProvider>
+          <Header />
+          <main>
+            {children}
+          </main>
+        </ToastProvider>
       </body>
     </html>
   )

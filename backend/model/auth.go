@@ -1,7 +1,8 @@
 package model
 
-type LoginRequest struct {
-	Password string `json:"password"`
+// LinkAccountRequest は初回LINEログイン時に送られる学籍番号。
+type LinkAccountRequest struct {
+	StudentID string `json:"student_id"`
 }
 
 type UserInfo struct {

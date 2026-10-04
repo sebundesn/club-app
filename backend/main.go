@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"club-app/middleware"
 	"club-app/feature"
+	"club-app/middleware"
 	"club-app/util"
 )
 
@@ -20,25 +20,37 @@ func main() {
 	fs := http.FileServer(http.Dir("./uploads"))
 	http.Handle("/uploads/", http.StripPrefix("/uploads/", fs))
 
-	http.Handle("/saveEvent", util.AppHandler(feature.SaveNote))
-	http.Handle("/getMonthEvents", util.AppHandler(feature.GetMonthNotes))
-	http.Handle("/getDateEvent", util.AppHandler(feature.GetDateEvent))
-	http.Handle("/accountInfo", util.AppHandler(feature.GetAccountInfo))
-	http.Handle("/getMoneySum", util.AppHandler(feature.GetMoneyTotal))
-	http.Handle("/addMoneyLog", util.AppHandler(feature.SaveMoneyLog))
-	http.Handle("/getReceiptsInfo", util.AppHandler(feature.GetMonthReceipts))
-	http.Handle("/uploadReceipt", util.AppHandler(feature.UploadReceipt))
-	http.Handle("/login", util.AppHandler(middleware.LoginHandler))
-	http.Handle("/updateMembers", util.AppHandler(feature.UpdateMembers))
-	http.Handle("/deleteImage", util.AppHandler(feature.DeleteImg))
-	http.Handle("/deleteMoneyLog", util.AppHandler(feature.DeleteMoneyLog))
-	http.Handle("/getMembers", util.AppHandler(feature.FetchMembers))
+	// 認証（LINEログイン）
+	http.Handle("/auth/line/login", util.AppHandler(feature.LineLogin))
+	http.Handle("/auth/line/callback", util.AppHandler(feature.LineCallback))
+	http.Handle("/auth/line/link", util.AppHandler(feature.LinkLineAccount))
 	http.Handle("/checkAuth", util.AppHandler(middleware.CheckAuthHandler))
 	http.Handle("/logout", util.AppHandler(feature.Logout))
 	http.Handle("/firstLogin", util.AppHandler(feature.FirstLogin))
+
+	// カレンダー / イベント
+	http.Handle("/saveEvent", util.AppHandler(feature.SaveNote))
+	http.Handle("/getMonthEvents", util.AppHandler(feature.GetMonthNotes))
+	http.Handle("/getDateEvent", util.AppHandler(feature.GetDateEvents))
 	http.Handle("/getNotification", util.AppHandler(feature.GetNotificate))
-	http.Handle("/fetchMembersAndPayment", util.AppHandler(feature.GetMembersWithPayment))
+
+	// 会計
+	http.Handle("/accountInfo", util.AppHandler(feature.GetAccountInfo))
+	http.Handle("/getMoneySum", util.AppHandler(feature.GetMoneyTotal))
+	http.Handle("/addMoneyLog", util.AppHandler(feature.SaveMoneyLog))
+	http.Handle("/deleteMoneyLog", util.AppHandler(feature.DeleteMoneyLog))
+
+	// レシート
+	http.Handle("/getReceiptsInfo", util.AppHandler(feature.GetMonthReceipts))
+	http.Handle("/uploadReceipt", util.AppHandler(feature.UploadReceipt))
+	http.Handle("/deleteImage", util.AppHandler(feature.DeleteImg))
+
+	// 部員 / 参加者
+	http.Handle("/getMembers", util.AppHandler(feature.FetchMembers))
+	http.Handle("/updateMembers", util.AppHandler(feature.UpdateMembers))
 	http.Handle("/getClubMembers", util.AppHandler(feature.GetAllClubMembers))
+	http.Handle("/fetchMembersAndPayment", util.AppHandler(feature.GetMembersWithPayment))
+	http.Handle("/takePartIn", util.AppHandler(feature.TakePartIn))
 
 	port := os.Getenv("PORT")
 	if port == "" {

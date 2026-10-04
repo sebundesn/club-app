@@ -1,18 +1,30 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { ReceiptDataStruct, MoneyLogStruct, MemberOption } from '../utils/schema';
-import "./account.css"
-import Select from 'react-select';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  ReceiptDataStruct,
+  MoneyLogStruct,
+  NewMoneyLog,
+  MemberOption,
+  EventMember,
+} from '../utils/schema';
+import { backendURL, readErrorMessage } from '../utils/api';
+import { useToast } from '../../components/Toast';
+import './account.css';
+import Select, { SelectInstance } from 'react-select';
+
+// 直近何週間分のレシートを表示するか（バックエンドの howLongWeek と同じ単位）
+const HOW_LONG_WEEK = 2;
 
 // 会計ページ：部費の管理とレシートのアップロード機能を提供
 export default function Account() {
+  const { showToast } = useToast();
   const [moneyLogs, setMoneyLogs] = useState<MoneyLogStruct[]>([]);
   const [totalSum, setTotalSum] = useState<number>(0);
   const [receiptDatas, setReceiptDatas] = useState<ReceiptDataStruct[]>([]);
   const [fullScreenImg, setFullScreenImg] = useState<string | null>(null);
   const [receiptModal, setReceiptModal] = useState<ReceiptDataStruct | null>(null);
-  const [newLog, setNewLog] = useState<Omit<MoneyLogStruct, 'amount'> & { amount: number | string }>({
+  const [newLog, setNewLog] = useState<NewMoneyLog>({
     date: new Date().toISOString().split('T')[0],
     content: '',
     amount: '',
@@ -20,19 +32,25 @@ export default function Account() {
 
   const [isMembersMenuOpen, setIsMembersMenuOpen] = useState(false);
   const [allClubMembers, setAllClubMembers] = useState<MemberOption[]>([]);
+  const [participants, setParticipants] = useState<EventMember[]>([]);
   const [selectedOptions, setSelectedOptions] = useState<MemberOption[]>([]);
-  const backendURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
   const year = new Date().getFullYear();
-  const howLongWeek = 2;
-  const selectRef = useRef<any>(null);
+  const selectRef = useRef<SelectInstance<MemberOption, true> | null>(null);
 
   // レシート情報を取得
-  const getReceipts = async () => {
+  const getReceipts = useCallback(async () => {
     try {
-      const res = await fetch(`${backendURL}/getReceiptsInfo?howLongMonth=${howLongWeek}`);
-      const data = await res.json();
+      const res = await fetch(`${backendURL}/getReceiptsInfo?howLongWeek=${HOW_LONG_WEEK}`);
 
-      const formattedData: ReceiptDataStruct[] = data.map((item: any) => ({
+      if (!res.ok) {
+        showToast(await readErrorMessage(res, 'レシートの取得に失敗しました。'), 'error');
+        return;
+      }
+
+      const data: { id: number; title: string; date: string; images: string[] | null }[] =
+        (await res.json()) ?? [];
+
+      const formattedData: ReceiptDataStruct[] = data.map((item) => ({
         ID: item.id,
         Title: item.title,
         Date: item.date.split('T')[0],
@@ -42,38 +60,50 @@ export default function Account() {
       setReceiptDatas(formattedData);
     } catch (e) {
       console.error('failed to getReceipts:', e);
-      alert('通信に失敗しました。');
+      showToast('通信に失敗しました。', 'error');
     }
-  };
+  }, [showToast]);
 
   // 会計情報を取得
-  const getAccountInfo = async () => {
+  const getAccountInfo = useCallback(async () => {
     try {
       const res = await fetch(`${backendURL}/accountInfo?year=${year}`);
-      const data = await res.json();
-      setMoneyLogs(data || []);
+
+      if (!res.ok) {
+        showToast(await readErrorMessage(res, '会計情報の取得に失敗しました。'), 'error');
+        return;
+      }
+
+      const data: MoneyLogStruct[] = (await res.json()) ?? [];
+      setMoneyLogs(data);
     } catch (e) {
       console.error('failed to getAccountInfo:', e);
-      alert('通信に失敗しました。');
+      showToast('通信に失敗しました。', 'error');
     }
-  };
+  }, [showToast, year]);
 
   // 合計金額を取得
-  const getMoneySum = async () => {
+  const getMoneySum = useCallback(async () => {
     try {
       const res = await fetch(`${backendURL}/getMoneySum`);
-      const data = await res.json();
-      setTotalSum(data);
+
+      if (!res.ok) {
+        showToast(await readErrorMessage(res, '残高の取得に失敗しました。'), 'error');
+        return;
+      }
+
+      const data: number = await res.json();
+      setTotalSum(data ?? 0);
     } catch (e) {
       console.error('failed to getMoneySum:', e);
-      alert('通信に失敗しました。');
+      showToast('通信に失敗しました。', 'error');
     }
-  };
+  }, [showToast]);
 
   // 会計ログを追加
   const addAccountLog = async () => {
     if (!newLog.content || !newLog.amount || newLog.amount === '-') {
-      alert('内容と金額を入力してください');
+      showToast('内容と金額を入力してください。', 'error');
       return;
     }
 
@@ -81,20 +111,22 @@ export default function Account() {
       const res = await fetch(`${backendURL}/addMoneyLog`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newLog),
+        body: JSON.stringify({ ...newLog, amount: Number(newLog.amount) }),
         credentials: 'include',
       });
 
-      if (res.ok) {
-        getAccountInfo();
-        getMoneySum();
-        setNewLog({ ...newLog, content: '', amount: '' });
-      } else {
-        alert('追加できませんでした。会計権限のユーザのみが可能です。');
+      if (!res.ok) {
+        showToast(await readErrorMessage(res, '追加できませんでした。'), 'error');
+        return;
       }
+
+      await getAccountInfo();
+      await getMoneySum();
+      setNewLog({ ...newLog, content: '', amount: '' });
+      showToast('追加しました。', 'success');
     } catch (e) {
       console.error('failed to add account log:', e);
-      alert('通信に失敗しました。');
+      showToast('通信に失敗しました。', 'error');
     }
   };
 
@@ -114,16 +146,22 @@ export default function Account() {
       const res = await fetch(`${backendURL}/uploadReceipt`, {
         method: 'POST',
         body: formData,
+        credentials: 'include',
       });
 
       if (!res.ok) {
-        alert('画像のアップロードに失敗しました。');
+        showToast(await readErrorMessage(res, '画像のアップロードに失敗しました。'), 'error');
         return;
       }
 
       await getReceipts();
-    } catch (e) {
-      alert('画像のアップロードに失敗しました。');
+      showToast('画像をアップロードしました。', 'success');
+    } catch (err) {
+      console.error('failed to upload receipt:', err);
+      showToast('通信に失敗しました。', 'error');
+    } finally {
+      // 同じファイルを選び直せるように入力をリセットする
+      e.target.value = '';
     }
   };
 
@@ -133,34 +171,37 @@ export default function Account() {
       const res = await fetch(`${backendURL}/deleteMoneyLog`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(oneMoneyLog),
+        // 同日・同額・同内容の行を巻き添えにしないよう id で指定する
+        body: JSON.stringify({ id: oneMoneyLog.id }),
         credentials: 'include',
       });
 
       if (!res.ok) {
-        alert('Failed to fetch');
+        showToast(await readErrorMessage(res, '削除に失敗しました。'), 'error');
         return;
       }
 
       await getAccountInfo();
       await getMoneySum();
+      showToast('削除しました。', 'success');
     } catch (error) {
-      alert('failed to delete image');
+      console.error('failed to delete money log:', error);
+      showToast('通信に失敗しました。', 'error');
     }
   };
 
   // 画像を削除
-  const deleteImage = async (date: string, url: string) => {
+  const deleteImage = async (eventID: number, url: string) => {
     try {
       const res = await fetch(`${backendURL}/deleteImage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, url }),
+        body: JSON.stringify({ event_id: eventID, url }),
         credentials: 'include',
       });
 
       if (!res.ok) {
-        alert('Failed to fetch');
+        showToast(await readErrorMessage(res, '画像の削除に失敗しました。'), 'error');
         return;
       }
 
@@ -174,103 +215,116 @@ export default function Account() {
 
       setReceiptDatas((prev) =>
         prev.map((item) => {
-          if (item.Date === date.split('T')[0]) {
+          if (item.ID === eventID) {
             return {
-            ...item,
-            ImageURLs: item.ImageURLs.filter((imgUrl) => imgUrl !== url),
-          };
-        }
-        return item;
-      })
-    );
+              ...item,
+              ImageURLs: item.ImageURLs.filter((imgUrl) => imgUrl !== url),
+            };
+          }
+          return item;
+        }),
+      );
 
       await getReceipts();
+      showToast('画像を削除しました。', 'success');
     } catch (error) {
-      alert('failed to delete image');
+      console.error('failed to delete image:', error);
+      showToast('通信に失敗しました。', 'error');
     }
   };
 
-  // fetch participants
-  const fetchCurrentParticipants = async () => {
+  // 現在の参加者を取得
+  const fetchCurrentParticipants = useCallback(
+    async (eventID: number) => {
+      try {
+        const res = await fetch(`${backendURL}/fetchMembersAndPayment?event_id=${eventID}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        if (!res.ok) {
+          showToast(await readErrorMessage(res, '参加者の取得に失敗しました。'), 'error');
+          return;
+        }
+
+        const data: EventMember[] = (await res.json()) ?? [];
+
+        setParticipants(data);
+        // react-select は {value, label} を要求するので、ここで詰め替える
+        setSelectedOptions(data.map((m) => ({ value: m.user_id, label: m.user_name })));
+      } catch (e) {
+        console.error('failed to fetch event members:', e);
+        showToast('通信に失敗しました。', 'error');
+      }
+    },
+    [showToast],
+  );
+
+  const getAllClubMembers = useCallback(async () => {
     try {
-      const res = await fetch(`${backendURL}/fetchMembersAndPayment?event_id=${receiptModal?.ID}`, {
-        method: "GET",
-        credentials: "include",
-      });
-
-      if(res.ok) {
-        const data = await res.json();
-
-        const formatted = data.map((m: any) => ({
-          value: m.UserID,
-          label: m.UserName
-        })) as MemberOption[];
-
-        setSelectedOptions(formatted);
-      }
-    } catch (e) {
-      alert(`Failed to fetchEventMembers: ${e}`)
-    }
-  };
-
-  const getAllClubMembers = async () => {
-    try{
       const res = await fetch(`${backendURL}/getClubMembers`, {
-        method: "GET",
-        credentials: "include",
+        method: 'GET',
+        credentials: 'include',
       });
-      if(res.ok){
-        const data = await res.json();
 
-        console.log(data);
-        setAllClubMembers(data);
-      } else {
-        alert("取得に失敗しました。")
-        console.error("getAllClubMembers response error")
+      if (!res.ok) {
+        showToast(await readErrorMessage(res, '部員の取得に失敗しました。'), 'error');
+        return;
       }
+
+      const data: MemberOption[] = (await res.json()) ?? [];
+      setAllClubMembers(data);
     } catch (e) {
-      alert("通信エラーが起きました。")
-      console.error(`getAllClubMembers connection error: ${e}`);
+      console.error('failed to get club members:', e);
+      showToast('通信に失敗しました。', 'error');
     }
-  };
+  }, [showToast]);
 
   //　button that preserve participants
   const takePartInButton = async () => {
-    try{
-      const userIDs = selectedOptions.map(opt => opt.ID);
+    if (!receiptModal) return;
+
+    try {
+      const userIDs = selectedOptions.map((opt) => opt.value);
 
       const res = await fetch(`${backendURL}/takePartIn`, {
-        method: "POST",
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          event_id: receiptModal?.ID,
+          event_id: receiptModal.ID,
           user_ids: userIDs,
         }),
-        credentials: "include",
-      })
+        credentials: 'include',
+      });
 
-      if(!res.ok){
-        alert("participants preservation error")
+      if (!res.ok) {
+        showToast(await readErrorMessage(res, '参加者の保存に失敗しました。'), 'error');
+        return;
       }
 
-      alert("response success")
       setIsMembersMenuOpen(false);
+      await fetchCurrentParticipants(receiptModal.ID);
+      showToast('参加者を保存しました。', 'success');
     } catch (e) {
-      alert(`connection error: ${e}`);
+      console.error('failed to save participants:', e);
+      showToast('通信に失敗しました。', 'error');
     }
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 非同期の取得なので state 更新は await のあと。同期的な連鎖レンダリングは起きない。
     getAccountInfo();
     getMoneySum();
     getReceipts();
-  }, []);
+  }, [getAccountInfo, getMoneySum, getReceipts]);
 
   useEffect(() => {
-    if(!receiptModal) return;
-    fetchCurrentParticipants();
+    if (!receiptModal) return;
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 非同期の取得なので state 更新は await のあと。同期的な連鎖レンダリングは起きない。
+    fetchCurrentParticipants(receiptModal.ID);
     getAllClubMembers();
-  }, [receiptModal]);
+  }, [receiptModal, fetchCurrentParticipants, getAllClubMembers]);
 
   return (
     <div className="account-container max-w-6xl mx-auto px-4 py-8">
@@ -280,8 +334,8 @@ export default function Account() {
           <div className="card p-6">
             <h2 className="text-2xl font-bold text-forest-800 mb-6">レシート管理</h2>
             <div className="receipt-grid grid md:grid-cols-2 gap-4">
-              {receiptDatas.map((event, index) => (
-                <div key={index} className="receipt-item-card bg-earth-50 rounded-xl p-5 border border-earth-200">
+              {receiptDatas.map((event) => (
+                <div key={event.ID} className="receipt-item-card bg-earth-50 rounded-xl p-5 border border-earth-200">
                   <div className="receipt-card-top flex items-start justify-between mb-3">
                     <div>
                       <span className="text-sm text-earth-600 font-medium">{event.Date}</span>
@@ -298,7 +352,7 @@ export default function Account() {
                       </div>
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/jpeg,image/png"
                         multiple
                         className="hidden"
                         onChange={(e) => handleFileChange(e, event.ID)}
@@ -337,18 +391,18 @@ export default function Account() {
                   <h4 className="text-lg font-bold text-forest-700 mb-3">👥 参加者</h4>
 
                   <div className="participants-list-container">
-                      {(!selectedOptions || selectedOptions.length === 0) ? (
-                        <span>参加者はいません。</span>
-                      ) : (
-                        <ul>
-                          {selectedOptions.map((m: any) => (
-                            <li key={m.user_id}>
-                              <span className="participant_name">{m.user_name}</span>
-                              <span className="participant_amount">{m.amount}円</span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
+                    {participants.length === 0 ? (
+                      <span>参加者はいません。</span>
+                    ) : (
+                      <ul>
+                        {participants.map((m) => (
+                          <li key={m.user_id}>
+                            <span className="participant_name">{m.user_name}</span>
+                            <span className="participant_amount">{m.amount}円</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
 
                   <div className="flex justify-between items-center gap-2 mb-3">
@@ -358,13 +412,13 @@ export default function Account() {
                         type="button"
                         onClick={() => {
                           setIsMembersMenuOpen(!isMembersMenuOpen);
-                          if(!isMembersMenuOpen) {
+                          if (!isMembersMenuOpen) {
                             //reactが反応するように、50ms待ってから検索窓にfocusするようにした
                             setTimeout(() => selectRef.current?.focus(), 50);
                           }
                         }}
                       >
-                        {isMembersMenuOpen ? "▲ リストを閉じる": "参加者を追加"}
+                        {isMembersMenuOpen ? '▲ リストを閉じる' : '参加者を追加'}
                       </button>
                     </div>
 
@@ -377,17 +431,17 @@ export default function Account() {
                         options={allClubMembers}
                         value={selectedOptions}
                         onChange={(newValue) => {
-                          setSelectedOptions(newValue as MemberOption[]);
+                          setSelectedOptions([...newValue]);
                         }}
                         menuIsOpen={isMembersMenuOpen}
                         onMenuClose={() => setIsMembersMenuOpen(false)}
                         placeholder="メンバー検索"
-                        noOptionsMessage={() => "部員が見つかりません"}
+                        noOptionsMessage={() => '部員が見つかりません'}
                         theme={(theme) => ({
                           ...theme,
                           colors: {
                             ...theme.colors,
-                            primary: '#15803d'
+                            primary: '#15803d',
                           },
                         })}
                       />
@@ -395,10 +449,7 @@ export default function Account() {
 
                     {/* participants preservation button */}
                     <div>
-                      <button
-                        type="button"
-                        onClick = {takePartInButton}
-                      >
+                      <button type="button" onClick={takePartInButton}>
                         参加者を保存
                       </button>
                     </div>
@@ -407,7 +458,6 @@ export default function Account() {
                   <hr className="border-earth-200 mb-6" />
                 </div>
 
-                
                 {receiptModal.ImageURLs.length === 0 ? (
                   <p className="modal-empty-text text-center text-earth-600 py-8">登録されているレシート画像はありません。</p>
                 ) : (
@@ -425,7 +475,7 @@ export default function Account() {
                           onClick={(e) => {
                             e.stopPropagation();
                             if (window.confirm('写真を削除しますか？')) {
-                              deleteImage(receiptModal.Date, url);
+                              deleteImage(receiptModal.ID, url);
                             }
                           }}
                         >
@@ -465,10 +515,10 @@ export default function Account() {
           <div className="card p-6">
             <h3 className="text-xl font-bold text-forest-800 mb-4">部費</h3>
             <div className="space-y-3 history-list max-h-96 overflow-y-auto">
-              {[...moneyLogs].reverse().map((oneMoneyLog, index) => {
+              {[...moneyLogs].reverse().map((oneMoneyLog) => {
                 const isPlus = Number(oneMoneyLog.amount) > 0;
                 return (
-                  <div key={index} className="history-item flex items-center gap-3 p-3 bg-earth-50 rounded-lg border border-earth-200">
+                  <div key={oneMoneyLog.id} className="history-item flex items-center gap-3 p-3 bg-earth-50 rounded-lg border border-earth-200">
                     <button
                       onClick={() => {
                         if (window.confirm(`「${oneMoneyLog.content}」の履歴を削除しますか？`)) {
@@ -520,7 +570,7 @@ export default function Account() {
                 onChange={(e) => {
                   const val = e.target.value;
                   if (val === '' || val === '-') {
-                    setNewLog({ ...newLog, amount: val as any });
+                    setNewLog({ ...newLog, amount: val });
                     return;
                   }
                   const num = Number(val);

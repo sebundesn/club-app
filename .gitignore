@@ -11,3 +11,5 @@ frontend/.env
 
 backend/.env
 backend/uploads
+frontend/out
+frontend/tsconfig.tsbuildinfo

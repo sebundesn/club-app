@@ -8,7 +8,9 @@ type EventReceipts struct {
 	Images []string `json:"images"`
 }
 
+// DeleteImageRequest は削除対象のレシート画像。
+// 同じ日に複数イベントがありうるので、日付ではなく event_id で指す。
 type DeleteImageRequest struct {
-	Date string `json:"date"`
-	URL  string `json:"url"`
+	EventID int    `json:"event_id"`
+	URL     string `json:"url"`
 }

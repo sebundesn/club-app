@@ -18,9 +18,13 @@
 ## 2. コミットメッセージの規則
 ### 📌 種類一覧 [例付き]
 
-* **`feat:`（新機能の追加）**
-  * `feat: 会計ログにCSVエクスポート機能を追加`
-  * `feat(auth): パスワードリセット機能のバックエンドAPI実装`
+* **`feature:`（新機能の追加）**
+  * `feature: 会計ログにCSVエクスポート機能を追加`
+  * `feature(auth): パスワードリセット機能のバックエンドAPI実装`
+
+  スコープ付き（`feature(auth):`）でも、なしでもよい。
+  これまでの履歴が `feature(participation):` `feature(notificate):` のように
+  `feature` で揃っているので、`feat` ではなく `feature` を使う。
 
 * **`fix・refactor:`（バグ・不具合の修正・改善）**
   * `fix: タイムゾーンのズレによりカレンダーの日付が1日ずれる問題を修正`
@@ -29,11 +33,19 @@
   * `chore: 不要になったログ出力コード（fmt.Println等）の削除`
   * `chore: データベースのマイグレーションファイルを生成`
 
+* **`style:`（見た目・CSSのみの変更）**
+  * `style(account-page): receiptのレスポンシブを変えた`
+
+### ⚠️ 避けること
+`debug` や `refs #?: わからない前回の処理` のような、
+あとから見て何をしたか分からないメッセージは残さない。
+何を変えたのかを一行で書く。
+
 ---
 
 ## 3. ブランチの命名規則
 
-機能ごとに命名する
+機能ごとに命名する。接頭辞は付けない。
 
 ### ✍️ 具体的な命名例
 * `loginlogout`
@@ -42,6 +54,7 @@
 * `accountlog`
 * `receiptlog`
 * `management`
+* `participation`
 
 ---
 
@@ -52,14 +65,30 @@
 ```bash
 git checkout main
 git pull origin main
-git checkout -b feature/作業内容
+git checkout -b 作業内容
 ```
+
+上の「3. ブランチの命名規則」に合わせて、`feature/` などの接頭辞は付けない。
 
 ### ② プルリクエスト（PR）の作成
 GitHub上で「自分の書いたコードをメインのコードに合流させてください」と Pull Request を送る
 記載すること: 変更内容の概要、確認してほしいポイント、動作確認の結果など
 
-### ③ コードレビュー
+### ③ CI とコードレビュー
+PRを出すと GitHub Actions（`.github/workflows/ci.yml`）が次を実行する。
+ここが赤いままマージしない。
+
+* バックエンド: `go build ./...` / `go vet ./...` / `go test ./...`
+* フロントエンド: `npx tsc --noEmit` / `npm run lint` / `npm run build`
+
+手元で同じことを確認するには:
+
+```bash
+cd backend && go build ./... && go vet ./... && go test ./...
+cd frontend && npx tsc --noEmit && npm run lint && npm run build
+```
+
+そのうえでコードレビューを受ける
 
 ### ④ マージ（合流）とブランチの削除
 レビューでOKをもらったら、 main ブランチへマージ

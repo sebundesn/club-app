@@ -26,6 +26,5 @@ const InsertReceipts = `
 
 const DeleteImgQuery = `
 	DELETE FROM receipt_images
-	WHERE event_id = (SELECT id FROM events WHERE date = $1)
-	AND image_url = $2;
+	WHERE event_id = $1 AND image_url = $2;
 `

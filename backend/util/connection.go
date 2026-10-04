@@ -2,6 +2,7 @@ package util
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -57,30 +58,38 @@ func ConnectSQL() {
 		log.Fatal(err)
 	}
 
-	_, err = DB.Exec(query.CreateEventsTable_Q)
-	if err != nil {
+	if err := migrate(); err != nil {
 		log.Fatal(err)
 	}
-	_, err = DB.Exec(query.AccountLogTable)
-	if err != nil {
-		log.Fatal(err)
-	}
-	_, err = DB.Exec(query.ReceiptImagesTable)
-	if err != nil {
-		log.Fatal(err)
+}
+
+// migrate は起動時のテーブル作成をまとめて流す。
+// 以前は1つずつ手書きしていて、最後の1つだけエラーチェックが漏れていた。
+// 名前付きにしているので、失敗したマイグレーションがログで分かる。
+func migrate() error {
+	migrations := []struct {
+		name  string
+		query string
+	}{
+		{"events", query.CreateEventsTable_Q},
+		{"events: drop date unique", query.DropEventsDateUnique},
+		{"events: date index", query.CreateEventsDateIndex},
+		{"accountLog", query.AccountLogTable},
+		{"receipt_images", query.ReceiptImagesTable},
+		{"users", query.UserTable},
+		{"users: line_user_id column", query.AddLineUserIDColumn},
+		{"users: line_user_id index", query.AddLineUserIDIndex},
+		{"notificate", query.CreateNotificateTable},
+		{"event_members", query.CreateEventMembers},
 	}
 
-	_, err = DB.Exec(query.UserTable)
-	if err != nil {
-		log.Fatal(err)
+	for _, m := range migrations {
+		if _, err := DB.Exec(m.query); err != nil {
+			return fmt.Errorf("migration %q failed: %w", m.name, err)
+		}
 	}
 
-	_, err = DB.Exec(query.CreateNotificateTable)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, err = DB.Exec(query.CreateEventMembers)
+	return nil
 }
 
 func SetCorsHeader(w http.ResponseWriter) {

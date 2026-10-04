@@ -11,11 +11,11 @@ const AccountLogTable = `
 `
 
 const MoneyInfo = `
-	SELECT TO_CHAR(date, 'YYYY-MM-DD'), content, amount FROM accountLog WHERE CAST(date as TEXT) LIKE $1;
+	SELECT id, TO_CHAR(date, 'YYYY-MM-DD'), content, amount FROM accountLog WHERE CAST(date as TEXT) LIKE $1;
 `
 
 const MoneySum = `
-	SELECT SUM(amount) FROM accountLog;
+	SELECT COALESCE(SUM(amount), 0) FROM accountLog;
 `
 
 const AddLog = `
@@ -23,7 +23,9 @@ const AddLog = `
 	VALUES ($1, $2, $3);
 `
 
+// 日付・内容・金額での削除は、同日同額同内容の行が2件あると
+// まとめて消えてしまうので主キーで消す。
 const DelMoneyLog = `
 	DELETE FROM accountLog
-	WHERE date = $1 AND content = $2 AND amount = $3
+	WHERE id = $1;
 `

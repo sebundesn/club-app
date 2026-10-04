@@ -1,40 +1,67 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { CSVRow, MemberInfo } from '../utils/schema';
+import { backendURL, readErrorMessage } from '../utils/api';
+import { useToast } from '../../components/Toast';
 import Papa from 'papaparse';
 import './management.css';
 
+// 部員情報を書き換えられるロール。実際の認可はサーバー側でも同じ判定をしている。
+const MANAGEMENT_ROLES = ['部長', '副部長'];
+
 // 管理ページ：メンバー管理とCSVのインポート/エクスポート機能を提供
 export default function Management() {
-  const [name, setName] = useState('');
-  const [role, setRole] = useState('なし');
+  const { showToast } = useToast();
   const [members, setMembers] = useState<MemberInfo[]>([]);
+  // 認可はサーバーのロール判定に一本化する。
+  // 以前はクライアント側のパスワード比較だけで、パスワードはバンドルに埋め込まれていた。
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [passwordInput, setPasswordInput] = useState('');
-  const backendURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+  const [isChecking, setIsChecking] = useState(true);
 
   // メンバー情報を取得
-  const getMembers = async () => {
+  const getMembers = useCallback(async () => {
     try {
-      const res = await fetch(`${backendURL}/getMembers`);
-      const data = await res.json();
-      setMembers(data || []);
-    } catch (e: any) {
-      alert(`Failed to connect: ${e}`);
-    }
-  };
+      const res = await fetch(`${backendURL}/getMembers`, {
+        credentials: 'include',
+      });
 
-  // パスワード認証
-  const handlePasswordSubmit = (e: React.SubmitEvent) => {
-    e.preventDefault();
-    if (passwordInput === `${process.env.NEXT_PUBLIC_MANAGEMENT_PASSWORD}`) {
-      setIsAuthorized(true);
-    } else {
-      alert('The password is wrong');
-      setPasswordInput('');
+      if (!res.ok) {
+        showToast(await readErrorMessage(res, '部員の取得に失敗しました。'), 'error');
+        return;
+      }
+
+      const data: MemberInfo[] = (await res.json()) ?? [];
+      setMembers(data);
+    } catch (e) {
+      console.error('failed to get members:', e);
+      showToast('通信に失敗しました。', 'error');
     }
-  };
+  }, [showToast]);
+
+  // ログイン中のユーザーのロールを確認する
+  const checkAuthorization = useCallback(async () => {
+    try {
+      const res = await fetch(`${backendURL}/checkAuth`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+      const authorized = Boolean(data.logged_in) && MANAGEMENT_ROLES.includes(data.role);
+      setIsAuthorized(authorized);
+
+      if (authorized) {
+        await getMembers();
+      }
+    } catch (e) {
+      console.error('failed to check authorization:', e);
+    } finally {
+      setIsChecking(false);
+    }
+  }, [getMembers]);
 
   // メンバー情報を更新
   const updateMembers = async (currentMembers: MemberInfo[]) => {
@@ -47,19 +74,28 @@ export default function Management() {
       });
 
       if (!res.ok) {
-        alert('Update failed');
+        showToast(await readErrorMessage(res, '更新に失敗しました。'), 'error');
+        return;
       }
-    } catch (error: any) {
-      alert(`failed to connect: ${error}`);
+
+      await getMembers();
+      showToast('部員情報を更新しました。', 'success');
+    } catch (error) {
+      console.error('failed to update members:', error);
+      showToast('通信に失敗しました。', 'error');
     }
   };
 
   // CSVインポート
   const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const input = e.target;
+    const file = input.files?.[0];
     if (!file) return;
 
-    if (!window.confirm('本当に変更しますか？学籍番号と名前が一致している行は全て反映されます。')) return;
+    if (!window.confirm('本当に変更しますか？学籍番号と名前が一致している行は全て反映されます。')) {
+      input.value = '';
+      return;
+    }
 
     Papa.parse<CSVRow>(file, {
       header: true,
@@ -68,24 +104,27 @@ export default function Management() {
       escapeChar: '"',
       encoding: 'SJIS',
       complete: (results) => {
-        console.log('データ: ', results.data);
         const hasInvalidMember = results.data.some((row) => !row['学生氏名']);
 
         if (hasInvalidMember) {
-          alert('名前がない欄があります。');
+          showToast('名前が空欄の行があります。', 'error');
+          input.value = '';
           return;
         }
 
         const parsedMembers = results.data.map((row) => ({
           student_id: row['学籍番号'],
-          name: row['学生氏名'] || "",
+          name: row['学生氏名'] || '',
           role: row['役職'] || '',
         }));
         setMembers(parsedMembers);
         updateMembers(parsedMembers);
+        input.value = '';
       },
       error: (error: Error) => {
-        alert('CSVの読み込みに失敗しました:' + error.message);
+        console.error('failed to parse CSV:', error);
+        showToast('CSVの読み込みに失敗しました。', 'error');
+        input.value = '';
       },
     });
   };
@@ -93,7 +132,7 @@ export default function Management() {
   // CSVエクスポート
   const handleCSVDownload = () => {
     if (members.length === 0) {
-      alert('There are no exported datas');
+      showToast('出力するデータがありません。', 'error');
       return;
     }
 
@@ -114,44 +153,42 @@ export default function Management() {
     link.href = url;
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   useEffect(() => {
-    getMembers();
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 非同期の取得なので state 更新は await のあと。同期的な連鎖レンダリングは起きない。
+    checkAuthorization();
+  }, [checkAuthorization]);
+
+  if (isChecking) {
+    return (
+      <div className="management-container">
+        <div className="card p-8">
+          <p className="text-earth-600">確認しています...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return (
+      <div className="management-container">
+        <div className="card p-8">
+          <h1 className="text-3xl font-bold text-forest-800 mb-4">管理画面 🔒</h1>
+          <p className="text-earth-700 mb-6">
+            この画面は{MANAGEMENT_ROLES.join('・')}のみが利用できます。LINEでログインしてから開いてください。
+          </p>
+          <button className="btn-primary" onClick={() => { window.location.href = '/calendar'; }}>
+            HOME へ
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="management-container">
-      {/* パスワード認証モーダル */}
-      {!isAuthorized && (
-        <div className="auth-overlay">
-          <div className="auth-modal">
-            <button className="btn-home-absolute" onClick={() => {window.location.href = "/calendar"}}>
-              HOME へ
-            </button>
-            <h2 className="text-2xl font-bold text-forest-800 mb-4 text-center">
-              管理画面ロック 🔒
-            </h2>
-            <p className="text-earth-700 mb-6 text-center text-sm">
-              管理者パスワードを入力
-            </p>
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              <input
-                type="password"
-                placeholder="Please type password"
-                value={passwordInput}
-                onChange={(e) => setPasswordInput(e.target.value)}
-                className="input-field"
-                required
-              />
-              <button type="submit" className="btn-primary w-full">
-                認証解除
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
       <div className="card p-8">
         <h1 className="text-3xl font-bold text-forest-800 mb-8">管理画面</h1>
 
@@ -196,8 +233,8 @@ export default function Management() {
                   </tr>
                 </thead>
                 <tbody>
-                  {members.map((member, index) => (
-                    <tr key={index} className="table-row">
+                  {members.map((member) => (
+                    <tr key={member.student_id} className="table-row">
                       <td className="text-forest-800">{member.student_id}</td>
                       <td className="text-forest-800 font-medium">{member.name}</td>
                       <td>

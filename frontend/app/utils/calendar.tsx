@@ -6,23 +6,12 @@ export const generateCalendarDays = (year: number, month: number) => {
     const lastDate = new Date(year, month, 0).getDate() + 1;
 
     //月の初日より前の空白を埋める
-    const days = Array(firstDayOfMonth).fill(null);
+    const days: (number | null)[] = Array(firstDayOfMonth).fill(null);
 
     for(let d=1; d < lastDate; d++) days.push(d);
 
     return days;
 };
 
-export const createEmptyEvents = (year: Number, month: Number) => {
-    const eventMap: Record<string, any> = {};
-    for(let i=1; i <= 31; i++){
-        const dateKey = `${String(year)}-${String(month).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-
-        eventMap[dateKey] = {
-            date: dateKey,
-            title: ""
-        };
-    }
-
-    return eventMap;
-};
+export const toDateKey = (year: number, month: number, date: number) =>
+    `${String(year)}-${String(month).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
