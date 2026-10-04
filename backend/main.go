@@ -46,8 +46,6 @@ func main() {
 	http.Handle("/deleteImage", util.AppHandler(feature.DeleteImg))
 
 	// 部員 / 参加者
-	http.Handle("/getMembers", util.AppHandler(feature.FetchMembers))
-	http.Handle("/updateMembers", util.AppHandler(feature.UpdateMembers))
 	http.Handle("/getClubMembers", util.AppHandler(feature.GetAllClubMembers))
 	http.Handle("/fetchMembersAndPayment", util.AppHandler(feature.GetMembersWithPayment))
 	http.Handle("/takePartIn", util.AppHandler(feature.TakePartIn))

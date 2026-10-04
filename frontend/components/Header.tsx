@@ -157,7 +157,6 @@ export default function Header() {
   const navItems = [
     { path: '/calendar', label: 'HOME' },
     { path: '/account', label: '会計' },
-    { path: '/management', label: '管理画面' },
   ];
 
   useEffect(() => {

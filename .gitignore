@@ -7,6 +7,7 @@ frontend/next.config.ts
 frontend/package-lock.json
 frontend/postcss.config.mjs
 frontend/tsconfig.json
+frontend/tailwind.config.ts
 frontend/.env
 
 backend/.env
