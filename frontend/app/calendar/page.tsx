@@ -53,7 +53,7 @@ export default function CalendarPage() {
   const getMonthEvents = useCallback(async () => {
     try {
       const res = await fetch(
-        `${backendURL}/getMonthEvents?month=${String(year)}-${String(month).padStart(2, '0')}`
+        `${backendURL}/api/getMonthEvents?month=${String(year)}-${String(month).padStart(2, '0')}`
       );
 
       if (!res.ok) {
@@ -76,7 +76,7 @@ export default function CalendarPage() {
 
   const getDateEvents = useCallback(
     async (dateStr: string): Promise<EventDetail[]> => {
-      const res = await fetch(`${backendURL}/getDateEvent?date=${dateStr}`);
+      const res = await fetch(`${backendURL}/api/getDateEvent?date=${dateStr}`);
 
       if (!res.ok) {
         showToast(await readErrorMessage(res, 'イベントの取得に失敗しました。'), 'error');
@@ -116,7 +116,7 @@ export default function CalendarPage() {
     }
 
     try {
-      const res = await fetch(`${backendURL}/saveEvent`, {
+      const res = await fetch(`${backendURL}/api/saveEvent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

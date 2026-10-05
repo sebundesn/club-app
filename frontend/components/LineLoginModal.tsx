@@ -8,10 +8,10 @@ interface LineLoginModalProps {
   onClose: () => void;
 }
 
-/** LINEログインの案内モーダル。ボタンでLINEの認可画面へ送る（戻り先はバックエンドの /auth/line/callback）。 */
+/** LINEログインの案内モーダル。ボタンでLINEの認可画面へ送る（戻り先はバックエンドの /api/auth/line/callback）。 */
 export default function LineLoginModal({ onClose }: LineLoginModalProps) {
   const handleLineLogin = () => {
-    window.location.href = `${backendURL}/auth/line/login`;
+    window.location.href = `${backendURL}/api/auth/line/login`;
   };
 
   return (

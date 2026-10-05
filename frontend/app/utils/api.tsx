@@ -1,4 +1,5 @@
-export const backendURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+// 本番は同一オリジン(CloudFront経由)なので空文字を指定する。未設定のときだけローカル用の値を使う。
+export const backendURL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 
 /**
  * バックエンドは失敗時に {"message": "..."} を返す。

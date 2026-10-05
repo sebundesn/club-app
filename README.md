@@ -90,7 +90,7 @@ cp frontend/.env.example frontend/.env
 | `COOKIE_SECURE` | ローカルは必ず `false`。`http://localhost` では Secure Cookie が保存されずログインできない |
 | `COOKIE_SAMESITE` | ローカルは `lax`。フロントとバックが別ドメインの本番では `none`（`COOKIE_SECURE=true` とセット） |
 | `LINE_CHANNEL_ID` / `LINE_CHANNEL_SECRET` | LINE Developers の「LINEログイン」チャネルから取得 |
-| `LINE_REDIRECT_URI` | ローカルは `http://localhost:8080/auth/line/callback`。同じURLを LINE のチャネル設定にコールバックURLとして登録する |
+| `LINE_REDIRECT_URI` | ローカルは `http://localhost:8080/api/auth/line/callback`。同じURLを LINE のチャネル設定にコールバックURLとして登録する |
 
 **frontend/.env の必須項目**
 

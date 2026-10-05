@@ -1,0 +1,95 @@
+name: Deploy
+
+# main へのpush時に、CIと同じ内容を検証してから本番へ反映する。
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write # AWSへOIDCでログインするために必要
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-northeast-1
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - run: go vet ./... && go test ./...
+        working-directory: backend
+
+  deploy-frontend:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+        working-directory: frontend
+
+      - run: npm run build
+        working-directory: frontend
+        env:
+          # 同一オリジン(CloudFront経由)で /api を叩くので空にする
+          NEXT_PUBLIC_API_URL: ''
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: upload to S3
+        run: aws s3 sync frontend/out "s3://${{ vars.SITE_BUCKET }}" --delete
+
+      - name: invalidate CloudFront
+        run: aws cloudfront create-invalidation --distribution-id "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" --paths '/*'
+
+  deploy-backend:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: build (linux/arm64)
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o club-app .
+        working-directory: backend
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: upload binary
+        run: aws s3 cp backend/club-app "s3://${{ vars.ARTIFACTS_BUCKET }}/releases/${{ github.sha }}/club-app"
+
+      - name: deploy via SSM
+        run: |
+          id=$(aws ssm send-command \
+            --document-name AWS-RunShellScript \
+            --instance-ids "${{ vars.INSTANCE_ID }}" \
+            --parameters 'commands=["/opt/club-app/deploy.sh ${{ github.sha }}"]' \
+            --query Command.CommandId --output text)
+          aws ssm wait command-executed --command-id "$id" --instance-id "${{ vars.INSTANCE_ID }}"
+          aws ssm get-command-invocation --command-id "$id" --instance-id "${{ vars.INSTANCE_ID }}" \
+            --query '[Status,StandardOutputContent,StandardErrorContent]' --output text

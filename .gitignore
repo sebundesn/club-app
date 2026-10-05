@@ -14,3 +14,9 @@ backend/.env
 backend/uploads
 frontend/out
 frontend/tsconfig.tsbuildinfo
+
+# Terraform (state にはシークレットが入る)
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.*
+infra/*.tfvars

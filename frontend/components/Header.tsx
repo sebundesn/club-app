@@ -30,7 +30,7 @@ export default function Header() {
   // 認証状態の確認(ページ遷移ごとに)
   const checkAuth = useCallback(async () => {
     try {
-      const res = await fetch(`${backendURL}/checkAuth`, {
+      const res = await fetch(`${backendURL}/api/checkAuth`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -69,7 +69,7 @@ export default function Header() {
     }
 
     try {
-      const res = await fetch(`${backendURL}/firstLogin`, {
+      const res = await fetch(`${backendURL}/api/firstLogin`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -96,7 +96,7 @@ export default function Header() {
     if (!window.confirm('ログアウトしますか？')) return;
 
     try {
-      const res = await fetch(`${backendURL}/logout`, {
+      const res = await fetch(`${backendURL}/api/logout`, {
         method: 'GET',
         credentials: 'include',
       });

@@ -24,7 +24,7 @@ export default function LineLinkModal({ onLinked }: LineLinkModalProps) {
     }
 
     try {
-      const res = await fetch(`${backendURL}/auth/line/link`, {
+      const res = await fetch(`${backendURL}/api/auth/line/link`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ student_id: studentID.trim() }),

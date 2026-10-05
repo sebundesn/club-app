@@ -40,7 +40,7 @@ export default function Account() {
   // レシート情報を取得
   const getReceipts = useCallback(async () => {
     try {
-      const res = await fetch(`${backendURL}/getReceiptsInfo?howLongWeek=${HOW_LONG_WEEK}`);
+      const res = await fetch(`${backendURL}/api/getReceiptsInfo?howLongWeek=${HOW_LONG_WEEK}`);
 
       if (!res.ok) {
         showToast(await readErrorMessage(res, 'レシートの取得に失敗しました。'), 'error');
@@ -67,7 +67,7 @@ export default function Account() {
   // 会計情報を取得
   const getAccountInfo = useCallback(async () => {
     try {
-      const res = await fetch(`${backendURL}/accountInfo?year=${year}`);
+      const res = await fetch(`${backendURL}/api/accountInfo?year=${year}`);
 
       if (!res.ok) {
         showToast(await readErrorMessage(res, '会計情報の取得に失敗しました。'), 'error');
@@ -85,7 +85,7 @@ export default function Account() {
   // 合計金額を取得
   const getMoneySum = useCallback(async () => {
     try {
-      const res = await fetch(`${backendURL}/getMoneySum`);
+      const res = await fetch(`${backendURL}/api/getMoneySum`);
 
       if (!res.ok) {
         showToast(await readErrorMessage(res, '残高の取得に失敗しました。'), 'error');
@@ -108,7 +108,7 @@ export default function Account() {
     }
 
     try {
-      const res = await fetch(`${backendURL}/addMoneyLog`, {
+      const res = await fetch(`${backendURL}/api/addMoneyLog`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...newLog, amount: Number(newLog.amount) }),
@@ -143,7 +143,7 @@ export default function Account() {
     }
 
     try {
-      const res = await fetch(`${backendURL}/uploadReceipt`, {
+      const res = await fetch(`${backendURL}/api/uploadReceipt`, {
         method: 'POST',
         body: formData,
         credentials: 'include',
@@ -168,7 +168,7 @@ export default function Account() {
   // 会計ログを削除
   const deleteMoneyLog = async (oneMoneyLog: MoneyLogStruct) => {
     try {
-      const res = await fetch(`${backendURL}/deleteMoneyLog`, {
+      const res = await fetch(`${backendURL}/api/deleteMoneyLog`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         // 同日・同額・同内容の行を巻き添えにしないよう id で指定する
@@ -193,7 +193,7 @@ export default function Account() {
   // 画像を削除
   const deleteImage = async (eventID: number, url: string) => {
     try {
-      const res = await fetch(`${backendURL}/deleteImage`, {
+      const res = await fetch(`${backendURL}/api/deleteImage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ event_id: eventID, url }),
@@ -237,7 +237,7 @@ export default function Account() {
   const fetchCurrentParticipants = useCallback(
     async (eventID: number) => {
       try {
-        const res = await fetch(`${backendURL}/fetchMembersAndPayment?event_id=${eventID}`, {
+        const res = await fetch(`${backendURL}/api/fetchMembersAndPayment?event_id=${eventID}`, {
           method: 'GET',
           credentials: 'include',
         });
@@ -262,7 +262,7 @@ export default function Account() {
 
   const getAllClubMembers = useCallback(async () => {
     try {
-      const res = await fetch(`${backendURL}/getClubMembers`, {
+      const res = await fetch(`${backendURL}/api/getClubMembers`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -287,7 +287,7 @@ export default function Account() {
     try {
       const userIDs = selectedOptions.map((opt) => opt.value);
 
-      const res = await fetch(`${backendURL}/takePartIn`, {
+      const res = await fetch(`${backendURL}/api/takePartIn`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

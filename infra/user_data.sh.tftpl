@@ -1,0 +1,100 @@
+#!/bin/bash
+# 初回起動時だけ実行される。Postgres と club-app の systemd ユニットを用意する。
+set -euxo pipefail
+
+REGION=${region}
+BUCKET=${artifacts_bucket}
+
+dnf install -y postgresql16-server
+
+# --- Postgres ---
+postgresql-setup --initdb
+# ローカル接続をパスワード認証にする
+sed -i -E 's/^(host\s+all\s+all\s+\S+\s+)ident/\1scram-sha-256/' /var/lib/pgsql/data/pg_hba.conf
+systemctl enable --now postgresql
+
+DB_PASSWORD=$(aws ssm get-parameter --region $REGION --name /club-app/DB_PASSWORD --with-decryption --query Parameter.Value --output text)
+sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE ROLE club_app LOGIN PASSWORD '$DB_PASSWORD'"
+sudo -u postgres createdb -O club_app club_db
+
+# --- アプリ ---
+useradd --system --home-dir /opt/club-app --shell /sbin/nologin club-app
+mkdir -p /opt/club-app/uploads
+chown -R club-app:club-app /opt/club-app
+
+# SSM の /club-app/ 配下を env ファイルにする(起動のたびに再取得)
+cat > /opt/club-app/fetch-env.sh <<'EOF'
+#!/bin/bash
+set -euo pipefail
+aws ssm get-parameters-by-path --region ${region} --path /club-app/ --with-decryption \
+  --query 'Parameters[].[Name,Value]' --output text |
+while IFS=$'\t' read -r name value; do
+  echo "$(basename "$name")=$value"
+done > /run/club-app.env
+chmod 600 /run/club-app.env
+EOF
+chmod +x /opt/club-app/fetch-env.sh
+
+cat > /etc/systemd/system/club-app.service <<'EOF'
+[Unit]
+Description=club-app backend
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+User=club-app
+WorkingDirectory=/opt/club-app
+# "+" 付きは root で実行される(/run に書くため)
+ExecStartPre=+/opt/club-app/fetch-env.sh
+ExecStartPre=+/bin/chown club-app:club-app /run/club-app.env
+EnvironmentFile=/run/club-app.env
+ExecStart=/opt/club-app/club-app
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# デプロイ(CIからSSM経由で呼ばれる): 新しいバイナリを取得して再起動
+cat > /opt/club-app/deploy.sh <<'EOF'
+#!/bin/bash
+set -euo pipefail
+aws s3 cp --region ${region} "s3://${artifacts_bucket}/releases/$1/club-app" /opt/club-app/club-app.new
+chmod +x /opt/club-app/club-app.new
+mv /opt/club-app/club-app.new /opt/club-app/club-app
+chown club-app:club-app /opt/club-app/club-app
+systemctl restart club-app
+sleep 3
+systemctl is-active club-app
+EOF
+chmod +x /opt/club-app/deploy.sh
+
+# --- バックアップ(毎日): DBとuploadsをS3へ ---
+cat > /opt/club-app/backup.sh <<'EOF'
+#!/bin/bash
+set -euo pipefail
+d=$(date +%F)
+sudo -u postgres pg_dump club_db | gzip | aws s3 cp --region ${region} - "s3://${artifacts_bucket}/backups/db-$d.sql.gz"
+tar czf - -C /opt/club-app uploads | aws s3 cp --region ${region} - "s3://${artifacts_bucket}/backups/uploads-$d.tar.gz"
+EOF
+chmod +x /opt/club-app/backup.sh
+
+cat > /etc/systemd/system/club-app-backup.service <<'EOF'
+[Service]
+Type=oneshot
+ExecStart=/opt/club-app/backup.sh
+EOF
+
+cat > /etc/systemd/system/club-app-backup.timer <<'EOF'
+[Timer]
+OnCalendar=*-*-* 18:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+
+systemctl daemon-reload
+systemctl enable club-app
+systemctl enable --now club-app-backup.timer

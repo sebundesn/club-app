@@ -37,7 +37,7 @@ func lineRedirectURI() string {
 	if uri := os.Getenv("LINE_REDIRECT_URI"); uri != "" {
 		return uri
 	}
-	return "http://localhost:8080/auth/line/callback"
+	return "http://localhost:8080/api/auth/line/callback"
 }
 
 func frontendURL() string {
