@@ -6,7 +6,7 @@ import { getNowTime } from '../utils/getTime';
 import { DateTitle, EventDetail, EventStruct, NotificateStruct } from '../utils/schema';
 import { backendURL, readErrorMessage } from '../utils/api';
 import { useToast } from '../../components/Toast';
-import './calendar.css'; // Vanilla CSSをインポート
+import './calendar.css';
 
 const emptyEvent: EventStruct = {
   ID: 0,
@@ -17,7 +17,6 @@ const emptyEvent: EventStruct = {
   Content: '',
 };
 
-// カレンダーページ：月間カレンダーとイベント管理機能を提供
 export default function CalendarPage() {
   const { showToast } = useToast();
   const [thisYear, thisMonth, today, dayNames] = getNowTime();
@@ -27,15 +26,12 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState('');
   const [opinion, setOpinion] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // 1日に複数イベントを持てるので、日付キーに対して配列を持つ
   const [eventMap, setEventMap] = useState<Record<string, DateTitle[]>>({});
   const [dayEvents, setDayEvents] = useState<EventDetail[]>([]);
-  // 編集中のイベント。ID が 0 なら新規作成。null なら一覧表示。
   const [editing, setEditing] = useState<EventStruct | null>(null);
   const [notificate] = useState<NotificateStruct[]>([]);
   const days = generateCalendarDays(year, month);
 
-  // 前月へ移動
   const handlePrevMonth = () => {
     if (month === 1) {
       setMonth(12);
@@ -45,7 +41,6 @@ export default function CalendarPage() {
     }
   };
 
-  // 次月へ移動
   const handleNextMonth = () => {
     if (month === 12) {
       setMonth(1);
@@ -55,7 +50,6 @@ export default function CalendarPage() {
     }
   };
 
-  // 月のイベントを取得
   const getMonthEvents = useCallback(async () => {
     try {
       const res = await fetch(
@@ -80,7 +74,6 @@ export default function CalendarPage() {
     }
   }, [year, month, showToast]);
 
-  // 指定日のイベントを取得
   const getDateEvents = useCallback(
     async (dateStr: string): Promise<EventDetail[]> => {
       const res = await fetch(`${backendURL}/getDateEvent?date=${dateStr}`);
@@ -95,7 +88,6 @@ export default function CalendarPage() {
     [showToast],
   );
 
-  // 日付クリック時の処理
   const handleDateClick = async (date: number) => {
     if (!date) return;
 

@@ -6,6 +6,9 @@ import { usePathname } from 'next/navigation';
 import { UserInfoStruct } from '../app/utils/schema';
 import { backendURL, readErrorMessage } from '../app/utils/api';
 import { useToast } from './Toast';
+import Modal from './Modal';
+import LineLoginModal from './LineLoginModal';
+import LineLinkModal from './LineLinkModal';
 import './header.css'; // Vanilla CSSの読み込み
 
 // ヘッダーコンポーネント：ナビゲーションとユーザー認証機能を提供
@@ -14,7 +17,7 @@ export default function Header() {
   const { showToast } = useToast();
   const [isInitialLogin, setIsInitialLogin] = useState(false);
   const [needsLink, setNeedsLink] = useState(false);
-  const [studentID, setStudentID] = useState('');
+  const [showLogin, setShowLogin] = useState(false);
   const [realname, setRealname] = useState('');
   const [userInfo, setUserInfo] = useState<UserInfoStruct>({
     ID: null,
@@ -23,11 +26,6 @@ export default function Header() {
     isLoggedIn: false,
   });
   const [isScrolled, setIsScrolled] = useState(false);
-
-  // LINEの認可画面へ送る。戻り先はバックエンドの /auth/line/callback。
-  const handleLineLogin = () => {
-    window.location.href = `${backendURL}/auth/line/login`;
-  };
 
   // 認証状態の確認(ページ遷移ごとに)
   const checkAuth = useCallback(async () => {
@@ -60,38 +58,6 @@ export default function Header() {
       console.error('failed to check auth:', e);
     }
   }, []);
-
-  // 初回ログイン時に学籍番号でLINEアカウントを部員レコードに紐づける
-  const handleLinkSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    if (studentID.trim() === '') {
-      showToast('学籍番号を入力してください。', 'error');
-      return;
-    }
-
-    try {
-      const res = await fetch(`${backendURL}/auth/line/link`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ student_id: studentID.trim() }),
-        credentials: 'include',
-      });
-
-      if (!res.ok) {
-        showToast(await readErrorMessage(res, '連携に失敗しました。'), 'error');
-        return;
-      }
-
-      setStudentID('');
-      setNeedsLink(false);
-      showToast('LINEアカウントを連携しました。', 'success');
-      await checkAuth();
-    } catch (e) {
-      console.error('failed to link line account:', e);
-      showToast('通信に失敗しました。', 'error');
-    }
-  };
 
   // 初期ログイン時のユーザー情報設定
   const handleLoginSubmitFirst = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -220,7 +186,7 @@ export default function Header() {
 
           {/* ユーザーボタン */}
           <button
-            onClick={userInfo.isLoggedIn ? handleLogout : handleLineLogin}
+            onClick={userInfo.isLoggedIn ? handleLogout : () => setShowLogin(true)}
             className="user-menu-btn"
             aria-label={userInfo.isLoggedIn ? 'ログアウト' : 'LINEでログイン'}
           >
@@ -253,59 +219,32 @@ export default function Header() {
       {/* メインコンテンツのオフセット */}
       <div className="header-offset" />
 
+      {/* LINEログインモーダル */}
+      {showLogin && !userInfo.isLoggedIn && <LineLoginModal onClose={() => setShowLogin(false)} />}
+
       {/* LINE連携モーダル（初回のみ） */}
-      {needsLink && (
-        <div className="modal-overlay">
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-2xl font-bold text-forest-800 mb-6 text-center">部員情報との連携</h3>
-            <p className="text-sm text-earth-600 mb-4">
-              初回のみ学籍番号の入力が必要です。次回からはLINEでログインするだけで利用できます。
-            </p>
-            <form onSubmit={handleLinkSubmit}>
-              <div className="mb-4">
-                <label className="block text-forest-700 mb-2 font-medium">学籍番号</label>
-                <input
-                  type="text"
-                  value={studentID}
-                  onChange={(e) => setStudentID(e.target.value)}
-                  required
-                  className="input-field"
-                />
-              </div>
-              <button type="submit" className="btn-primary w-full">
-                連携する
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+      {needsLink && <LineLinkModal onLinked={async () => { setNeedsLink(false); await checkAuth(); }} />}
 
       {/* 初期ログインモーダル */}
       {isInitialLogin && (
-        <div className="modal-overlay">
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-2xl font-bold text-forest-800 mb-6 text-center">初期設定</h3>
-            <form onSubmit={handleLoginSubmitFirst}>
-              <div className="mb-4">
-                <label className="block text-forest-700 mb-2 font-medium">本名</label>
-                <input
-                  type="text"
-                  value={realname}
-                  onChange={(e) => setRealname(e.target.value)}
-                  required
-                  className="input-field"
-                />
-                <p className="text-sm text-earth-600 mt-1">*名字と名前の間はスペースを空けてください！</p>
-              </div>
-              <button
-                type="submit"
-                className="btn-primary w-full"
-              >
-                OK
-              </button>
-            </form>
-          </div>
-        </div>
+        <Modal title="初期設定">
+          <form onSubmit={handleLoginSubmitFirst}>
+            <div className="mb-4">
+              <label className="block text-forest-700 mb-2 font-medium">本名</label>
+              <input
+                type="text"
+                value={realname}
+                onChange={(e) => setRealname(e.target.value)}
+                required
+                className="input-field"
+              />
+              <p className="text-sm text-earth-600 mt-1">*名字と名前の間はスペースを空けてください！</p>
+            </div>
+            <button type="submit" className="btn-primary w-full">
+              OK
+            </button>
+          </form>
+        </Modal>
       )}
     </>
   );
