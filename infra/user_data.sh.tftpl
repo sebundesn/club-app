@@ -47,7 +47,8 @@ WorkingDirectory=/opt/club-app
 # "+" 付きは root で実行される(/run に書くため)
 ExecStartPre=+/opt/club-app/fetch-env.sh
 ExecStartPre=+/bin/chown club-app:club-app /run/club-app.env
-EnvironmentFile=/run/club-app.env
+# "-" 付き: ExecStartPre(fetch-env.sh)が作る前でも失敗させない
+EnvironmentFile=-/run/club-app.env
 ExecStart=/opt/club-app/club-app
 Restart=on-failure
 RestartSec=10
