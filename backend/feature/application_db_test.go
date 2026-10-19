@@ -90,3 +90,11 @@ func TestValidStudentID(t *testing.T) {
 		}
 	}
 }
+
+func TestRemoveSpaces(t *testing.T) {
+	for in, want := range map[string]string{"山田 太郎": "山田太郎", "山田　太郎": "山田太郎", " 山田太郎 ": "山田太郎", "山田太郎": "山田太郎", "": ""} {
+		if got := removeSpaces(in); got != want {
+			t.Errorf("removeSpaces(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

@@ -15,6 +15,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"unicode"
 
 	"club-app/model"
 	"club-app/query"
@@ -182,7 +183,7 @@ func LinkLineAccount(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 
 	req.StudentID = strings.TrimSpace(req.StudentID)
-	req.Name = strings.TrimSpace(req.Name)
+	req.Name = removeSpaces(req.Name)
 	if !validStudentID(req.StudentID) {
 		return util.BadRequest("学籍番号は半角英数字7文字で入力してください。", errors.New("invalid student_id"))
 	}
@@ -253,6 +254,16 @@ func applyForMembership(w http.ResponseWriter, lineUserID string, req model.Link
 }
 
 const maxNameLength = 50
+
+// 名前は姓と名の間も含めて空白を入れない(半角・全角のどちらも取り除く)
+func removeSpaces(s string) string {
+	return strings.Map(func(r rune) rune {
+		if unicode.IsSpace(r) {
+			return -1
+		}
+		return r
+	}, s)
+}
 
 // 学籍番号は半角英数字7文字(users.student_id が VARCHAR(7) のため)
 func validStudentID(s string) bool {

@@ -35,7 +35,7 @@ export default function LineLinkModal({ onLinked, application, onClose }: LineLi
       const res = await fetch(`${backendURL}/api/auth/line/link`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ student_id: studentID.trim(), name: name.trim() }),
+        body: JSON.stringify({ student_id: studentID.trim(), name: name.replace(/\s/g, '') }),
         credentials: 'include',
       });
 
@@ -97,7 +97,7 @@ export default function LineLinkModal({ onLinked, application, onClose }: LineLi
           />
         </div>
         <div className="mb-4">
-          <label className="block text-forest-700 mb-2 font-medium">名前(未登録の方は必須)</label>
+          <label className="block text-forest-700 mb-2 font-medium">名前(フルネームで)</label>
           <input
             type="text"
             value={name}
