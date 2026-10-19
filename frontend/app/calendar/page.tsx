@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { generateCalendarDays, toDateKey } from '../utils/calendar';
 import { getNowTime } from '../utils/getTime';
-import { buildUpcomingRows, monthsToFetch } from '../utils/upcoming';
+import { buildMonthRows, buildUpcomingRows, monthsToFetch } from '../utils/upcoming';
+import EventTable from './EventTable';
 import { DateTitle, EventDetail, EventStruct } from '../utils/schema';
 import { backendURL, readErrorMessage } from '../utils/api';
 import { useToast } from '../../components/Toast';
@@ -30,6 +31,10 @@ export default function CalendarPage() {
   const [dayEvents, setDayEvents] = useState<EventDetail[]>([]);
   const [editing, setEditing] = useState<EventStruct | null>(null);
   const [upcomingEvents, setUpcomingEvents] = useState<DateTitle[]>([]);
+  const [viewMode, setViewMode] = useState<'upcoming' | 'month'>('upcoming');
+  const [role, setRole] = useState('');
+  // 予定の登録・編集は部長・副部長だけ。画面の出し分けだけで、実際の権限チェックはサーバー側で行っている。
+  const isManager = role === '部長' || role === '副部長';
   const days = generateCalendarDays(year, month);
 
   const handlePrevMonth = () => {
@@ -112,8 +117,8 @@ export default function CalendarPage() {
     try {
       const events = await getDateEvents(dateStr);
       setDayEvents(events);
-      // その日にイベントがなければ、いきなり作成フォームを開く
-      setEditing(events.length === 0 ? { ...emptyEvent, Date: dateStr } : null);
+      // その日にイベントがなければ、部長・副部長はいきなり作成フォームを開く
+      setEditing(events.length === 0 && isManager ? { ...emptyEvent, Date: dateStr } : null);
       setIsModalOpen(true);
     } catch (e) {
       console.error('詳細取得失敗', e);
@@ -186,130 +191,165 @@ export default function CalendarPage() {
     getUpcomingEvents();
   }, [getUpcomingEvents]);
 
+  useEffect(() => {
+    const loadRole = async () => {
+      try {
+        const res = await fetch(`${backendURL}/api/checkAuth`, { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json();
+        setRole(typeof data.role === 'string' ? data.role : '');
+      } catch (e) {
+        console.error('failed to check role:', e);
+      }
+    };
+    loadRole();
+  }, []);
+
   const upcomingRows = useMemo(() => buildUpcomingRows(upcomingEvents, new Date()), [upcomingEvents]);
+  // 月別の一覧は、表示中の月(下の月カレンダーと共通)の予定を使う
+  const monthRows = useMemo(() => buildMonthRows(Object.values(eventMap).flat(), new Date()), [eventMap]);
 
   return (
     <div className="calendar-container">
-      {/* 今日から1か月先までの予定(日付・曜日・内容) */}
+      {/* 予定の一覧(日付・曜日・内容)。「これから」は今日を最上段に1か月先まで、「月別」は月ごと */}
       <div className="card mb-8">
-        <h2 className="upcoming-title">これからの予定(1か月先まで)</h2>
-        <div className="upcoming-table" role="table">
-          <div className="upcoming-row upcoming-head" role="row">
-            <span role="columnheader">日付</span>
-            <span role="columnheader">曜日</span>
-            <span role="columnheader">内容</span>
-          </div>
-          {upcomingRows.map((row) => (
-            <button
-              key={row.date}
-              type="button"
-              role="row"
-              className={`upcoming-row upcoming-item${row.isToday ? ' today' : ''}`}
-              onClick={() => openDay(row.date)}
-            >
-              <span className="upcoming-date">
-                {row.month}/{row.day}
-              </span>
-              <span
-                className={`upcoming-weekday ${row.weekday === 0 ? 'sunday' : row.weekday === 6 ? 'saturday' : ''}`}
-              >
-                {dayNames[row.weekday]}
-              </span>
-              <span className="upcoming-content">
-                {row.titles.length === 0 ? (
-                  <span className="upcoming-empty">予定なし</span>
-                ) : (
-                  row.titles.map((t, i) => <span key={i}>{t}</span>)
-                )}
-              </span>
-            </button>
-          ))}
+        <div className="list-modes" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={viewMode === 'upcoming'}
+            className={`list-mode${viewMode === 'upcoming' ? ' active' : ''}`}
+            onClick={() => setViewMode('upcoming')}
+          >
+            これから(1か月先まで)
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={viewMode === 'month'}
+            className={`list-mode${viewMode === 'month' ? ' active' : ''}`}
+            onClick={() => setViewMode('month')}
+          >
+            月別
+          </button>
         </div>
-      </div>
 
-      {/* カレンダーエリア */}
-      <div className="card mb-8">
-        <div className="calendar-header">
-          <h1 className="calendar-title">
-            {year}年 {month}月
-          </h1>
-          <div className="nav-buttons">
-            <button
-              onClick={handlePrevMonth}
-              className="nav-btn"
-              aria-label="前の月"
-            >
+        {viewMode === 'month' && (
+          <div className="month-switch">
+            <button onClick={handlePrevMonth} className="nav-btn" aria-label="前の月">
               ◀
             </button>
-            <button
-              onClick={handleNextMonth}
-              className="nav-btn"
-              aria-label="次の月"
-            >
+            <span className="month-switch-label">
+              {year}年 {month}月
+            </span>
+            <button onClick={handleNextMonth} className="nav-btn" aria-label="次の月">
               ▶
             </button>
           </div>
-        </div>
+        )}
 
-        {/* 曜日ヘッダー */}
-        <div className="grid-cols-7 mb-2">
-          {dayNames.map((name, i) => (
-            <div
-              key={name}
-              className={`day-name ${
-                i === 0 ? 'sunday' : i === 6 ? 'saturday' : 'weekday'
-              }`}
-            >
-              {name}
-            </div>
-          ))}
-        </div>
-
-        {/* 日付グリッド */}
-        <div className="grid-cols-7">
-          {days.map((date, i) => {
-            const isToday = year === thisYear && month === thisMonth && date === today;
-            const dayEventList = date ? eventMap[toDateKey(year, month, date)] ?? [] : [];
-
-            return (
-              <div
-                key={i}
-                className={`day-cell ${
-                  !date
-                    ? 'empty'
-                    : isToday
-                    ? 'today'
-                    : 'normal'
-                }`}
-                onClick={() => date && handleDateClick(date)}
-              >
-                {date && (
-                  <>
-                    <span
-                      className={`day-number ${
-                        isToday ? 'text-today' : 'text-normal'
-                      }`}
-                    >
-                      {date}
-                    </span>
-                    {dayEventList.length > 0 && (
-                      <div className="event-badge-container">
-                        {dayEventList.map((event) =>
-                          event.title ? (
-                            <span key={event.id} className="event-badge">
-                              {event.title}
-                            </span>
-                          ) : null,
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <EventTable
+          rows={viewMode === 'upcoming' ? upcomingRows : monthRows}
+          dayNames={dayNames}
+          onSelect={openDay}
+          canSelectEmpty={isManager}
+          emptyMessage="この月の予定はありません。"
+        />
       </div>
+
+      {/* 月カレンダー。予定を登録できる部長・副部長だけに出す(部員は上の一覧で見られる) */}
+      {isManager && (
+        <div className="card mb-8">
+          <div className="calendar-header">
+            <h1 className="calendar-title">
+              {year}年 {month}月
+            </h1>
+            <div className="nav-buttons">
+              <button
+                onClick={handlePrevMonth}
+                className="nav-btn"
+                aria-label="前の月"
+              >
+                ◀
+              </button>
+              <button
+                onClick={handleNextMonth}
+                className="nav-btn"
+                aria-label="次の月"
+              >
+                ▶
+              </button>
+            </div>
+          </div>
+
+          {/* 曜日ヘッダー */}
+          <div className="grid-cols-7 mb-2">
+            {dayNames.map((name, i) => (
+              <div
+                key={name}
+                className={`day-name ${
+                  i === 0 ? 'sunday' : i === 6 ? 'saturday' : 'weekday'
+                }`}
+              >
+                {name}
+              </div>
+            ))}
+          </div>
+
+          {/* 日付グリッド */}
+          <div className="grid-cols-7">
+            {days.map((date, i) => {
+              const isToday = year === thisYear && month === thisMonth && date === today;
+              const dayEventList = date ? eventMap[toDateKey(year, month, date)] ?? [] : [];
+
+              return (
+                <div
+                  key={i}
+                  className={`day-cell ${
+                    !date
+                      ? 'empty'
+                      : isToday
+                      ? 'today'
+                      : 'normal'
+                  }`}
+                  onClick={() => date && handleDateClick(date)}
+                >
+                  {date && (
+                    <>
+                      <span
+                        className={`day-number ${
+                          isToday ? 'text-today' : 'text-normal'
+                        }`}
+                      >
+                        {date}
+                      </span>
+                      {dayEventList.length > 0 && (
+                        <>
+                          {/* スマホではタイトルが読めないので点だけにする(詳細は日付を押すか、上の一覧で見る) */}
+                          <div className="event-dots" aria-label={`予定${dayEventList.length}件`}>
+                            {dayEventList.slice(0, 3).map((event) => (
+                              <span key={event.id} className="event-dot" />
+                            ))}
+                          </div>
+                          <div className="event-badge-container">
+                            {dayEventList.map((event) =>
+                              event.title ? (
+                                <span key={event.id} className="event-badge">
+                                  {event.title}
+                                </span>
+                              ) : null,
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* イベント編集モーダル */}
       {isModalOpen && (
@@ -334,22 +374,24 @@ export default function CalendarPage() {
                         <a href={`/album?eventID=${event.id}`} className="btn-secondary">
                           アルバム
                         </a>
-                        <button
-                          type="button"
-                          className="btn-secondary"
-                          onClick={() =>
-                            setEditing({
-                              ID: event.id,
-                              Date: selectedDate,
-                              Title: event.title,
-                              Subtitle: event.subtitle,
-                              Content: event.content,
-                              PDFPath: event.pdf_path,
-                            })
-                          }
-                        >
-                          編集
-                        </button>
+                        {isManager && (
+                          <button
+                            type="button"
+                            className="btn-secondary"
+                            onClick={() =>
+                              setEditing({
+                                ID: event.id,
+                                Date: selectedDate,
+                                Title: event.title,
+                                Subtitle: event.subtitle,
+                                Content: event.content,
+                                PDFPath: event.pdf_path,
+                              })
+                            }
+                          >
+                            編集
+                          </button>
+                        )}
                       </div>
                     </li>
                   ))}
@@ -359,12 +401,14 @@ export default function CalendarPage() {
                   <button onClick={closeModal} className="btn-secondary flex-1">
                     閉じる
                   </button>
-                  <button
-                    onClick={() => setEditing({ ...emptyEvent, Date: selectedDate })}
-                    className="btn-primary flex-1"
-                  >
-                    ＋ イベントを追加
-                  </button>
+                  {isManager && (
+                    <button
+                      onClick={() => setEditing({ ...emptyEvent, Date: selectedDate })}
+                      className="btn-primary flex-1"
+                    >
+                      ＋ イベントを追加
+                    </button>
+                  )}
                 </div>
               </>
             ) : (

@@ -64,3 +64,25 @@ export const buildUpcomingRows = (events: DateTitle[], today: Date, days = UPCOM
     .forEach((date) => rows.push(toRow(date)));
   return rows;
 };
+
+/** 1か月分の予定を、予定のある日だけ日付順に並べる(同じ日の予定は1行にまとめる)。 */
+export const buildMonthRows = (events: DateTitle[], today: Date): UpcomingRow[] => {
+  const todayKey = keyOf(today);
+  const byDate = new Map<string, string[]>();
+  for (const e of events) {
+    const date = e.date.slice(0, 10);
+    byDate.set(date, [...(byDate.get(date) ?? []), e.title || '(無題)']);
+  }
+
+  return [...byDate.keys()].sort().map((date) => {
+    const [y, m, d] = date.split('-').map(Number);
+    return {
+      date,
+      month: m,
+      day: d,
+      weekday: new Date(y, m - 1, d).getDay(),
+      titles: byDate.get(date) ?? [],
+      isToday: date === todayKey,
+    };
+  });
+};
