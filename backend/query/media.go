@@ -57,9 +57,21 @@ const SelectEventMedia = `
 	ORDER BY created_at, id;
 `
 
+// 削除は本人か役員(第3引数が true)のときだけ通す。権限の確認と削除を1文で行う。
 // S3のファイルも消すので、消した行のキーを返してもらう。
-const DeleteEventMedia = `
+const DeleteEventMediaIfAllowed = `
 	DELETE FROM event_media
-	WHERE id = $1
+	WHERE id = $1 AND (uploader_id = $2 OR $3)
+	RETURNING object_key, thumb_key;
+`
+
+// 変換に失敗した行を消して枠を戻す
+const DeleteEventMediaByID = `
+	DELETE FROM event_media WHERE id = $1;
+`
+
+// 再起動で変換が途切れた行(一時ファイルも失われている)を消す
+const DeleteProcessingMedia = `
+	DELETE FROM event_media WHERE status = 'processing'
 	RETURNING object_key, thumb_key;
 `

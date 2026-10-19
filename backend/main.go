@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -14,6 +15,11 @@ import (
 func main() {
 	util.ConnectSQL()
 	defer util.DB.Close()
+
+	if err := feature.InitMedia(context.Background()); err != nil {
+		log.Fatal(err)
+	}
+	feature.CleanupStaleMedia()
 	defer util.Store.Close()
 	defer util.Store.StopCleanup(util.Store.Cleanup(time.Hour))
 
@@ -44,6 +50,17 @@ func main() {
 	http.Handle("/api/getReceiptsInfo", util.AppHandler(feature.GetMonthReceipts))
 	http.Handle("/api/uploadReceipt", util.AppHandler(feature.UploadReceipt))
 	http.Handle("/api/deleteImage", util.AppHandler(feature.DeleteImg))
+
+	// アルバム(写真・動画)
+	http.Handle("/api/uploadMedia", util.AppHandler(feature.UploadMedia))
+	http.Handle("/api/getAlbum", util.AppHandler(feature.GetAlbum))
+	http.Handle("/api/deleteMedia", util.AppHandler(feature.DeleteMedia))
+
+	// 部費の未払い
+	http.Handle("/api/myUnpaid", util.AppHandler(feature.GetMyUnpaid))
+	http.Handle("/api/allUnpaid", util.AppHandler(feature.GetAllUnpaid))
+	http.Handle("/api/setPaid", util.AppHandler(feature.SetPaid))
+	http.Handle("/api/setEventFee", util.AppHandler(feature.SetEventFee))
 
 	// 部員 / 参加者
 	http.Handle("/api/getClubMembers", util.AppHandler(feature.GetAllClubMembers))

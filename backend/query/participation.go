@@ -29,8 +29,19 @@ const SetEventMemberPaid = `
 	WHERE event_id = $1 AND user_id = $2;
 `
 
-const SetEventMemberAmount = `
-	UPDATE event_members SET amount = $2 WHERE event_id = $1;
+// イベントごとの徴収額。参加者を追加したときの請求額の初期値になる。
+const AddEventFeeColumn = `
+	ALTER TABLE events ADD COLUMN IF NOT EXISTS fee INT NOT NULL DEFAULT 0;
+`
+
+const SetEventFee = `
+	UPDATE events SET fee = $2 WHERE id = $1;
+`
+
+// 徴収額を変えても、支払い済みの人の請求額は書き換えない(払った額の記録を保つため)。
+const ApplyEventFeeToUnpaid = `
+	UPDATE event_members SET amount = $2
+	WHERE event_id = $1 AND paid_at IS NULL;
 `
 
 // 自分の未払い。請求額が0の行は払うものがないので除く。
@@ -76,7 +87,7 @@ const DeleteEventMembersNotIn = `
 `
 
 const InsertEventMember = `
-	INSERT INTO event_members (event_id, user_id)
-	VALUES ($1, $2)
+	INSERT INTO event_members (event_id, user_id, amount)
+	VALUES ($1, $2, (SELECT fee FROM events WHERE id = $1))
 	ON CONFLICT (event_id, user_id) DO NOTHING;
 `

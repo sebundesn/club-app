@@ -63,6 +63,9 @@ func ConnectSQL() {
 	}
 }
 
+// Migrate は DB を差し替えるテストから、起動時と同じテーブルを作るために使う。
+func Migrate() error { return migrate() }
+
 // migrate は起動時のテーブル作成をまとめて流す。
 // 以前は1つずつ手書きしていて、最後の1つだけエラーチェックが漏れていた。
 // 名前付きにしているので、失敗したマイグレーションがログで分かる。
@@ -81,6 +84,7 @@ func migrate() error {
 		{"users: line_user_id index", query.AddLineUserIDIndex},
 		{"notificate", query.CreateNotificateTable},
 		{"event_members", query.CreateEventMembers},
+		{"events: fee", query.AddEventFeeColumn},
 		{"event_members: paid_at", query.AddEventMemberPaidAtColumn},
 		{"event_members: unpaid index", query.CreateEventMembersUnpaidIndex},
 		{"accountLog: event_id", query.AddAccountLogEventColumn},
