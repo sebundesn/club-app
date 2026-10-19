@@ -17,6 +17,7 @@ export default function Header() {
   const { showToast } = useToast();
   const [isInitialLogin, setIsInitialLogin] = useState(false);
   const [needsLink, setNeedsLink] = useState(false);
+  const [application, setApplication] = useState('');
   const [showLogin, setShowLogin] = useState(false);
   const [realname, setRealname] = useState('');
   const [userInfo, setUserInfo] = useState<UserInfoStruct>({
@@ -54,6 +55,7 @@ export default function Header() {
       setUserInfo({ ID: null, userName: '', role: '', isLoggedIn: false });
       // LINE認証は通ったが、まだ部員レコードと紐づいていない状態
       setNeedsLink(Boolean(data.needs_link));
+      setApplication(typeof data.application === 'string' ? data.application : '');
     } catch (e) {
       console.error('failed to check auth:', e);
     }
@@ -124,6 +126,7 @@ export default function Header() {
     { path: '/calendar', label: 'HOME' },
     { path: '/account', label: '会計' },
     { path: '/payments', label: '部費' },
+    ...(['部長', '副部長'].includes(userInfo.role) ? [{ path: '/members', label: '入部申請' }] : []),
   ];
 
   useEffect(() => {
@@ -226,6 +229,7 @@ export default function Header() {
       {/* LINE連携モーダル（初回のみ） */}
       {needsLink && (
         <LineLinkModal
+          application={application}
           onLinked={async () => {
             setNeedsLink(false);
             await checkAuth();

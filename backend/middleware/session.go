@@ -1,9 +1,13 @@
 package middleware
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
+	"log"
 	"net/http"
 
+	"club-app/query"
 	"club-app/util"
 )
 
@@ -24,9 +28,12 @@ func CheckAuthHandler(w http.ResponseWriter, r *http.Request) error {
 
 	if user == nil {
 		// LINE認証は通ったが学籍番号との紐づけがまだ、という状態をフロントに伝える
+		lineID := pendingLineID(r)
 		return json.NewEncoder(w).Encode(map[string]interface{}{
 			"logged_in":  false,
-			"needs_link": hasPendingLineAccount(r),
+			"needs_link": lineID != "",
+			// 申請済みなら pending / rejected。未申請なら空
+			"application": applicationStatus(lineID),
 		})
 	}
 
@@ -41,12 +48,29 @@ func CheckAuthHandler(w http.ResponseWriter, r *http.Request) error {
 	})
 }
 
-func hasPendingLineAccount(r *http.Request) bool {
+// pendingLineID は LINE認証は通ったが部員と未連携の人のLINE ID。いなければ空。
+func pendingLineID(r *http.Request) string {
 	session, err := util.Store.Get(r, util.SessionName)
 	if err != nil {
-		return false
+		return ""
 	}
 
-	pending, ok := session.Values[util.PendingLineIDKey].(string)
-	return ok && pending != ""
+	pending, _ := session.Values[util.PendingLineIDKey].(string)
+	return pending
+}
+
+func applicationStatus(lineID string) string {
+	if lineID == "" {
+		return ""
+	}
+	var status string
+	err := util.DB.QueryRow(query.SelectApplicationStatus, lineID).Scan(&status)
+	if errors.Is(err, sql.ErrNoRows) {
+		return ""
+	}
+	if err != nil {
+		log.Printf("application status lookup failed: %v", err)
+		return ""
+	}
+	return status
 }

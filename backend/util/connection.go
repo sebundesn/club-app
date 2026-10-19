@@ -84,6 +84,7 @@ func migrate() error {
 		{"users: line_user_id index", query.AddLineUserIDIndex},
 		{"notificate", query.CreateNotificateTable},
 		{"event_members", query.CreateEventMembers},
+		{"member_applications", query.CreateApplicationsTable},
 		{"events: fee", query.AddEventFeeColumn},
 		{"event_members: paid_at", query.AddEventMemberPaidAtColumn},
 		{"event_members: unpaid index", query.CreateEventMembersUnpaidIndex},

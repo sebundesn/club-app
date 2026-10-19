@@ -182,8 +182,9 @@ func LinkLineAccount(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 
 	req.StudentID = strings.TrimSpace(req.StudentID)
-	if req.StudentID == "" {
-		return util.BadRequest("学籍番号を入力してください。", errors.New("student_id is empty"))
+	req.Name = strings.TrimSpace(req.Name)
+	if !validStudentID(req.StudentID) {
+		return util.BadRequest("学籍番号は半角英数字7文字で入力してください。", errors.New("invalid student_id"))
 	}
 
 	var user util.SessionUser
@@ -192,10 +193,7 @@ func LinkLineAccount(w http.ResponseWriter, r *http.Request) error {
 	err = util.DB.QueryRow(query.LinkLineAccount, req.StudentID, lineUserID, displayName).
 		Scan(&user.ID, &name, &role)
 	if errors.Is(err, sql.ErrNoRows) {
-		return util.Forbidden(
-			"この学籍番号は登録されていないか、既に別のLINEアカウントと連携済みです。",
-			errors.New("link failed for student_id"),
-		)
+		return applyForMembership(w, lineUserID, req)
 	}
 	if err != nil {
 		return util.Internal("連携に失敗しました。", err)
@@ -213,6 +211,60 @@ func LinkLineAccount(w http.ResponseWriter, r *http.Request) error {
 		"name": user.Name,
 		"role": user.Role,
 	})
+}
+
+// applyForMembership は学籍番号が連携できなかったときの続き。
+// 既に誰かと連携済みの番号は断り、未登録の番号なら入部申請として保存する。
+func applyForMembership(w http.ResponseWriter, lineUserID string, req model.LinkAccountRequest) error {
+	var exists bool
+	if err := util.DB.QueryRow(query.StudentIDExists, req.StudentID).Scan(&exists); err != nil {
+		return util.Internal("連携に失敗しました。", err)
+	}
+	if exists {
+		return util.Forbidden(
+			"この学籍番号は既に別のLINEアカウントと連携済みです。心当たりがなければ部長・副部長に連絡してください。",
+			errors.New("student_id already linked"),
+		)
+	}
+
+	if req.Name == "" || len([]rune(req.Name)) > maxNameLength {
+		return util.BadRequest(
+			fmt.Sprintf("申請には名前(%d文字以内)が必要です。", maxNameLength),
+			errors.New("name is required for application"),
+		)
+	}
+
+	var status string
+	err := util.DB.QueryRow(query.UpsertApplication, lineUserID, req.StudentID, req.Name).Scan(&status)
+	if errors.Is(err, sql.ErrNoRows) {
+		// 承認済みなのにここに来る = 承認後の再ログインが必要な状態
+		return util.Forbidden("既に承認されています。LINEでもう一度ログインしてください。", errors.New("application already approved"))
+	}
+	if err != nil {
+		return util.Internal("申請に失敗しました。", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	return json.NewEncoder(w).Encode(map[string]string{
+		"status":  status,
+		"message": "入部を申請しました。部長・副部長の承認をお待ちください。",
+	})
+}
+
+const maxNameLength = 50
+
+// 学籍番号は半角英数字7文字(users.student_id が VARCHAR(7) のため)
+func validStudentID(s string) bool {
+	if len(s) != 7 {
+		return false
+	}
+	for _, c := range s {
+		if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z') {
+			return false
+		}
+	}
+	return true
 }
 
 func randomState() (string, error) {

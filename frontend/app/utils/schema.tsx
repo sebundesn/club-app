@@ -124,3 +124,11 @@ export interface UnpaidResponse {
   items: UnpaidItem[];
   total: number;
 }
+
+/** 承認待ちの入部申請 */
+export interface Application {
+  id: number;
+  student_id: string;
+  name: string;
+  created_at: string;
+}
