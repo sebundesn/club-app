@@ -126,6 +126,7 @@ export default function Header() {
     { path: '/calendar', label: 'HOME' },
     { path: '/account', label: '会計' },
     { path: '/payments', label: '部費' },
+    { path: '/upload', label: 'アップロード' },
     ...(['部長', '副部長'].includes(userInfo.role) ? [{ path: '/members', label: '入部申請' }] : []),
   ];
 

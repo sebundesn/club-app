@@ -23,7 +23,8 @@ import (
 
 const (
 	// 1リクエスト全体のサイズ上限。ディスクを埋められないよう必ず頭打ちにする。
-	maxUploadSize = 20 << 20 // 20MB
+	// スマホの写真は1枚が数MBあるので、数枚まとめて送れる大きさにしている(1枚あたりは maxPhotoBytes で別に制限)。
+	maxUploadSize = 60 << 20 // 60MB
 	// メモリに載せる上限。超えた分はテンポラリファイルに落ちる。
 	maxUploadMemory = 10 << 20 // 10MB
 	maxUploadFiles  = 10
@@ -122,6 +123,15 @@ func UploadReceipt(w http.ResponseWriter, r *http.Request) error {
 	user, err := utility.RequireLogin(r)
 	if err != nil {
 		return err
+	}
+
+	// 変換前のファイルでディスクを埋められないよう、同時に受け付ける数を絞る(アルバムと共通)
+	select {
+	case uploadSlots <- struct{}{}:
+		defer func() { <-uploadSlots }()
+	default:
+		return utility.NewAppError(http.StatusServiceUnavailable,
+			"アップロードが混み合っています。少し待ってからもう一度お試しください。", errors.New("too many concurrent uploads"))
 	}
 
 	// ParseMultipartForm より先に包むことで、巨大なボディを読み切る前に打ち切れる

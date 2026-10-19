@@ -107,6 +107,7 @@
 /* モバイル用ナビゲーション */
 .nav-mobile {
   display: flex;
+  flex-wrap: wrap; /* 項目が増えても、狭い画面で横にはみ出さず折り返す */
   align-items: center;
   justify-content: center;
   gap: 0.75rem;

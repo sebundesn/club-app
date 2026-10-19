@@ -531,3 +531,76 @@
     display: none;
   }
 }
+
+/* ホームの「あなたの部費」 */
+.unpaid-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.unpaid-head .upcoming-title {
+  margin: 0;
+}
+
+.unpaid-more {
+  font-size: 0.875rem;
+  color: #336c2e;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.unpaid-ok {
+  margin: 0;
+  color: #2a5627;
+}
+
+.unpaid-total {
+  margin: 0 0 0.5rem;
+  color: #7a6253;
+}
+
+.unpaid-total strong {
+  font-size: 1.5rem;
+  color: #b91c1c;
+}
+
+.unpaid-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.unpaid-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid #eee8e2;
+}
+
+.unpaid-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.unpaid-date {
+  display: block;
+  font-size: 0.8rem;
+  color: #7a6253;
+}
+
+.unpaid-amount {
+  flex-shrink: 0;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.unpaid-rest {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: #7a6253;
+}

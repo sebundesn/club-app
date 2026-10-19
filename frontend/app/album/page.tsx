@@ -5,27 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { MediaAlbum, MediaItem } from '../utils/schema';
 import { backendURL, readErrorMessage } from '../utils/api';
 import { useToast } from '../../components/Toast';
+import { PHOTOS_PER_REQUEST, VIDEO_MAX_SEC, readVideoDuration, uploadInBatches, uploadMedia } from '../utils/mediaUpload';
 import '../subpages.css';
-
-const PHOTOS_PER_REQUEST = 10;
-const VIDEO_MAX_SEC = 60;
-
-// 動画の長さをアップロード前に確認する。サーバーでも確認するので、これは待たせないための早期チェック。
-const readVideoDuration = (file: File): Promise<number> =>
-  new Promise((resolve, reject) => {
-    const video = document.createElement('video');
-    const url = URL.createObjectURL(file);
-    video.preload = 'metadata';
-    video.onloadedmetadata = () => {
-      URL.revokeObjectURL(url);
-      resolve(video.duration);
-    };
-    video.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('metadata error'));
-    };
-    video.src = url;
-  });
 
 interface EventSummary {
   id: number;
@@ -124,43 +105,20 @@ function AlbumContent() {
     return () => clearInterval(timer);
   }, [hasProcessing, load]);
 
-  const send = async (kind: 'photo' | 'video', files: File[]): Promise<boolean> => {
-    const form = new FormData();
-    form.append('eventID', String(eventID));
-    form.append('kind', kind);
-    files.forEach((f) => form.append('files', f));
-    try {
-      const res = await fetch(`${backendURL}/api/uploadMedia`, {
-        method: 'POST',
-        body: form,
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        showToast(await readErrorMessage(res, 'アップロードに失敗しました。'), 'error');
-        return false;
-      }
-      return true;
-    } catch (e) {
-      console.error('failed to upload:', e);
-      showToast('通信に失敗しました。', 'error');
-      return false;
-    }
-  };
-
   const onPhotos = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     e.target.value = '';
     if (files.length === 0) return;
 
     // 1リクエストの枚数に上限があるので、まとめて送らず10枚ずつ順に送る
-    let sent = 0;
-    for (let i = 0; i < files.length; i += PHOTOS_PER_REQUEST) {
-      setUploading(`写真をアップロード中… ${sent}/${files.length}`);
-      const batch = files.slice(i, i + PHOTOS_PER_REQUEST);
-      if (!(await send('photo', batch))) break;
-      sent += batch.length;
-    }
+    const { sent, error } = await uploadInBatches(
+      files,
+      PHOTOS_PER_REQUEST,
+      (batch) => uploadMedia(eventID, 'photo', batch),
+      (n) => setUploading(`写真をアップロード中… ${n}/${files.length}`),
+    );
     setUploading('');
+    if (error) showToast(error, 'error');
     if (sent > 0) showToast(`${sent}枚アップロードしました。`, 'success');
     await load();
   };
@@ -181,9 +139,10 @@ function AlbumContent() {
     }
 
     setUploading('動画をアップロード中…(完了まで画面を閉じないでください)');
-    const ok = await send('video', [file]);
+    const result = await uploadMedia(eventID, 'video', [file]);
     setUploading('');
-    if (ok) showToast('動画を受け付けました。変換が終わると表示されます。', 'success');
+    if (result.ok) showToast('動画を受け付けました。変換が終わると表示されます。', 'success');
+    else showToast(result.error ?? 'アップロードに失敗しました。', 'error');
     await load();
   };
 

@@ -5,6 +5,7 @@ import { generateCalendarDays, toDateKey } from '../utils/calendar';
 import { getNowTime } from '../utils/getTime';
 import { buildMonthRows, buildUpcomingRows, monthsToFetch } from '../utils/upcoming';
 import EventTable from './EventTable';
+import MyUnpaidCard from './MyUnpaidCard';
 import { DateTitle, EventDetail, EventStruct } from '../utils/schema';
 import { backendURL, readErrorMessage } from '../utils/api';
 import { useToast } from '../../components/Toast';
@@ -211,6 +212,9 @@ export default function CalendarPage() {
 
   return (
     <div className="calendar-container">
+      {/* 自分の部費の未払い */}
+      <MyUnpaidCard />
+
       {/* 予定の一覧(日付・曜日・内容)。「これから」は今日を最上段に1か月先まで、「月別」は月ごと */}
       <div className="card mb-8">
         <div className="list-modes" role="tablist">

@@ -5,7 +5,7 @@
 #   LINE_CHANNEL_ACCESS_TOKEN=xxxx SITE_URL=https://xxxx.cloudfront.net \
 #     ./scripts/richmenu/create.sh path/to/menu.png
 #
-# 画像は 2500x843 px、PNG/JPEG、1MB以内。左から「予定表」「部費」「アルバム」の3分割で作る。
+# 画像は 2500x843 px、PNG/JPEG、1MB以内。左から「予定表」「部費」「アルバム」「アップロード」の4分割で作る。
 # LINE_CHANNEL_ACCESS_TOKEN は Messaging API チャネルの「チャネルアクセストークン(長期)」。
 # リッチメニューの作成・設定は無料で、メッセージ通数にも数えられない。
 set -euo pipefail
@@ -20,7 +20,7 @@ SITE_URL="${SITE_URL%/}"
 API=https://api.line.me/v2/bot
 AUTH="Authorization: Bearer $LINE_CHANNEL_ACCESS_TOKEN"
 
-# 3分割(2500px / 3 ≒ 833px)。
+# 4分割(2500px / 4 = 625px)。
 # 全ボタンに openExternalBrowser=1 を付けて、端末の外部ブラウザ(Safari/Chrome)で開く。
 # LINE内ブラウザでは初回ログインの認証番号が見られず、ログイン状態も外部ブラウザと共有されないため。
 BODY=$(cat <<JSON
@@ -30,12 +30,14 @@ BODY=$(cat <<JSON
   "name": "club-app-menu",
   "chatBarText": "メニュー",
   "areas": [
-    {"bounds": {"x": 0,    "y": 0, "width": 833, "height": 843},
+    {"bounds": {"x": 0,    "y": 0, "width": 625, "height": 843},
      "action": {"type": "uri", "label": "予定表", "uri": "$SITE_URL/calendar?openExternalBrowser=1"}},
-    {"bounds": {"x": 833,  "y": 0, "width": 834, "height": 843},
+    {"bounds": {"x": 625,  "y": 0, "width": 625, "height": 843},
      "action": {"type": "uri", "label": "部費",   "uri": "$SITE_URL/payments?openExternalBrowser=1"}},
-    {"bounds": {"x": 1667, "y": 0, "width": 833, "height": 843},
-     "action": {"type": "uri", "label": "アルバム", "uri": "$SITE_URL/album?openExternalBrowser=1"}}
+    {"bounds": {"x": 1250, "y": 0, "width": 625, "height": 843},
+     "action": {"type": "uri", "label": "アルバム", "uri": "$SITE_URL/album?openExternalBrowser=1"}},
+    {"bounds": {"x": 1875, "y": 0, "width": 625, "height": 843},
+     "action": {"type": "uri", "label": "アップロード", "uri": "$SITE_URL/upload?openExternalBrowser=1"}}
   ]
 }
 JSON
