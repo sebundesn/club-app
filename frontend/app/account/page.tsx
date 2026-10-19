@@ -3,12 +3,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   ReceiptDataStruct,
+  ReceiptImage,
   MoneyLogStruct,
   NewMoneyLog,
   MemberOption,
   EventMember,
 } from '../utils/schema';
-import { backendURL, readErrorMessage } from '../utils/api';
+import { backendURL, readErrorMessage, receiptSrc } from '../utils/api';
 import { useToast } from '../../components/Toast';
 import './account.css';
 import Select, { SelectInstance } from 'react-select';
@@ -40,21 +41,23 @@ export default function Account() {
   // レシート情報を取得
   const getReceipts = useCallback(async () => {
     try {
-      const res = await fetch(`${backendURL}/api/getReceiptsInfo?howLongWeek=${HOW_LONG_WEEK}`);
+      const res = await fetch(`${backendURL}/api/getReceiptsInfo?howLongWeek=${HOW_LONG_WEEK}`, {
+        credentials: 'include',
+      });
 
       if (!res.ok) {
         showToast(await readErrorMessage(res, 'レシートの取得に失敗しました。'), 'error');
         return;
       }
 
-      const data: { id: number; title: string; date: string; images: string[] | null }[] =
+      const data: { id: number; title: string; date: string; images: ReceiptImage[] | null }[] =
         (await res.json()) ?? [];
 
       const formattedData: ReceiptDataStruct[] = data.map((item) => ({
         ID: item.id,
         Title: item.title,
         Date: item.date.split('T')[0],
-        ImageURLs: item.images || [],
+        Images: item.images || [],
       }));
 
       setReceiptDatas(formattedData);
@@ -191,12 +194,12 @@ export default function Account() {
   };
 
   // 画像を削除
-  const deleteImage = async (eventID: number, url: string) => {
+  const deleteImage = async (eventID: number, imageID: number) => {
     try {
       const res = await fetch(`${backendURL}/api/deleteImage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event_id: eventID, url }),
+        body: JSON.stringify({ event_id: eventID, image_id: imageID }),
         credentials: 'include',
       });
 
@@ -209,7 +212,7 @@ export default function Account() {
         if (!prev) return prev;
         return {
           ...prev,
-          ImageURLs: prev.ImageURLs.filter((imgUrl) => imgUrl !== url),
+          Images: prev.Images.filter((img) => img.id !== imageID),
         };
       });
 
@@ -218,7 +221,7 @@ export default function Account() {
           if (item.ID === eventID) {
             return {
               ...item,
-              ImageURLs: item.ImageURLs.filter((imgUrl) => imgUrl !== url),
+              Images: item.Images.filter((img) => img.id !== imageID),
             };
           }
           return item;
@@ -342,7 +345,7 @@ export default function Account() {
                       <h3 className="text-lg font-bold text-forest-800">{event.Title}</h3>
                     </div>
                     <span className="badge-count px-3 py-1 bg-forest-100 text-forest-700 text-sm rounded-full font-medium">
-                      {event.ImageURLs.length}枚
+                      {event.Images.length}枚
                     </span>
                   </div>
                   <div className="flex-actions flex gap-2">
@@ -458,24 +461,24 @@ export default function Account() {
                   <hr className="border-earth-200 mb-6" />
                 </div>
 
-                {receiptModal.ImageURLs.length === 0 ? (
+                {receiptModal.Images.length === 0 ? (
                   <p className="modal-empty-text text-center text-earth-600 py-8">登録されているレシート画像はありません。</p>
                 ) : (
                   <div className="image-thumbnail-grid grid md:grid-cols-2 gap-4">
-                    {receiptModal.ImageURLs.map((url, idx) => (
-                      <div key={idx} className="image-wrapper relative group">
+                    {receiptModal.Images.map((img) => (
+                      <div key={img.id} className="image-wrapper relative group">
                         <img
-                          src={`${backendURL}${url}`}
+                          src={receiptSrc(img.url)}
                           alt="receipt"
                           className="receipt-thumbnail w-full h-48 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-all"
-                          onClick={() => setFullScreenImg(url)}
+                          onClick={() => setFullScreenImg(img.url)}
                         />
                         <button
                           className="btn-delete-image absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center"
                           onClick={(e) => {
                             e.stopPropagation();
                             if (window.confirm('写真を削除しますか？')) {
-                              deleteImage(receiptModal.ID, url);
+                              deleteImage(receiptModal.ID, img.id);
                             }
                           }}
                         >
@@ -493,7 +496,7 @@ export default function Account() {
           {fullScreenImg && (
             <div className="fullscreen-overlay fixed inset-0 z-[60] flex items-center justify-center bg-black/90" onClick={() => setFullScreenImg(null)}>
               <img
-                src={`${backendURL}${fullScreenImg}`}
+                src={receiptSrc(fullScreenImg)}
                 alt="receiptImg"
                 className="fullscreen-image max-w-[90vw] max-h-[90vh] object-contain"
               />

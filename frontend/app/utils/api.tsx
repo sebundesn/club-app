@@ -2,6 +2,13 @@
 export const backendURL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 
 /**
+ * レシートの表示URL。S3の有効期限付きURLは絶対URLなのでそのまま使い、
+ * 旧データのサーバー内パス(/uploads/...)だけバックエンドのURLを前に付ける。
+ */
+export const receiptSrc = (url: string): string =>
+  /^https?:\/\//.test(url) ? url : `${backendURL}${url}`;
+
+/**
  * バックエンドは失敗時に {"message": "..."} を返す。
  * message はユーザー向けの日本語文言だけで、内部エラーはサーバーのログにしか出ない。
  * 読めなければステータスコードから当たり障りのない文言にフォールバックする。

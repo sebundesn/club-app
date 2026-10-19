@@ -36,11 +36,16 @@ export interface NewMoneyLog {
   amount: number | string;
 };
 
+export interface ReceiptImage {
+  id: number;
+  url: string;
+}
+
 export interface ReceiptDataStruct {
   ID: number;
   Title: string;
   Date: string;
-  ImageURLs: string[];
+  Images: ReceiptImage[];
 };
 
 /** 学務システムからエクスポートしたCSVの列名に合わせている */

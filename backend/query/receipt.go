@@ -24,20 +24,27 @@ const CreateReceiptImagesEventIndex = `
 
 // To get recipt images for certain events
 const GetReceiptsLog = `
-	SELECT e.id, e.title, e.date, ri.image_url
+	SELECT e.id, e.title, e.date, ri.id, ri.image_url, ri.object_key
 	FROM events e
 	LEFT JOIN receipt_images ri ON e.id = ri.event_id
 	WHERE e.date BETWEEN (NOW() - CAST($1 || ' week' AS INTERVAL))
 		AND (NOW() + INTERVAL '1 week')
-	ORDER BY e.date DESC;
+	ORDER BY e.date DESC, ri.id;
 `
 
+const CountReceipts = `
+	SELECT COUNT(*) FROM receipt_images WHERE event_id = $1;
+`
+
+// image_url は旧データ(サーバーのディスク)用。S3に置く分は object_key だけを使う。
 const InsertReceipts = `
-	INSERT INTO receipt_images (event_id, image_url)
-	VALUES ($1, $2);
+	INSERT INTO receipt_images (event_id, image_url, uploaded_by, object_key, size_bytes)
+	VALUES ($1, '', $2, $3, $4);
 `
 
+// 消した行のキーを返してもらい、S3のファイルも消す
 const DeleteImgQuery = `
 	DELETE FROM receipt_images
-	WHERE event_id = $1 AND image_url = $2;
+	WHERE id = $1 AND event_id = $2
+	RETURNING image_url, object_key;
 `
