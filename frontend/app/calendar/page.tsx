@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { generateCalendarDays, toDateKey } from '../utils/calendar';
 import { getNowTime } from '../utils/getTime';
+import { buildUpcomingRows, monthsToFetch } from '../utils/upcoming';
 import { DateTitle, EventDetail, EventStruct } from '../utils/schema';
 import { backendURL, readErrorMessage } from '../utils/api';
 import { useToast } from '../../components/Toast';
@@ -28,6 +29,7 @@ export default function CalendarPage() {
   const [eventMap, setEventMap] = useState<Record<string, DateTitle[]>>({});
   const [dayEvents, setDayEvents] = useState<EventDetail[]>([]);
   const [editing, setEditing] = useState<EventStruct | null>(null);
+  const [upcomingEvents, setUpcomingEvents] = useState<DateTitle[]>([]);
   const days = generateCalendarDays(year, month);
 
   const handlePrevMonth = () => {
@@ -72,6 +74,23 @@ export default function CalendarPage() {
     }
   }, [year, month, showToast]);
 
+  // 今日から1か月先までの予定(一覧用)。表示中の月とは別に取得する。
+  const getUpcomingEvents = useCallback(async () => {
+    try {
+      const lists = await Promise.all(
+        monthsToFetch(new Date()).map(async (m) => {
+          const res = await fetch(`${backendURL}/api/getMonthEvents?month=${m}`);
+          if (!res.ok) throw new Error(await readErrorMessage(res, '予定の取得に失敗しました。'));
+          return ((await res.json()) as DateTitle[] | null) ?? [];
+        }),
+      );
+      setUpcomingEvents(lists.flat());
+    } catch (e) {
+      console.error('failed to get upcoming events:', e);
+      showToast(e instanceof Error ? e.message : '通信に失敗しました。', 'error');
+    }
+  }, [showToast]);
+
   const getDateEvents = useCallback(
     async (dateStr: string): Promise<EventDetail[]> => {
       const res = await fetch(`${backendURL}/api/getDateEvent?date=${dateStr}`);
@@ -86,10 +105,8 @@ export default function CalendarPage() {
     [showToast],
   );
 
-  const handleDateClick = async (date: number) => {
-    if (!date) return;
-
-    const dateStr = toDateKey(year, month, date);
+  // 日付(YYYY-MM-DD)を指定して、その日の詳細モーダルを開く
+  const openDay = async (dateStr: string) => {
     setSelectedDate(dateStr);
 
     try {
@@ -102,6 +119,11 @@ export default function CalendarPage() {
       console.error('詳細取得失敗', e);
       showToast('通信に失敗しました。', 'error');
     }
+  };
+
+  const handleDateClick = (date: number) => {
+    if (!date) return;
+    return openDay(toDateKey(year, month, date));
   };
 
   // イベント保存（新規作成 / 更新）
@@ -136,6 +158,7 @@ export default function CalendarPage() {
       }
 
       await getMonthEvents();
+      await getUpcomingEvents();
       setDayEvents(await getDateEvents(selectedDate));
       setEditing(null);
       showToast('保存しました。', 'success');
@@ -158,8 +181,52 @@ export default function CalendarPage() {
     getMonthEvents();
   }, [getMonthEvents]);
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 同上
+    getUpcomingEvents();
+  }, [getUpcomingEvents]);
+
+  const upcomingRows = useMemo(() => buildUpcomingRows(upcomingEvents, new Date()), [upcomingEvents]);
+
   return (
     <div className="calendar-container">
+      {/* 今日から1か月先までの予定(日付・曜日・内容) */}
+      <div className="card mb-8">
+        <h2 className="upcoming-title">これからの予定(1か月先まで)</h2>
+        <div className="upcoming-table" role="table">
+          <div className="upcoming-row upcoming-head" role="row">
+            <span role="columnheader">日付</span>
+            <span role="columnheader">曜日</span>
+            <span role="columnheader">内容</span>
+          </div>
+          {upcomingRows.map((row) => (
+            <button
+              key={row.date}
+              type="button"
+              role="row"
+              className={`upcoming-row upcoming-item${row.isToday ? ' today' : ''}`}
+              onClick={() => openDay(row.date)}
+            >
+              <span className="upcoming-date">
+                {row.month}/{row.day}
+              </span>
+              <span
+                className={`upcoming-weekday ${row.weekday === 0 ? 'sunday' : row.weekday === 6 ? 'saturday' : ''}`}
+              >
+                {dayNames[row.weekday]}
+              </span>
+              <span className="upcoming-content">
+                {row.titles.length === 0 ? (
+                  <span className="upcoming-empty">予定なし</span>
+                ) : (
+                  row.titles.map((t, i) => <span key={i}>{t}</span>)
+                )}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* カレンダーエリア */}
       <div className="card mb-8">
         <div className="calendar-header">

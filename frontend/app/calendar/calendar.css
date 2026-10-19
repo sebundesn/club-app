@@ -381,3 +381,81 @@
     margin-top: 0.25rem;
   }
 }
+
+/* これからの予定の一覧(日付 / 曜日 / 内容) */
+.upcoming-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2d4a22;
+}
+
+.upcoming-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.upcoming-row {
+  display: grid;
+  grid-template-columns: 3.5rem 2.25rem minmax(0, 1fr);
+  align-items: start;
+  gap: 0.5rem;
+  padding: 0.6rem 0.5rem;
+  border: none;
+  border-top: 1px solid #eee8e2;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+}
+
+.upcoming-head {
+  border-top: none;
+  padding-top: 0;
+  font-size: 0.75rem;
+  color: #7a6253;
+}
+
+.upcoming-item {
+  cursor: pointer;
+}
+
+.upcoming-item:hover {
+  background: #faf9f8;
+}
+
+.upcoming-item.today {
+  background: #e8f1e4;
+  border-radius: 0.5rem;
+}
+
+.upcoming-date {
+  font-weight: 700;
+  color: #2d4a22;
+  white-space: nowrap;
+}
+
+.upcoming-weekday {
+  text-align: center;
+  color: #2d4a22;
+}
+
+.upcoming-weekday.sunday {
+  color: #dc2626;
+}
+
+.upcoming-weekday.saturday {
+  color: #2563eb;
+}
+
+.upcoming-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.upcoming-empty {
+  color: #9ca3af;
+}
