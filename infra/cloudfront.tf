@@ -45,6 +45,12 @@ resource "aws_cloudfront_distribution" "main" {
   }
 
   origin {
+    origin_id                = "media"
+    domain_name              = aws_s3_bucket.media.bucket_regional_domain_name
+    origin_access_control_id = aws_cloudfront_origin_access_control.site.id
+  }
+
+  origin {
     origin_id   = "api"
     domain_name = aws_eip.app.public_dns
 
@@ -79,6 +85,17 @@ resource "aws_cloudfront_distribution" "main" {
     cached_methods           = ["GET", "HEAD"]
     cache_policy_id          = local.cache_disabled
     origin_request_policy_id = local.origin_all_no_host
+  }
+
+  # アルバムの写真・動画。拡張子補完の関数は付けない(.html を足されてしまうため)
+  ordered_cache_behavior {
+    path_pattern           = "/media/*"
+    target_origin_id       = "media"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    cache_policy_id        = local.cache_optimized
+    compress               = true
   }
 
   ordered_cache_behavior {

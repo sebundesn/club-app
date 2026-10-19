@@ -29,6 +29,8 @@ resource "aws_ssm_parameter" "env" {
     COOKIE_SAMESITE    = "lax" # CloudFrontで同一オリジンにしているので lax でよい
     FRONTEND_URL       = local.site_url
     LINE_REDIRECT_URI  = "${local.site_url}/api/auth/line/callback"
+    MEDIA_BUCKET       = aws_s3_bucket.media.id
+    AWS_REGION         = var.region
   }
 
   name  = "/club-app/${each.key}"

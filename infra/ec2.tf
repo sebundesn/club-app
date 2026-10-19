@@ -40,6 +40,15 @@ resource "aws_iam_role_policy" "app" {
         Action   = ["s3:PutObject"]
         Resource = "${aws_s3_bucket.artifacts.arn}/backups/*"
       },
+      {
+        # アルバムとレシートの読み書き。バケット全体ではなく使うプレフィックスだけに絞る
+        Effect = "Allow"
+        Action = ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"]
+        Resource = [
+          "${aws_s3_bucket.media.arn}/media/*",
+          "${aws_s3_bucket.media.arn}/receipts/*",
+        ]
+      },
     ]
   })
 }
