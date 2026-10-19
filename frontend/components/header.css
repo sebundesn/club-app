@@ -1,9 +1,9 @@
 /* ヘッダー全体の基盤 */
+/* sticky にして、ヘッダー自身の高さぶんだけ自然に場所を取らせる。
+   fixed + 固定高さの空きブロックだと、スマホの2段のヘッダーでページの上が隠れていた。 */
 .site-header {
-  position: fixed;
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
   z-index: 50;
   background-color: var(--color-earth-50);
   padding: 1rem 0;
@@ -138,17 +138,6 @@
   background-color: var(--color-forest-600);
   color: #ffffff;
   font-weight: 1000;
-}
-
-/* ヘッダー背後のスペース埋め用ブロック */
-.header-offset {
-  height: 6rem;
-}
-
-@media (min-width: 768px) {
-  .header-offset {
-    height: 5rem;
-  }
 }
 
 /* モーダル基本設定 */

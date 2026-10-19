@@ -363,3 +363,21 @@
     font-size: 1.5rem;
   }
 }
+
+/* スマホでは日付のマスが細長くなるので、高さを抑える(イベントがあれば中身に合わせて伸びる) */
+@media (max-width: 480px) {
+  .day-cell {
+    min-height: 4.25rem;
+  }
+
+  .day-cell.today::after {
+    top: 0.4rem;
+    right: 0.35rem;
+    width: 0.5rem;
+    height: 0.5rem;
+  }
+
+  .event-badge-container {
+    margin-top: 0.25rem;
+  }
+}

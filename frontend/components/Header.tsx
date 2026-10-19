@@ -220,8 +220,6 @@ export default function Header() {
         </nav>
       </header>
 
-      {/* メインコンテンツのオフセット */}
-      <div className="header-offset" />
 
       {/* LINEログインモーダル */}
       {showLogin && !userInfo.isLoggedIn && <LineLoginModal onClose={() => setShowLogin(false)} />}
