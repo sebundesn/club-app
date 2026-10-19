@@ -29,3 +29,9 @@ const DelMoneyLog = `
 	DELETE FROM accountLog
 	WHERE id = $1;
 `
+
+// 収支をイベントに結びつける(任意)。イベントごとの収入・支出の集計に使う。
+// イベントを消しても会計の記録は残したいので SET NULL にしている。
+const AddAccountLogEventColumn = `
+	ALTER TABLE accountLog ADD COLUMN IF NOT EXISTS event_id INT REFERENCES events(id) ON DELETE SET NULL;
+`

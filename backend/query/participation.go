@@ -11,6 +11,47 @@ const CreateEventMembers = `CREATE TABLE IF NOT EXISTS event_members (
 	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );`
 
+// amount は請求額、paid_at は支払い済みになった時刻(NULL なら未払い)。
+// 一部払いは扱わず、支払い済みか未払いかの2値にしている。
+const AddEventMemberPaidAtColumn = `
+	ALTER TABLE event_members ADD COLUMN IF NOT EXISTS paid_at TIMESTAMP;
+`
+
+// 未払い一覧(自分の分・会計用の全員分)を引くためのインデックス
+const CreateEventMembersUnpaidIndex = `
+	CREATE INDEX IF NOT EXISTS event_members_unpaid_idx ON event_members (user_id) WHERE paid_at IS NULL;
+`
+
+// 会計が支払いを確認したとき、または取り消すときに使う。
+const SetEventMemberPaid = `
+	UPDATE event_members
+	SET paid_at = CASE WHEN $3 THEN CURRENT_TIMESTAMP ELSE NULL END
+	WHERE event_id = $1 AND user_id = $2;
+`
+
+const SetEventMemberAmount = `
+	UPDATE event_members SET amount = $2 WHERE event_id = $1;
+`
+
+// 自分の未払い。請求額が0の行は払うものがないので除く。
+const SelectUnpaidByUser = `
+	SELECT e.id, e.title, e.date, em.amount
+	FROM event_members em
+	INNER JOIN events e ON e.id = em.event_id
+	WHERE em.user_id = $1 AND em.paid_at IS NULL AND em.amount > 0
+	ORDER BY e.date;
+`
+
+// 会計用: 全員分の未払い
+const SelectUnpaidAll = `
+	SELECT e.id, e.title, e.date, u.id, u.name, em.amount
+	FROM event_members em
+	INNER JOIN events e ON e.id = em.event_id
+	INNER JOIN users u ON u.id = em.user_id
+	WHERE em.paid_at IS NULL AND em.amount > 0
+	ORDER BY e.date, u.name;
+`
+
 const GetEventMembers = `
 	SELECT em.event_id, em.user_id, u.name AS user_name, em.amount
 	FROM event_members em

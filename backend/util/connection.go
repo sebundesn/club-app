@@ -81,6 +81,14 @@ func migrate() error {
 		{"users: line_user_id index", query.AddLineUserIDIndex},
 		{"notificate", query.CreateNotificateTable},
 		{"event_members", query.CreateEventMembers},
+		{"event_members: paid_at", query.AddEventMemberPaidAtColumn},
+		{"event_members: unpaid index", query.CreateEventMembersUnpaidIndex},
+		{"accountLog: event_id", query.AddAccountLogEventColumn},
+		{"receipt_images: columns", query.AddReceiptColumns},
+		{"receipt_images: event index", query.CreateReceiptImagesEventIndex},
+		{"event_media", query.CreateEventMediaTable},
+		{"event_media: event index", query.CreateEventMediaIndex},
+		{"event_media: uploader index", query.CreateEventMediaUploaderIndex},
 	}
 
 	for _, m := range migrations {
