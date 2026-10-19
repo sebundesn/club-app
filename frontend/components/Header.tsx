@@ -224,7 +224,15 @@ export default function Header() {
       {showLogin && !userInfo.isLoggedIn && <LineLoginModal onClose={() => setShowLogin(false)} />}
 
       {/* LINE連携モーダル（初回のみ） */}
-      {needsLink && <LineLinkModal onLinked={async () => { setNeedsLink(false); await checkAuth(); }} />}
+      {needsLink && (
+        <LineLinkModal
+          onLinked={async () => {
+            setNeedsLink(false);
+            await checkAuth();
+          }}
+          onClose={() => setNeedsLink(false)}
+        />
+      )}
 
       {/* 初期ログインモーダル */}
       {isInitialLogin && (

@@ -5,7 +5,7 @@ set -euxo pipefail
 REGION=${region}
 BUCKET=${artifacts_bucket}
 
-dnf install -y postgresql16-server ffmpeg-free
+dnf install -y postgresql16-server
 
 # --- Postgres ---
 postgresql-setup --initdb

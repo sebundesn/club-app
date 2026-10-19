@@ -8,10 +8,12 @@ import { backendURL, readErrorMessage } from '../app/utils/api';
 interface LineLinkModalProps {
   /** 連携に成功したあとに呼ばれる */
   onLinked: () => void | Promise<void>;
+  /** 連携せずに閉じる(背景クリック・Esc・×)。未連携のままなのでログインはされない。 */
+  onClose: () => void;
 }
 
-/** 初回ログイン時に学籍番号でLINEアカウントを部員レコードに紐づけるモーダル。閉じられない。 */
-export default function LineLinkModal({ onLinked }: LineLinkModalProps) {
+/** 初回ログイン時に学籍番号でLINEアカウントを部員レコードに紐づけるモーダル。 */
+export default function LineLinkModal({ onLinked, onClose }: LineLinkModalProps) {
   const { showToast } = useToast();
   const [studentID, setStudentID] = useState('');
 
@@ -46,7 +48,7 @@ export default function LineLinkModal({ onLinked }: LineLinkModalProps) {
   };
 
   return (
-    <Modal title="部員情報との連携">
+    <Modal title="部員情報との連携" onClose={onClose}>
       <p className="text-sm text-earth-600 mb-4">
         初回のみ学籍番号の入力が必要です。次回からはLINEでログインするだけで利用できます。
       </p>

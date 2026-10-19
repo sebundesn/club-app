@@ -14,13 +14,10 @@
 
 1. `infra/` で `terraform plan` → 内容を確認 → `terraform apply`
    - 追加されるもの: メディア用S3バケット、CloudFront の `/media/*`、EC2のIAM権限、SSMの `MEDIA_BUCKET` / `AWS_REGION`
-2. **既存のEC2に ffmpeg を入れる**(user_data は `ignore_changes` なので自動では入らない)
-   ```bash
-   # SSM セッションマネージャ等で入って
-   sudo dnf install -y ffmpeg-free
-   ffmpeg -version && ffprobe -version
-   ```
-   AL2023 のリポジトリに `ffmpeg-free` が無い場合は、静的ビルドの ffmpeg を `/usr/local/bin` に置く。
+2. **EC2 に ffmpeg / ffprobe を入れる**。AL2023 の標準リポジトリには `ffmpeg-free` が無い
+   (2026-10 に確認済み: `dnf install ffmpeg-free` は "No match")ので、静的ビルドの arm64 版を
+   `/usr/local/bin` に置く。取得元とチェックサムを確認してから入れること。
+   入れたら `ffmpeg -version` と `ffprobe -version` で確認する。
 3. バックエンドをデプロイ(通常のCI)。起動時に新しいテーブル・列が自動で作られる。
 4. **動作確認(t4g.micro で動画変換が実用か)**: 1分の動画を実機から上げて、完了までの時間を測る。
    遅い・本体が重くなる場合は `infra/variables.tf` の `instance_type` を `t4g.small` に上げる。
