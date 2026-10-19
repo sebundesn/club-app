@@ -35,6 +35,10 @@ export default function Account() {
   const [allClubMembers, setAllClubMembers] = useState<MemberOption[]>([]);
   const [participants, setParticipants] = useState<EventMember[]>([]);
   const [selectedOptions, setSelectedOptions] = useState<MemberOption[]>([]);
+  const [role, setRole] = useState('');
+  const [feeInput, setFeeInput] = useState('');
+  // 画面を出し分けるだけ。実際の権限チェックはサーバー側で行っている
+  const canEditPayment = role === '会計';
   const year = new Date().getFullYear();
   const selectRef = useRef<SelectInstance<MemberOption, true> | null>(null);
 
@@ -283,6 +287,54 @@ export default function Account() {
     }
   }, [showToast]);
 
+  // 支払い済みの切り替え(会計だけ)
+  const setPaid = async (userID: number, paid: boolean) => {
+    if (!receiptModal) return;
+    try {
+      const res = await fetch(`${backendURL}/api/setPaid`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_id: receiptModal.ID, user_id: userID, paid }),
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        showToast(await readErrorMessage(res, '更新に失敗しました。'), 'error');
+        return;
+      }
+      await fetchCurrentParticipants(receiptModal.ID);
+    } catch (e) {
+      console.error('failed to set paid:', e);
+      showToast('通信に失敗しました。', 'error');
+    }
+  };
+
+  // 徴収額の設定(会計だけ)。支払い済みの人の請求額は変わらない。
+  const saveFee = async () => {
+    if (!receiptModal) return;
+    const fee = Number(feeInput);
+    if (feeInput === '' || !Number.isInteger(fee) || fee < 0) {
+      showToast('金額を正しく入力してください。', 'error');
+      return;
+    }
+    try {
+      const res = await fetch(`${backendURL}/api/setEventFee`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_id: receiptModal.ID, fee }),
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        showToast(await readErrorMessage(res, '徴収額の設定に失敗しました。'), 'error');
+        return;
+      }
+      await fetchCurrentParticipants(receiptModal.ID);
+      showToast('徴収額を設定しました。', 'success');
+    } catch (e) {
+      console.error('failed to set fee:', e);
+      showToast('通信に失敗しました。', 'error');
+    }
+  };
+
   //　button that preserve participants
   const takePartInButton = async () => {
     if (!receiptModal) return;
@@ -313,6 +365,20 @@ export default function Account() {
       showToast('通信に失敗しました。', 'error');
     }
   };
+
+  useEffect(() => {
+    const loadRole = async () => {
+      try {
+        const res = await fetch(`${backendURL}/api/checkAuth`, { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json();
+        setRole(typeof data.role === 'string' ? data.role : '');
+      } catch (e) {
+        console.error('failed to check role:', e);
+      }
+    };
+    loadRole();
+  }, []);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 非同期の取得なので state 更新は await のあと。同期的な連鎖レンダリングは起きない。
@@ -402,11 +468,38 @@ export default function Account() {
                           <li key={m.user_id}>
                             <span className="participant_name">{m.user_name}</span>
                             <span className="participant_amount">{m.amount}円</span>
+                            {canEditPayment && (
+                              <label className="ml-3 text-sm">
+                                <input
+                                  type="checkbox"
+                                  checked={m.paid}
+                                  onChange={(e) => setPaid(m.user_id, e.target.checked)}
+                                />{' '}
+                                支払い済み
+                              </label>
+                            )}
                           </li>
                         ))}
                       </ul>
                     )}
                   </div>
+
+                  {canEditPayment && (
+                    <div className="flex items-center gap-2 mb-3 text-sm">
+                      <span>徴収額(未払いの人に反映)</span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={feeInput}
+                        onChange={(e) => setFeeInput(e.target.value)}
+                        className="w-24 border border-earth-200 rounded px-2 py-1"
+                      />
+                      <span>円</span>
+                      <button type="button" onClick={saveFee}>
+                        設定
+                      </button>
+                    </div>
+                  )}
 
                   <div className="flex justify-between items-center gap-2 mb-3">
                     <div className="flex gap-2 text-xs">

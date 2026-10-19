@@ -123,6 +123,7 @@ export default function Header() {
   const navItems = [
     { path: '/calendar', label: 'HOME' },
     { path: '/account', label: '会計' },
+    { path: '/payments', label: '部費' },
   ];
 
   useEffect(() => {

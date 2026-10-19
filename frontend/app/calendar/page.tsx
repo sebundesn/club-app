@@ -317,6 +317,9 @@ export default function CalendarPage() {
                         {event.subtitle && <p className="day-event-subtitle">{event.subtitle}</p>}
                         {event.content && <p className="day-event-content">{event.content}</p>}
                       </div>
+                      <a href={`/album?eventID=${event.id}`} className="btn-secondary">
+                        アルバム
+                      </a>
                       <button
                         type="button"
                         className="btn-secondary"

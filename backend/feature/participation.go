@@ -40,7 +40,7 @@ func GetMembersWithPayment(w http.ResponseWriter, r *http.Request) error {
 		var em model.EventMember
 		var name sql.NullString
 
-		if err := rows.Scan(&em.EventID, &em.UserID, &name, &em.Amount); err != nil {
+		if err := rows.Scan(&em.EventID, &em.UserID, &name, &em.Amount, &em.Paid); err != nil {
 			return util.Internal("参加者の取得に失敗しました。", fmt.Errorf("scan error: %w", err))
 		}
 		em.UserName = name.String

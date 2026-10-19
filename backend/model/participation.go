@@ -5,6 +5,7 @@ type EventMember struct {
 	UserID   int    `json:"user_id"`
 	UserName string `json:"user_name"`
 	Amount   int    `json:"amount"`
+	Paid     bool   `json:"paid"`
 }
 
 // ClubMember は react-select の選択肢に渡す形。

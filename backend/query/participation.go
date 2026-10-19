@@ -64,7 +64,7 @@ const SelectUnpaidAll = `
 `
 
 const GetEventMembers = `
-	SELECT em.event_id, em.user_id, u.name AS user_name, em.amount
+	SELECT em.event_id, em.user_id, u.name AS user_name, em.amount, em.paid_at IS NOT NULL
 	FROM event_members em
 	INNER JOIN users u ON em.user_id = u.id
 	WHERE em.event_id = $1

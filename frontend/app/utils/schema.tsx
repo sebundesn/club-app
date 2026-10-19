@@ -81,6 +81,7 @@ export interface EventMember {
   user_id: number;
   user_name: string;
   amount: number;
+  paid: boolean;
 };
 
 export interface NotificateStruct {
@@ -88,3 +89,38 @@ export interface NotificateStruct {
   title: string;
   due_date: string | null;
 };
+
+/** アルバムの1件(写真・動画) */
+export interface MediaItem {
+  id: number;
+  kind: 'photo' | 'video';
+  url: string;
+  thumb_url: string;
+  status: 'processing' | 'ready';
+  mine: boolean;
+  can_delete: boolean;
+}
+
+export interface MediaAlbum {
+  event_id: number;
+  items: MediaItem[];
+  photo_count: number;
+  photo_limit: number;
+  video_count: number;
+  video_limit: number;
+}
+
+/** 部費の未払い1件。user_id / user_name は会計用の全員分の一覧でだけ入る */
+export interface UnpaidItem {
+  event_id: number;
+  title: string;
+  date: string;
+  amount: number;
+  user_id?: number;
+  user_name?: string;
+}
+
+export interface UnpaidResponse {
+  items: UnpaidItem[];
+  total: number;
+}
