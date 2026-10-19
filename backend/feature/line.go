@@ -134,6 +134,7 @@ func LineCallback(w http.ResponseWriter, r *http.Request) error {
 	if err == nil {
 		user.Name = name.String
 		user.Role = role.String
+		savePicture(user.ID, profile.PictureURL)
 		if err := util.Login(w, r, &user); err != nil {
 			return err
 		}
@@ -147,6 +148,7 @@ func LineCallback(w http.ResponseWriter, r *http.Request) error {
 	// 未連携のLINEアカウント。学籍番号の入力を待つ一時状態にする。
 	session.Values[util.PendingLineIDKey] = profile.UserID
 	session.Values[util.PendingLineNameKey] = profile.DisplayName
+	session.Values[util.PendingLinePictureKey] = profile.PictureURL
 	delete(session.Values, util.OAuthStateKey)
 	util.ApplyCookieOptions(session.Options)
 	if err := session.Save(r, w); err != nil {
@@ -175,6 +177,7 @@ func LinkLineAccount(w http.ResponseWriter, r *http.Request) error {
 		return util.Unauthorized("もう一度LINEでログインしてください。", errors.New("no pending line account"))
 	}
 	displayName, _ := session.Values[util.PendingLineNameKey].(string)
+	pictureURL, _ := session.Values[util.PendingLinePictureKey].(string)
 
 	var req model.LinkAccountRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -202,6 +205,7 @@ func LinkLineAccount(w http.ResponseWriter, r *http.Request) error {
 
 	user.Name = name.String
 	user.Role = role.String
+	savePicture(user.ID, pictureURL)
 	if err := util.Login(w, r, &user); err != nil {
 		return err
 	}
@@ -212,6 +216,13 @@ func LinkLineAccount(w http.ResponseWriter, r *http.Request) error {
 		"name": user.Name,
 		"role": user.Role,
 	})
+}
+
+// savePicture はLINEのプロフィール画像のURLを保存する。画像は飾りなので、失敗してもログインは止めない。
+func savePicture(userID int, raw string) {
+	if _, err := util.DB.Exec(query.UpdatePictureURL, userID, util.SafePictureURL(raw)); err != nil {
+		log.Printf("failed to save picture url: %v", err)
+	}
 }
 
 // applyForMembership は学籍番号が連携できなかったときの続き。
@@ -322,6 +333,7 @@ func exchangeLineCode(code string) (string, error) {
 type lineProfile struct {
 	UserID      string `json:"userId"`
 	DisplayName string `json:"displayName"`
+	PictureURL  string `json:"pictureUrl"`
 }
 
 func fetchLineProfile(accessToken string) (*lineProfile, error) {

@@ -8,6 +8,7 @@ import { backendURL, readErrorMessage } from '../app/utils/api';
 import { useToast } from './Toast';
 import Modal from './Modal';
 import LineLoginButton from './LineLoginButton';
+import UserMenu from './UserMenu';
 import LineLinkModal from './LineLinkModal';
 import './header.css'; // Vanilla CSSの読み込み
 
@@ -23,6 +24,7 @@ export default function Header() {
     ID: null,
     userName: '',
     role: '',
+    picture: '',
     isLoggedIn: false,
   });
   const [isScrolled, setIsScrolled] = useState(false);
@@ -44,6 +46,7 @@ export default function Header() {
           ID: data.id,
           userName: data.name,
           role: data.role,
+          picture: typeof data.picture === 'string' ? data.picture : '',
           isLoggedIn: true,
         });
         setNeedsLink(false);
@@ -51,7 +54,7 @@ export default function Header() {
         return;
       }
 
-      setUserInfo({ ID: null, userName: '', role: '', isLoggedIn: false });
+      setUserInfo({ ID: null, userName: '', role: '', picture: '', isLoggedIn: false });
       // LINE認証は通ったが、まだ部員レコードと紐づいていない状態
       setNeedsLink(Boolean(data.needs_link));
       setApplication(typeof data.application === 'string' ? data.application : '');
@@ -116,6 +119,7 @@ export default function Header() {
         ID: null,
         userName: '',
         role: '',
+        picture: '',
         isLoggedIn: false,
       });
       showToast('ログアウトしました。', 'success');
@@ -195,9 +199,7 @@ export default function Header() {
 
           {/* ログイン / ログアウト */}
           {userInfo.isLoggedIn ? (
-            <button type="button" onClick={handleLogout} className="logout-btn">
-              ログアウト
-            </button>
+            <UserMenu userName={userInfo.userName} picture={userInfo.picture} onLogout={handleLogout} />
           ) : (
             <LineLoginButton onClick={goLineLogin} />
           )}

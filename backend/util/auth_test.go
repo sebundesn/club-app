@@ -98,3 +98,19 @@ func TestApplyCookieOptionsUsesSessionMaxAge(t *testing.T) {
 		t.Errorf("SessionMaxAge %d is shorter than the pgstore default of 30 days", SessionMaxAge)
 	}
 }
+
+func TestSafePictureURL(t *testing.T) {
+	ok := "https://profile.line-scdn.net/abcdef"
+	for in, want := range map[string]string{
+		ok:                                 ok,
+		"http://profile.line-scdn.net/abc": "",
+		"https://evil.example.com/abc":     "",
+		"https://profile.line-scdn.net.evil.example/abc": "",
+		"javascript:alert(1)":                            "",
+		"":                                               "",
+	} {
+		if got := SafePictureURL(in); got != want {
+			t.Errorf("SafePictureURL(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

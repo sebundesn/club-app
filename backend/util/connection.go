@@ -86,6 +86,7 @@ func migrate() error {
 		{"users", query.UserTable},
 		{"users: line_user_id column", query.AddLineUserIDColumn},
 		{"users: line_user_id index", query.AddLineUserIDIndex},
+		{"users: picture_url", query.AddPictureURLColumn},
 		{"event_members", query.CreateEventMembers},
 		{"member_applications", query.CreateApplicationsTable},
 		{"events: fee", query.AddEventFeeColumn},

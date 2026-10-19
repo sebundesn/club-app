@@ -36,3 +36,16 @@ const LinkLineAccount = `
 	WHERE student_id = $1 AND line_user_id IS NULL
 	RETURNING id, name, role;
 `
+
+// LINEのプロフィール画像のURL。ログインのたびに更新する(LINE側でアイコンを変えても追従するため)。
+const AddPictureURLColumn = `
+	ALTER TABLE users ADD COLUMN IF NOT EXISTS picture_url TEXT;
+`
+
+const UpdatePictureURL = `
+	UPDATE users SET picture_url = $2 WHERE id = $1;
+`
+
+const SelectPictureURL = `
+	SELECT picture_url FROM users WHERE id = $1;
+`

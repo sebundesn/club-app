@@ -66,6 +66,8 @@ export interface UserInfoStruct {
   ID: number | null;
   userName: string;
   role: string;
+  /** LINEのプロフィール画像のURL。未保存なら空 */
+  picture: string;
   isLoggedIn: boolean;
 };
 

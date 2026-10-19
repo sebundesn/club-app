@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 
@@ -168,6 +169,7 @@ func Login(w http.ResponseWriter, r *http.Request, user *SessionUser) error {
 	// 連携待ちの一時情報はログイン完了時点で不要になる
 	delete(session.Values, PendingLineIDKey)
 	delete(session.Values, PendingLineNameKey)
+	delete(session.Values, PendingLinePictureKey)
 	delete(session.Values, OAuthStateKey)
 
 	ApplyCookieOptions(session.Options)
@@ -182,5 +184,17 @@ func Login(w http.ResponseWriter, r *http.Request, user *SessionUser) error {
 const (
 	PendingLineIDKey   = "pending_line_user_id"
 	PendingLineNameKey = "pending_line_name"
-	OAuthStateKey      = "oauth_state"
+	// 連携待ちの人のLINEプロフィール画像(連携が済んだら users に保存する)
+	PendingLinePictureKey = "pending_line_picture"
+	OAuthStateKey         = "oauth_state"
 )
+
+// SafePictureURL は LINE のプロフィール画像のURLだけを通す。
+// ブラウザがそのURLを読み込むので、LINEの画像サーバー以外(想定外のURL)は保存しない。
+func SafePictureURL(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil || u.Scheme != "https" || u.Host != "profile.line-scdn.net" {
+		return ""
+	}
+	return raw
+}

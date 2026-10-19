@@ -42,6 +42,7 @@ func CheckAuthHandler(w http.ResponseWriter, r *http.Request) error {
 
 	// 名前が未設定なら初期設定モーダルを出してもらう
 	return json.NewEncoder(w).Encode(map[string]interface{}{
+		"picture":    pictureURL(user.ID),
 		"id":         user.ID,
 		"role":       user.Role,
 		"name":       user.Name,
@@ -60,6 +61,16 @@ func pendingLineID(r *http.Request) string {
 
 	pending, _ := session.Values[util.PendingLineIDKey].(string)
 	return pending
+}
+
+// pictureURL は本人のLINEプロフィール画像のURL。未保存(ログインし直す前)なら空。
+func pictureURL(userID int) string {
+	var picture sql.NullString
+	if err := util.DB.QueryRow(query.SelectPictureURL, userID).Scan(&picture); err != nil {
+		log.Printf("picture lookup failed: %v", err)
+		return ""
+	}
+	return util.SafePictureURL(picture.String)
 }
 
 func applicationStatus(lineID string) string {
