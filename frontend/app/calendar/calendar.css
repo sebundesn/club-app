@@ -604,3 +604,97 @@
   font-size: 0.8rem;
   color: #7a6253;
 }
+
+/* ホームの「部費の残高」 */
+.account-balance {
+  margin: 0 0 0.75rem;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2d4a22;
+}
+
+.account-year {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.account-year .nav-btn {
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 1rem;
+}
+
+.account-year-label {
+  font-weight: 700;
+  color: #2d4a22;
+}
+
+.account-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.account-total strong,
+.account-amount {
+  font-weight: 700;
+}
+
+.account-total.in strong,
+.account-amount.in {
+  color: #16a34a;
+}
+
+.account-total.out strong,
+.account-amount.out {
+  color: #dc2626;
+}
+
+.account-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.account-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0;
+  border-top: 1px solid #eee8e2;
+}
+
+.account-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.account-date {
+  display: block;
+  font-size: 0.8rem;
+  color: #7a6253;
+}
+
+.account-amount {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.account-more {
+  display: block;
+  width: 100%;
+  min-height: 2.5rem;
+  margin-top: 0.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: #f0e6df;
+  color: #3b5e2f;
+  font-weight: 700;
+  cursor: pointer;
+}

@@ -7,7 +7,7 @@ import { UserInfoStruct } from '../app/utils/schema';
 import { backendURL, readErrorMessage } from '../app/utils/api';
 import { useToast } from './Toast';
 import Modal from './Modal';
-import LineLoginModal from './LineLoginModal';
+import LineLoginButton from './LineLoginButton';
 import LineLinkModal from './LineLinkModal';
 import './header.css'; // Vanilla CSSの読み込み
 
@@ -18,7 +18,6 @@ export default function Header() {
   const [isInitialLogin, setIsInitialLogin] = useState(false);
   const [needsLink, setNeedsLink] = useState(false);
   const [application, setApplication] = useState('');
-  const [showLogin, setShowLogin] = useState(false);
   const [realname, setRealname] = useState('');
   const [userInfo, setUserInfo] = useState<UserInfoStruct>({
     ID: null,
@@ -91,6 +90,11 @@ export default function Header() {
     } finally {
       setRealname('');
     }
+  };
+
+  // LINEの認可画面へ。戻り先はバックエンドの /api/auth/line/callback
+  const goLineLogin = () => {
+    window.location.href = `${backendURL}/api/auth/line/login`;
   };
 
   // ログアウト処理
@@ -189,22 +193,14 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* ユーザーボタン */}
-          <button
-            onClick={userInfo.isLoggedIn ? handleLogout : () => setShowLogin(true)}
-            className="user-menu-btn"
-            aria-label={userInfo.isLoggedIn ? 'ログアウト' : 'LINEでログイン'}
-          >
-            {userInfo.isLoggedIn ? (
-              <span className="user-avatar-text">
-                {userInfo.userName[0] || '?'}
-              </span>
-            ) : (
-              <svg className="user-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            )}
-          </button>
+          {/* ログイン / ログアウト */}
+          {userInfo.isLoggedIn ? (
+            <button type="button" onClick={handleLogout} className="logout-btn">
+              ログアウト
+            </button>
+          ) : (
+            <LineLoginButton onClick={goLineLogin} />
+          )}
         </div>
 
         {/* ナビゲーション（モバイル用） */}
@@ -223,7 +219,6 @@ export default function Header() {
 
 
       {/* LINEログインモーダル */}
-      {showLogin && !userInfo.isLoggedIn && <LineLoginModal onClose={() => setShowLogin(false)} />}
 
       {/* LINE連携モーダル（初回のみ） */}
       {needsLink && (

@@ -69,37 +69,6 @@
   font-weight: 1000;
 }
 
-/* ユーザー丸型ボタン */
-.user-menu-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 3rem;
-  height: 3rem;
-  border-radius: 9999px;
-  background-color: var(--color-forest-100);
-  border: 2px solid var(--color-forest-300);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.user-menu-btn:hover {
-  background-color: var(--color-forest-200);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-.user-avatar-text {
-  font-size: 1.125rem; /* text-lg */
-  font-weight: 700;
-  color: var(--color-forest-700);
-}
-
-.user-icon-svg {
-  width: 1.5rem;
-  height: 1.5rem;
-  color: var(--color-forest-600);
-}
-
 .password-form {
   margin-bottom: 30px;
 }
@@ -171,3 +140,88 @@
 .flex { display: flex; }
 .gap-3 { gap: 0.75rem; }
 .mt-1 { margin-top: 0.25rem; }
+/* LINEログインボタン(LINEのガイドラインに沿った色)。基本 #06C755、ホバーは黒10%、押下は黒30%を重ねる。 */
+.line-login-btn {
+  display: inline-flex;
+  align-items: stretch;
+  height: 2.75rem;
+  padding: 0 1rem 0 0;
+  overflow: hidden;
+  border: none;
+  border-radius: 0.25rem;
+  background-color: #06c755;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap; /* 文言は改行しない */
+  cursor: pointer;
+  /* ホバー・押下の色を、背景の上に重ねて表現する */
+  background-image: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0));
+}
+
+.line-login-btn:hover {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1));
+}
+
+.line-login-btn:active {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3));
+}
+
+.line-login-btn:focus-visible {
+  outline: 3px solid var(--color-forest-300);
+  outline-offset: 2px;
+}
+
+.line-login-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  /* アイコンと文言の境目の縦線(黒8%) */
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+  margin-right: 0.85rem;
+}
+
+.line-login-icon img {
+  display: block;
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.line-login-text {
+  display: flex;
+  align-items: center;
+}
+
+/* 広い画面は長い表記、狭い画面は短い表記 */
+.line-login-text-short {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .line-login-text-long {
+    display: none;
+  }
+
+  .line-login-text-short {
+    display: flex;
+  }
+}
+
+.logout-btn {
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  border: 2px solid var(--color-forest-300);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--color-forest-700);
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background-color: var(--color-forest-100);
+}
