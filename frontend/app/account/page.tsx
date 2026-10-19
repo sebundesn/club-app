@@ -456,8 +456,8 @@ export default function Account() {
                 </div>
 
                 {/* participants section */}
-                <div className="bg-white p-5 rounded-xl border border-earth-200 mb-6 shadow-sm">
-                  <h4 className="text-lg font-bold text-forest-700 mb-3">👥 参加者</h4>
+                <div className="participants-panel">
+                  <h4 className="participants-heading">👥 参加者</h4>
 
                   <div className="participants-list-container">
                     {participants.length === 0 ? (
@@ -469,7 +469,7 @@ export default function Account() {
                             <span className="participant_name">{m.user_name}</span>
                             <span className="participant_amount">{m.amount}円</span>
                             {canEditPayment && (
-                              <label className="ml-3 text-sm">
+                              <label className="paid-label">
                                 <input
                                   type="checkbox"
                                   checked={m.paid}
@@ -485,27 +485,28 @@ export default function Account() {
                   </div>
 
                   {canEditPayment && (
-                    <div className="flex items-center gap-2 mb-3 text-sm">
+                    <div className="fee-row">
                       <span>徴収額(未払いの人に反映)</span>
                       <input
                         type="number"
                         min={0}
                         value={feeInput}
                         onChange={(e) => setFeeInput(e.target.value)}
-                        className="w-24 border border-earth-200 rounded px-2 py-1"
+                        className="fee-input"
                       />
                       <span>円</span>
-                      <button type="button" onClick={saveFee}>
+                      <button type="button" className="btn-small" onClick={saveFee}>
                         設定
                       </button>
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center gap-2 mb-3">
-                    <div className="flex gap-2 text-xs">
+                  <div className="participants-actions">
+                    <div className="participants-toggle">
                       {/* participants addition section */}
                       <button
                         type="button"
+                        className="btn-small"
                         onClick={() => {
                           setIsMembersMenuOpen(!isMembersMenuOpen);
                           if (!isMembersMenuOpen) {
@@ -519,7 +520,7 @@ export default function Account() {
                     </div>
 
                     {/* select box */}
-                    <div className="mb-4">
+                    <div className="participants-select">
                       <Select
                         ref={selectRef}
                         isMulti
@@ -545,13 +546,13 @@ export default function Account() {
 
                     {/* participants preservation button */}
                     <div>
-                      <button type="button" onClick={takePartInButton}>
+                      <button type="button" className="btn-small btn-small-primary" onClick={takePartInButton}>
                         参加者を保存
                       </button>
                     </div>
                   </div>
 
-                  <hr className="border-earth-200 mb-6" />
+                  <hr className="participants-divider" />
                 </div>
 
                 {receiptModal.Images.length === 0 ? (

@@ -54,6 +54,10 @@ func ConnectSQL() {
 		log.Fatal(err)
 	}
 
+	// pgstore は Cookie の署名の有効期間を既定の30日にしている。
+	// ここで合わせないと、Cookie自体は90日残っていても、30日を過ぎたものはログインを失う。
+	Store.MaxAge(SessionMaxAge)
+
 	if err = DB.Ping(); err != nil {
 		log.Fatal(err)
 	}
@@ -82,7 +86,6 @@ func migrate() error {
 		{"users", query.UserTable},
 		{"users: line_user_id column", query.AddLineUserIDColumn},
 		{"users: line_user_id index", query.AddLineUserIDIndex},
-		{"notificate", query.CreateNotificateTable},
 		{"event_members", query.CreateEventMembers},
 		{"member_applications", query.CreateApplicationsTable},
 		{"events: fee", query.AddEventFeeColumn},

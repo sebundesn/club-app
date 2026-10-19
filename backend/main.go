@@ -42,7 +42,6 @@ func main() {
 	http.Handle("/api/saveEvent", util.AppHandler(feature.SaveNote))
 	http.Handle("/api/getMonthEvents", util.AppHandler(feature.GetMonthNotes))
 	http.Handle("/api/getDateEvent", util.AppHandler(feature.GetDateEvents))
-	http.Handle("/api/getNotification", util.AppHandler(feature.GetNotificate))
 
 	// 会計
 	http.Handle("/api/accountInfo", util.AppHandler(feature.GetAccountInfo))

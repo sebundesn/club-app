@@ -3,6 +3,8 @@ package util
 import (
 	"net/http"
 	"testing"
+
+	"github.com/gorilla/sessions"
 )
 
 func TestSessionUserHasRole(t *testing.T) {
@@ -83,5 +85,16 @@ func TestCookieSameSite(t *testing.T) {
 				t.Errorf("cookieSameSite() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestApplyCookieOptionsUsesSessionMaxAge(t *testing.T) {
+	opts := &sessions.Options{}
+	ApplyCookieOptions(opts)
+	if opts.MaxAge != SessionMaxAge {
+		t.Errorf("MaxAge = %d, want %d", opts.MaxAge, SessionMaxAge)
+	}
+	if SessionMaxAge < 30*24*60*60 {
+		t.Errorf("SessionMaxAge %d is shorter than the pgstore default of 30 days", SessionMaxAge)
 	}
 }

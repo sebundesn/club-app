@@ -1,9 +1,5 @@
 package model
 
-import (
-	"time"
-)
-
 // EventDetail は1件のイベント。1日に複数件ありうるので ID を持つ。
 type EventDetail struct {
 	ID       int    `json:"id"`
@@ -29,12 +25,4 @@ type SaveEventRequest struct {
 	Subtitle string `json:"subtitle"`
 	Content  string `json:"content"`
 	PDFPath  string `json:"pdf_path"`
-}
-
-// ------------notificate section-------------------------
-
-type Notificate struct {
-	ID      int        `json:"id"`
-	Title   string     `json:"title"`
-	DueDate *time.Time `json:"due_date"`
 }

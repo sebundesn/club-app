@@ -45,3 +45,43 @@
 .app-modal-close:hover {
   color: #2d4a22;
 }
+
+.app-modal-text {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--color-earth-600, #7a6253);
+}
+
+.app-modal-error {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  color: #dc2626;
+}
+
+.app-modal-field {
+  margin-bottom: 1rem;
+}
+
+.app-modal-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--color-forest-700, #2a5627);
+}
+
+.app-modal-submit {
+  width: 100%;
+}
+
+/* スマホでは余白を詰め、画面いっぱいまで使う */
+@media (max-width: 480px) {
+  .app-modal {
+    padding: 1.25rem;
+  }
+
+  .app-modal-title {
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+  }
+}

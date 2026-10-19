@@ -37,6 +37,9 @@ func CheckAuthHandler(w http.ResponseWriter, r *http.Request) error {
 		})
 	}
 
+	// 開くたびにログインの期限を延ばす(最後に開いてから SessionMaxAge まで保つ)
+	util.RefreshSession(w, r)
+
 	// 名前が未設定なら初期設定モーダルを出してもらう
 	return json.NewEncoder(w).Encode(map[string]interface{}{
 		"id":         user.ID,

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Application } from '../utils/schema';
 import { backendURL, readErrorMessage } from '../utils/api';
 import { useToast } from '../../components/Toast';
+import '../subpages.css';
 
 export default function MembersPage() {
   const { showToast } = useToast();
@@ -53,30 +54,31 @@ export default function MembersPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
-      <h1 className="text-xl font-bold text-forest-800 mb-1">入部申請</h1>
-      <p className="text-sm text-earth-600 mb-4">
+    <div className="sp-page">
+      <h1 className="sp-title">入部申請</h1>
+      <p className="sp-lead">
         名簿と照らし合わせて、部員本人かどうかを確認してから承認してください(部長・副部長のみ)。
       </p>
 
       {apps === null ? (
-        <p className="text-earth-600">読み込み中…</p>
+        <p className="sp-muted">読み込み中…</p>
       ) : apps.length === 0 ? (
-        <p className="text-forest-700">承認待ちの申請はありません。</p>
+        <p className="sp-empty">承認待ちの申請はありません。</p>
       ) : (
-        <ul className="divide-y divide-earth-100 bg-white rounded-xl border border-earth-200">
+        <ul className="sp-card sp-list">
           {apps.map((app) => (
-            <li key={app.id} className="flex items-center justify-between gap-3 px-4 py-3">
-              <span>
+            <li key={app.id} className="sp-row">
+              <span className="sp-row-main">
                 {app.name}
-                <span className="text-sm text-earth-600 ml-2">{app.student_id}</span>
-                <span className="block text-xs text-earth-600">{app.created_at.slice(0, 10)}</span>
+                <span className="sp-row-sub">
+                  {app.student_id} ・ {app.created_at.slice(0, 10)}
+                </span>
               </span>
-              <span className="flex gap-2 shrink-0">
-                <button className="px-3 py-1 rounded-lg bg-forest-600 text-white" onClick={() => decide(app, true)}>
+              <span className="sp-actions">
+                <button className="sp-btn" onClick={() => decide(app, true)}>
                   承認
                 </button>
-                <button className="px-3 py-1 rounded-lg bg-earth-200 text-forest-800" onClick={() => decide(app, false)}>
+                <button className="sp-btn-sub" onClick={() => decide(app, false)}>
                   却下
                 </button>
               </span>

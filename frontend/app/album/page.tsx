@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { MediaAlbum, MediaItem } from '../utils/schema';
 import { backendURL, readErrorMessage } from '../utils/api';
 import { useToast } from '../../components/Toast';
+import '../subpages.css';
 
 const PHOTOS_PER_REQUEST = 10;
 const VIDEO_MAX_SEC = 60;
@@ -61,20 +62,20 @@ function EventPicker() {
   }, [showToast]);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
-      <h1 className="text-xl font-bold text-forest-800 mb-4">アルバム</h1>
-      <p className="text-sm text-earth-700 mb-3">イベントを選んでください(先月・今月)。それ以前は予定表から開けます。</p>
+    <div className="sp-page">
+      <h1 className="sp-title">アルバム</h1>
+      <p className="sp-lead">イベントを選んでください(先月・今月)。それ以前は予定表から開けます。</p>
       {events === null ? (
-        <p className="text-earth-600">読み込み中…</p>
+        <p className="sp-muted">読み込み中…</p>
       ) : events.length === 0 ? (
-        <p className="text-earth-600">イベントがありません。</p>
+        <p className="sp-muted">イベントがありません。</p>
       ) : (
-        <ul className="divide-y divide-earth-100 bg-white rounded-xl border border-earth-200">
+        <ul className="sp-card sp-list">
           {events.map((e) => (
-            <li key={e.id}>
-              <a href={`/album?eventID=${e.id}`} className="flex justify-between px-4 py-3">
-                <span>{e.title || '(無題)'}</span>
-                <span className="text-sm text-earth-600">{e.date}</span>
+            <li key={e.id} className="sp-row">
+              <a href={`/album?eventID=${e.id}`} className="sp-link-row" style={{ flex: 1 }}>
+                <span className="sp-row-main">{e.title || '(無題)'}</span>
+                <span className="sp-muted">{e.date}</span>
               </a>
             </li>
           ))}
@@ -213,25 +214,25 @@ function AlbumContent() {
   const videoFull = album ? album.video_count >= album.video_limit : false;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6">
-      <h1 className="text-xl font-bold text-forest-800 mb-1">アルバム</h1>
+    <div className="sp-page">
+      <h1 className="sp-title">アルバム</h1>
       {album && (
-        <p className="text-sm text-earth-700 mb-4">
+        <p className="sp-lead">
           写真 {album.photo_count}/{album.photo_limit}枚 ・ 動画 {album.video_count}/{album.video_limit}本
           {(photoFull || videoFull) && '(枠がいっぱいです。不要なものを削除すると追加できます)'}
         </p>
       )}
 
-      <div className="flex gap-3 mb-4">
+      <div className="sp-toolbar">
         <button
-          className="px-4 py-2 rounded-lg bg-forest-600 text-white disabled:opacity-40"
+          className="sp-btn"
           disabled={photoFull || uploading !== ''}
           onClick={() => photoInput.current?.click()}
         >
           写真を追加
         </button>
         <button
-          className="px-4 py-2 rounded-lg bg-forest-600 text-white disabled:opacity-40"
+          className="sp-btn"
           disabled={videoFull || uploading !== ''}
           onClick={() => videoInput.current?.click()}
         >
@@ -241,30 +242,25 @@ function AlbumContent() {
         <input ref={videoInput} type="file" accept="video/*" hidden onChange={onVideo} />
       </div>
 
-      {uploading && <p className="text-sm text-forest-700 mb-3">{uploading}</p>}
+      {uploading && <p className="sp-status">{uploading}</p>}
 
-      {album && album.items.length === 0 && <p className="text-earth-600">まだ写真・動画がありません。</p>}
+      {album && album.items.length === 0 && <p className="sp-muted">まだ写真・動画がありません。</p>}
 
-      <div className="grid grid-cols-3 sm:grid-cols-4 gap-1">
+      <div className="album-grid">
         {album?.items.map((item) =>
           item.status === 'processing' ? (
             <div
               key={item.id}
-              className="aspect-square bg-earth-100 flex items-center justify-center text-xs text-earth-600"
+              className="album-cell-processing"
             >
               変換中…
             </div>
           ) : (
-            <button key={item.id} className="relative aspect-square" onClick={() => setViewing(item)}>
+            <button key={item.id} className="album-cell" onClick={() => setViewing(item)}>
               {/* eslint-disable-next-line @next/next/no-img-element -- 静的エクスポートでは next/image の最適化が使えない */}
-              <img
-                src={item.thumb_url}
-                alt=""
-                loading="lazy"
-                className="w-full h-full object-cover"
-              />
+              <img src={item.thumb_url} alt="" loading="lazy" />
               {item.kind === 'video' && (
-                <span className="absolute bottom-1 right-1 text-xs bg-black/60 text-white px-1 rounded">▶</span>
+                <span className="album-video-mark">▶</span>
               )}
             </button>
           ),
@@ -273,7 +269,7 @@ function AlbumContent() {
 
       {viewing && (
         <div
-          className="fixed inset-0 z-[60] bg-black/90 flex flex-col items-center justify-center p-4"
+          className="album-viewer"
           onClick={() => setViewing(null)}
         >
           {viewing.kind === 'video' ? (
@@ -282,16 +278,15 @@ function AlbumContent() {
               controls
               playsInline
               autoPlay
-              className="max-w-full max-h-[80vh]"
               onClick={(e) => e.stopPropagation()}
             />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element -- 同上
-            <img src={viewing.url} alt="" className="max-w-full max-h-[80vh] object-contain" />
+            <img src={viewing.url} alt="" />
           )}
           {viewing.can_delete && (
             <button
-              className="mt-4 px-4 py-2 rounded-lg bg-red-600 text-white"
+              className="sp-btn-danger"
               onClick={(e) => {
                 e.stopPropagation();
                 remove(viewing);
@@ -309,7 +304,7 @@ function AlbumContent() {
 // useSearchParams は静的エクスポートで Suspense が必要
 export default function AlbumPage() {
   return (
-    <Suspense fallback={<p className="p-6">読み込み中…</p>}>
+    <Suspense fallback={<p className="sp-page sp-muted">読み込み中…</p>}>
       <AlbumContent />
     </Suspense>
   );

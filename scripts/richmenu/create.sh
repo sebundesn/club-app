@@ -20,7 +20,9 @@ SITE_URL="${SITE_URL%/}"
 API=https://api.line.me/v2/bot
 AUTH="Authorization: Bearer $LINE_CHANNEL_ACCESS_TOKEN"
 
-# 3分割(2500px / 3 ≒ 833px)。URIアクションはLINE内ブラウザでそのページを開く。
+# 3分割(2500px / 3 ≒ 833px)。
+# 全ボタンに openExternalBrowser=1 を付けて、端末の外部ブラウザ(Safari/Chrome)で開く。
+# LINE内ブラウザでは初回ログインの認証番号が見られず、ログイン状態も外部ブラウザと共有されないため。
 BODY=$(cat <<JSON
 {
   "size": {"width": 2500, "height": 843},
@@ -29,11 +31,11 @@ BODY=$(cat <<JSON
   "chatBarText": "メニュー",
   "areas": [
     {"bounds": {"x": 0,    "y": 0, "width": 833, "height": 843},
-     "action": {"type": "uri", "label": "予定表", "uri": "$SITE_URL/calendar"}},
+     "action": {"type": "uri", "label": "予定表", "uri": "$SITE_URL/calendar?openExternalBrowser=1"}},
     {"bounds": {"x": 833,  "y": 0, "width": 834, "height": 843},
-     "action": {"type": "uri", "label": "部費",   "uri": "$SITE_URL/payments"}},
+     "action": {"type": "uri", "label": "部費",   "uri": "$SITE_URL/payments?openExternalBrowser=1"}},
     {"bounds": {"x": 1667, "y": 0, "width": 833, "height": 843},
-     "action": {"type": "uri", "label": "アルバム", "uri": "$SITE_URL/album"}}
+     "action": {"type": "uri", "label": "アルバム", "uri": "$SITE_URL/album?openExternalBrowser=1"}}
   ]
 }
 JSON

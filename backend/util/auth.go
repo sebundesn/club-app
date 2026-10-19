@@ -96,13 +96,34 @@ func RequireRole(r *http.Request, roles ...string) (*SessionUser, error) {
 	)
 }
 
+// SessionMaxAge はログインを保つ期間。部員は月に数回しか開かないので長めにしている。
+// 使うたびに RefreshSession で延長するので、実際には「最後に開いてから90日」になる。
+const SessionMaxAge = 90 * 24 * 60 * 60
+
+// RefreshSession はログイン中のセッションの有効期限を今から SessionMaxAge に延ばす。
+// 未ログインなら何もしない。失敗してもログインは今の期限まで有効なので、ログに残すだけにする。
+func RefreshSession(w http.ResponseWriter, r *http.Request) {
+	session, err := Store.Get(r, SessionName)
+	if err != nil {
+		return
+	}
+	if auth, _ := session.Values["authenticated"].(bool); !auth {
+		return
+	}
+
+	ApplyCookieOptions(session.Options)
+	if err := session.Save(r, w); err != nil {
+		log.Printf("failed to refresh session: %v", err)
+	}
+}
+
 // ApplyCookieOptions はセッションCookieのセキュリティ設定をまとめる。
 // Secure / SameSite は環境ごとに変える必要があるため環境変数で切り替える
 // （localhost の http では Secure Cookie が保存されずログインできないため）。
 func ApplyCookieOptions(options *sessions.Options) {
 	options.HttpOnly = true
 	options.Path = "/"
-	options.MaxAge = 86400 * 7
+	options.MaxAge = SessionMaxAge
 	options.Secure = cookieSecure()
 	options.SameSite = cookieSameSite()
 }

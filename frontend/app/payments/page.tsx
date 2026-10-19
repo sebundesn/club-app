@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { UnpaidResponse } from '../utils/schema';
 import { backendURL, readErrorMessage } from '../utils/api';
 import { useToast } from '../../components/Toast';
+import '../subpages.css';
 
 const yen = (n: number) => `${n.toLocaleString()}円`;
 
@@ -36,53 +37,53 @@ export default function PaymentsPage() {
   }, [load]);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
-      <h1 className="text-xl font-bold text-forest-800 mb-4">部費の支払い状況</h1>
+    <div className="sp-page">
+      <h1 className="sp-title">部費の支払い状況</h1>
 
-      <section className="bg-white rounded-xl border border-earth-200 p-5 mb-6">
-        <h2 className="font-bold text-forest-700 mb-3">あなたの未払い</h2>
+      <section className="sp-card">
+        <h2 className="sp-card-title">あなたの未払い</h2>
         {mine === null ? (
-          <p className="text-earth-600">読み込み中…</p>
+          <p className="sp-muted">読み込み中…</p>
         ) : mine.items.length === 0 ? (
-          <p className="text-forest-700">未払いはありません 🎉</p>
+          <p className="sp-empty">未払いはありません 🎉</p>
         ) : (
           <>
-            <ul className="divide-y divide-earth-100">
+            <ul className="sp-list">
               {mine.items.map((it) => (
-                <li key={it.event_id} className="flex justify-between py-2">
-                  <span>
+                <li key={it.event_id} className="sp-row">
+                  <span className="sp-row-main">
                     {it.title || '(無題)'}
-                    <span className="text-xs text-earth-600 ml-2">{it.date.split('T')[0]}</span>
+                    <span className="sp-row-sub">{it.date.split('T')[0]}</span>
                   </span>
-                  <span className="font-medium">{yen(it.amount)}</span>
+                  <span className="sp-amount">{yen(it.amount)}</span>
                 </li>
               ))}
             </ul>
-            <p className="text-right font-bold mt-3">合計 {yen(mine.total)}</p>
+            <p className="sp-total">合計 {yen(mine.total)}</p>
           </>
         )}
       </section>
 
       {all && (
-        <section className="bg-white rounded-xl border border-earth-200 p-5">
-          <h2 className="font-bold text-forest-700 mb-1">全員の未払い(会計・役員のみ)</h2>
-          <p className="text-sm text-earth-600 mb-3">合計 {yen(all.total)}</p>
+        <section className="sp-card">
+          <h2 className="sp-card-title">全員の未払い(会計・役員のみ)</h2>
+          <p className="sp-muted" style={{ marginBottom: '0.75rem' }}>合計 {yen(all.total)}</p>
           {all.items.length === 0 ? (
-            <p className="text-forest-700">未払いはありません。</p>
+            <p className="sp-empty">未払いはありません。</p>
           ) : (
-            <ul className="divide-y divide-earth-100">
+            <ul className="sp-list">
               {all.items.map((it) => (
-                <li key={`${it.event_id}-${it.user_id}`} className="flex justify-between py-2">
-                  <span>
+                <li key={`${it.event_id}-${it.user_id}`} className="sp-row">
+                  <span className="sp-row-main">
                     {it.user_name}
-                    <span className="text-xs text-earth-600 ml-2">{it.title || '(無題)'}</span>
+                    <span className="sp-row-sub">{it.title || '(無題)'}</span>
                   </span>
-                  <span>{yen(it.amount)}</span>
+                  <span className="sp-amount">{yen(it.amount)}</span>
                 </li>
               ))}
             </ul>
           )}
-          <p className="text-xs text-earth-600 mt-3">支払い済みにするには、会計ページのイベントの参加者欄で操作します。</p>
+          <p className="sp-muted" style={{ marginTop: '0.75rem' }}>支払い済みにするには、会計ページのイベントの参加者欄で操作します。</p>
         </section>
       )}
     </div>

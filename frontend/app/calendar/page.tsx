@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { generateCalendarDays, toDateKey } from '../utils/calendar';
 import { getNowTime } from '../utils/getTime';
-import { DateTitle, EventDetail, EventStruct, NotificateStruct } from '../utils/schema';
+import { DateTitle, EventDetail, EventStruct } from '../utils/schema';
 import { backendURL, readErrorMessage } from '../utils/api';
 import { useToast } from '../../components/Toast';
 import './calendar.css';
@@ -24,12 +24,10 @@ export default function CalendarPage() {
   const [year, setYear] = useState<number>(thisYear);
   const [month, setMonth] = useState<number>(thisMonth);
   const [selectedDate, setSelectedDate] = useState('');
-  const [opinion, setOpinion] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [eventMap, setEventMap] = useState<Record<string, DateTitle[]>>({});
   const [dayEvents, setDayEvents] = useState<EventDetail[]>([]);
   const [editing, setEditing] = useState<EventStruct | null>(null);
-  const [notificate] = useState<NotificateStruct[]>([]);
   const days = generateCalendarDays(year, month);
 
   const handlePrevMonth = () => {
@@ -155,20 +153,6 @@ export default function CalendarPage() {
     setEditing(null);
   };
 
-  // メッセージ送信（TODO: 実装中）
-  const sendMessage = async () => {
-    if (!opinion.trim()) {
-      showToast('メッセージを入力してください。', 'error');
-      return;
-    }
-
-    const isConfirmed = window.confirm('この内容で送信しますか？');
-
-    if (isConfirmed) {
-      setOpinion('');
-    }
-  };
-
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 非同期の取得なので state 更新は await のあと。同期的な連鎖レンダリングは起きない。
     getMonthEvents();
@@ -260,44 +244,6 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      <div className="bottom-grid">
-        {/* 通知 */}
-        <div className="card">
-          <h2 className="section-title">通知 (開発中)</h2>
-          {
-            !notificate || notificate.length === 0 ? (
-              <p>報告はないです!</p>
-            ) : (
-              <ul className="todo-list">
-                {notificate.map((n) => (
-                  <li key={n.id} className="todo-item">
-                    <span className="todo-dot orange" />
-                    <span className="todo-text">{n.title}</span>
-                  </li>
-                ))}
-              </ul>
-             )
-          }
-        </div>
-
-        {/* 匿名意見箱 */}
-        <div className="card">
-          <h2 className="section-title">匿名意見箱(開発中)</h2>
-          <div className="space-y-4">
-            <textarea
-              placeholder="行きたい場所・やりたいこと・意見等何でも書いてね"
-              value={opinion}
-              rows={5}
-              onChange={(e) => setOpinion(e.target.value)}
-              className="input-field resize-none"
-            />
-            <button onClick={sendMessage} className="btn-primary">
-              送信
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* イベント編集モーダル */}
       {isModalOpen && (
         <div className="modal-overlay" onClick={closeModal}>
@@ -317,25 +263,27 @@ export default function CalendarPage() {
                         {event.subtitle && <p className="day-event-subtitle">{event.subtitle}</p>}
                         {event.content && <p className="day-event-content">{event.content}</p>}
                       </div>
-                      <a href={`/album?eventID=${event.id}`} className="btn-secondary">
-                        アルバム
-                      </a>
-                      <button
-                        type="button"
-                        className="btn-secondary"
-                        onClick={() =>
-                          setEditing({
-                            ID: event.id,
-                            Date: selectedDate,
-                            Title: event.title,
-                            Subtitle: event.subtitle,
-                            Content: event.content,
-                            PDFPath: event.pdf_path,
-                          })
-                        }
-                      >
-                        編集
-                      </button>
+                      <div className="day-event-actions">
+                        <a href={`/album?eventID=${event.id}`} className="btn-secondary">
+                          アルバム
+                        </a>
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={() =>
+                            setEditing({
+                              ID: event.id,
+                              Date: selectedDate,
+                              Title: event.title,
+                              Subtitle: event.subtitle,
+                              Content: event.content,
+                              PDFPath: event.pdf_path,
+                            })
+                          }
+                        >
+                          編集
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>

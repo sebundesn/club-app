@@ -84,12 +84,6 @@ export interface EventMember {
   paid: boolean;
 };
 
-export interface NotificateStruct {
-  id: number;
-  title: string;
-  due_date: string | null;
-};
-
 /** アルバムの1件(写真・動画) */
 export interface MediaItem {
   id: number;

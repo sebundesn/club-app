@@ -134,39 +134,3 @@ func SaveNote(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(model.EventSummary{ID: e.ID, Date: e.Date, Title: e.Title})
 }
-
-// 自分の通知を取得する関数
-func GetNotificate(w http.ResponseWriter, r *http.Request) error {
-	if r.Method != http.MethodGet {
-		return util.MethodNotAllowed(r.Method)
-	}
-
-	user, err := util.RequireLogin(r)
-	if err != nil {
-		return err
-	}
-
-	rows, err := util.DB.Query(query.FetchNotificates, user.ID)
-	if err != nil {
-		return util.Internal("通知の取得に失敗しました。", err)
-	}
-	defer rows.Close()
-
-	notificates := []model.Notificate{}
-	for rows.Next() {
-		var n model.Notificate
-
-		if err := rows.Scan(&n.ID, &n.Title, &n.DueDate); err != nil {
-			return util.Internal("通知の取得に失敗しました。", err)
-		}
-
-		notificates = append(notificates, n)
-	}
-
-	if err = rows.Err(); err != nil {
-		return util.Internal("通知の取得に失敗しました。", err)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	return json.NewEncoder(w).Encode(notificates)
-}

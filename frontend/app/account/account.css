@@ -468,3 +468,117 @@
   border-radius: 20px;
   font-size: 13px;
 }
+/* ---- レシート詳細モーダルの参加者欄(スマホ対応) ---- */
+.participants-panel {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #ffffff;
+  border: 1px solid #d9d2b8;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.participants-heading {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2a5627;
+}
+
+.participants-list-container li {
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+}
+
+.paid-label {
+  margin-left: auto;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.paid-label input {
+  width: 1.1rem;
+  height: 1.1rem;
+  vertical-align: middle;
+}
+
+.fee-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+  font-size: 0.875rem;
+}
+
+.fee-input {
+  box-sizing: border-box;
+  width: 6.5rem;
+  min-height: 2.25rem;
+  padding: 0 0.5rem;
+  border: 1px solid #d9d2b8;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+}
+
+.btn-small {
+  min-height: 2.25rem;
+  padding: 0 0.9rem;
+  border: none;
+  border-radius: 0.375rem;
+  background: #e6d5cb;
+  color: #2d4a22;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-small-primary {
+  background: #336c2e;
+  color: #ffffff;
+}
+
+.participants-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+  margin: 0.75rem 0;
+}
+
+.participants-select {
+  min-width: 0;
+}
+
+.participants-divider {
+  margin: 1rem 0 0;
+  border: none;
+  border-top: 1px solid #d9d2b8;
+}
+
+/* 画像の削除ボタン。マウスが無い端末(スマホ)では hover できないので、常に見えるようにする */
+@media (hover: none) {
+  .btn-delete-image {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .account-container {
+    padding: 1rem 0.5rem;
+  }
+
+  .modal-content {
+    padding: 1rem;
+    max-height: 90vh;
+  }
+
+  .modal-header h3 {
+    font-size: 1.1rem;
+    margin: 0;
+  }
+
+  .receipt-thumbnail {
+    height: 10rem;
+  }
+}

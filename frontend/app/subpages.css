@@ -1,0 +1,240 @@
+/* アルバム・部費・入部申請の画面。スマホ(幅360px〜)を基準に作り、広い画面では余白と列数を増やす。 */
+
+.sp-page {
+  box-sizing: border-box;
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 3rem;
+}
+
+.sp-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-forest-800);
+}
+
+.sp-lead {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--color-earth-700);
+}
+
+.sp-card {
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  background: #ffffff;
+  border: 1px solid var(--color-earth-200);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.sp-card-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-forest-700);
+}
+
+.sp-muted {
+  font-size: 0.8rem;
+  color: var(--color-earth-600);
+}
+
+.sp-empty {
+  margin: 0;
+  color: var(--color-forest-700);
+}
+
+/* 行リスト(未払い・申請・イベント選択) */
+.sp-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--color-earth-100);
+}
+
+.sp-row:first-child {
+  border-top: none;
+}
+
+.sp-row-main {
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.sp-row-sub {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--color-earth-600);
+}
+
+.sp-amount {
+  flex-shrink: 0;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sp-total {
+  margin: 0.75rem 0 0;
+  text-align: right;
+  font-weight: 700;
+}
+
+.sp-link-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 0.25rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ボタン。指で押せるよう高さを44px以上にしている */
+.sp-btn,
+.sp-btn-sub,
+.sp-btn-danger {
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sp-btn {
+  background: var(--color-forest-600);
+  color: #ffffff;
+}
+
+.sp-btn-sub {
+  background: var(--color-earth-200);
+  color: var(--color-forest-800);
+}
+
+.sp-btn-danger {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.sp-btn:disabled,
+.sp-btn-sub:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sp-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.5rem;
+}
+
+.sp-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.sp-toolbar > button {
+  flex: 1 1 10rem;
+}
+
+.sp-status {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-forest-700);
+}
+
+/* アルバムのサムネイル一覧 */
+.album-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.25rem;
+}
+
+@media (min-width: 640px) {
+  .album-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.album-cell {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: none;
+  background: var(--color-earth-100);
+  cursor: pointer;
+}
+
+.album-cell img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.album-cell-processing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+  background: var(--color-earth-100);
+  font-size: 0.75rem;
+  color: var(--color-earth-600);
+}
+
+.album-video-mark {
+  position: absolute;
+  right: 0.25rem;
+  bottom: 0.25rem;
+  padding: 0 0.35rem;
+  border-radius: 0.25rem;
+  background: rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+  font-size: 0.75rem;
+}
+
+/* 拡大表示。スマホの画面下のバーに隠れないよう dvh を使う */
+.album-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.92);
+}
+
+.album-viewer img,
+.album-viewer video {
+  max-width: 100%;
+  max-height: 75vh;
+  max-height: 75dvh;
+  object-fit: contain;
+}
+
+/* カードそのものがリストのとき(入部申請・イベント選択)は、行の左右に余白を持たせる */
+.sp-card.sp-list {
+  padding: 0.25rem 1rem;
+}
