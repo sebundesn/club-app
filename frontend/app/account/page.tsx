@@ -38,7 +38,7 @@ export default function Account() {
   const [role, setRole] = useState('');
   const [feeInput, setFeeInput] = useState('');
   // 画面を出し分けるだけ。実際の権限チェックはサーバー側で行っている
-  const canEditPayment = role === '会計';
+  const canEditPayment = role === '会計' || role === '部長';
   const year = new Date().getFullYear();
   const selectRef = useRef<SelectInstance<MemberOption, true> | null>(null);
 

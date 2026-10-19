@@ -114,3 +114,12 @@ func TestSafePictureURL(t *testing.T) {
 		}
 	}
 }
+
+func TestAccountingRoles(t *testing.T) {
+	for role, want := range map[string]bool{"会計": true, "部長": true, "副部長": false, "": false, "部員": false} {
+		u := &SessionUser{Role: role}
+		if got := u.HasRole(AccountingRoles...); got != want {
+			t.Errorf("HasRole(AccountingRoles) for %q = %v, want %v", role, got, want)
+		}
+	}
+}

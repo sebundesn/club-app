@@ -15,7 +15,7 @@ func SaveMoneyLog(w http.ResponseWriter, r *http.Request) error {
 		return util.MethodNotAllowed(r.Method)
 	}
 
-	if _, err := util.RequireRole(r, util.RoleTreasurer); err != nil {
+	if _, err := util.RequireRole(r, util.AccountingRoles...); err != nil {
 		return err
 	}
 
@@ -96,7 +96,7 @@ func DeleteMoneyLog(w http.ResponseWriter, r *http.Request) error {
 		return util.MethodNotAllowed(r.Method)
 	}
 
-	if _, err := util.RequireRole(r, util.RoleTreasurer); err != nil {
+	if _, err := util.RequireRole(r, util.AccountingRoles...); err != nil {
 		return err
 	}
 

@@ -87,7 +87,7 @@ func SetPaid(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
 		return utility.MethodNotAllowed(r.Method)
 	}
-	if _, err := utility.RequireRole(r, utility.RoleTreasurer); err != nil {
+	if _, err := utility.RequireRole(r, utility.AccountingRoles...); err != nil {
 		return err
 	}
 
@@ -117,7 +117,7 @@ func SetEventFee(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
 		return utility.MethodNotAllowed(r.Method)
 	}
-	if _, err := utility.RequireRole(r, utility.RoleTreasurer); err != nil {
+	if _, err := utility.RequireRole(r, utility.AccountingRoles...); err != nil {
 		return err
 	}
 

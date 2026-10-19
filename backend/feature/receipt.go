@@ -240,7 +240,7 @@ func DeleteImg(w http.ResponseWriter, r *http.Request) error {
 		return utility.MethodNotAllowed(r.Method)
 	}
 
-	if _, err := utility.RequireRole(r, utility.RoleTreasurer); err != nil {
+	if _, err := utility.RequireRole(r, utility.AccountingRoles...); err != nil {
 		return err
 	}
 

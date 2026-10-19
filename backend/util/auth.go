@@ -23,6 +23,9 @@ const (
 // ManagementRoles は部員情報を書き換えられるロール
 var ManagementRoles = []string{RoleChief, RoleViceChief}
 
+// AccountingRoles は会計の処理(入出金の追加・削除、支払い済みの切り替え、徴収額の設定、レシートの削除)ができるロール
+var AccountingRoles = []string{RoleTreasurer, RoleChief}
+
 // SessionUser はセッションに保存しているログイン中のユーザー情報
 type SessionUser struct {
 	ID   int
