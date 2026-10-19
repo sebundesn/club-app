@@ -26,6 +26,64 @@ const readVideoDuration = (file: File): Promise<number> =>
     video.src = url;
   });
 
+interface EventSummary {
+  id: number;
+  date: string;
+  title: string;
+}
+
+const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+// リッチメニューから開いたとき(イベント未指定)に、今月と先月のイベントから選ばせる
+function EventPicker() {
+  const { showToast } = useToast();
+  const [events, setEvents] = useState<EventSummary[] | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      const now = new Date();
+      const months = [monthKey(now), monthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1))];
+      try {
+        const lists = await Promise.all(
+          months.map(async (m) => {
+            const res = await fetch(`${backendURL}/api/getMonthEvents?month=${m}`);
+            return res.ok ? ((await res.json()) as EventSummary[] | null) ?? [] : [];
+          }),
+        );
+        setEvents(lists.flat().sort((a, b) => b.date.localeCompare(a.date)));
+      } catch (e) {
+        console.error('failed to load events:', e);
+        showToast('通信に失敗しました。', 'error');
+        setEvents([]);
+      }
+    };
+    load();
+  }, [showToast]);
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-6">
+      <h1 className="text-xl font-bold text-forest-800 mb-4">アルバム</h1>
+      <p className="text-sm text-earth-700 mb-3">イベントを選んでください(先月・今月)。それ以前は予定表から開けます。</p>
+      {events === null ? (
+        <p className="text-earth-600">読み込み中…</p>
+      ) : events.length === 0 ? (
+        <p className="text-earth-600">イベントがありません。</p>
+      ) : (
+        <ul className="divide-y divide-earth-100 bg-white rounded-xl border border-earth-200">
+          {events.map((e) => (
+            <li key={e.id}>
+              <a href={`/album?eventID=${e.id}`} className="flex justify-between px-4 py-3">
+                <span>{e.title || '(無題)'}</span>
+                <span className="text-sm text-earth-600">{e.date}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function AlbumContent() {
   const { showToast } = useToast();
   const params = useSearchParams();
@@ -149,9 +207,7 @@ function AlbumContent() {
     }
   };
 
-  if (!eventID) {
-    return <p className="p-6">イベントが指定されていません。カレンダーからアルバムを開いてください。</p>;
-  }
+  if (!eventID) return <EventPicker />;
 
   const photoFull = album ? album.photo_count >= album.photo_limit : false;
   const videoFull = album ? album.video_count >= album.video_limit : false;
