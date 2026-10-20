@@ -295,6 +295,30 @@
   left: 0;
 }
 
+/* ナビの各項目は、アイコンの下にごく小さい文字 */
+.nav-link,
+.nav-link-mobile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  min-width: 3.25rem;
+  padding: 0.35rem 0.5rem;
+  line-height: 1;
+}
+
+.nav-icon {
+  display: block;
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+.nav-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 /* 通知の赤丸(件数)。付けた要素の左上に重ねる */
 .nav-link,
 .nav-link-mobile {

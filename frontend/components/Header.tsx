@@ -10,6 +10,7 @@ import { useToast } from './Toast';
 import Modal from './Modal';
 import LineLoginButton from './LineLoginButton';
 import UserMenu from './UserMenu';
+import NavIcon, { NavIconName } from './NavIcon';
 import LineLinkModal from './LineLinkModal';
 import './header.css'; // Vanilla CSSの読み込み
 
@@ -134,12 +135,14 @@ export default function Header() {
   const pending = usePendingApplications(['部長', '副部長'].includes(userInfo.role));
 
   // ナビゲーション項目
-  const navItems = [
-    { path: '/calendar', label: 'ワンゲル', badge: 0 },
-    { path: '/album', label: 'アルバム', badge: 0 },
-    ...(userInfo.isLoggedIn ? [{ path: '/receipts', label: 'レシート', badge: 0 }] : []),
+  const navItems: { path: string; label: string; icon: NavIconName; badge: number }[] = [
+    { path: '/calendar', label: 'ワンゲル', icon: 'mountain', badge: 0 },
+    { path: '/album', label: 'アルバム', icon: 'album', badge: 0 },
+    ...(userInfo.isLoggedIn ? [{ path: '/receipts', label: 'レシート', icon: 'receipt' as const, badge: 0 }] : []),
     // 部長・副部長・会計には、役職名のページを出す
-    ...(['部長', '副部長', '会計'].includes(userInfo.role) ? [{ path: '/admin', label: userInfo.role, badge: pending }] : []),
+    ...(['部長', '副部長', '会計'].includes(userInfo.role)
+      ? [{ path: '/admin', label: userInfo.role, icon: userInfo.role === '会計' ? ('wallet' as const) : ('crown' as const), badge: pending }]
+      : []),
   ];
 
   useEffect(() => {
@@ -201,7 +204,8 @@ export default function Header() {
                 href={item.path}
                 className={`nav-link ${pathname === item.path ? 'active' : ''}`}
               >
-                {item.label}
+                <NavIcon name={item.icon} />
+                <span className="nav-label">{item.label}</span>
                 {item.badge > 0 && <span className="notify-badge">{item.badge}</span>}
               </Link>
             ))}
@@ -217,7 +221,8 @@ export default function Header() {
               href={item.path}
               className={`nav-link-mobile ${pathname === item.path ? 'active' : ''}`}
             >
-              {item.label}
+              <NavIcon name={item.icon} />
+              <span className="nav-label">{item.label}</span>
               {item.badge > 0 && <span className="notify-badge">{item.badge}</span>}
             </Link>
           ))}

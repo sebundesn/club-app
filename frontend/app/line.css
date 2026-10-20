@@ -565,6 +565,8 @@
 /* アルバム一覧: 横にスワイプするカバーフロー。両端の画像も真ん中まで来られるよう左右に余白 */
 .la-flow {
   position: relative;
+  /* 画像ごとの重なり順(z-index)をこの中だけに閉じ込め、ヘッダーより上に出さない */
+  isolation: isolate;
   display: flex;
   margin-top: 0.75rem;
   padding: 0.5rem 20%;
