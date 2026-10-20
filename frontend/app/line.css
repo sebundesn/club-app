@@ -74,7 +74,8 @@
 }
 
 .la-text-btn:disabled {
-  background: #c9ccd0;
+  background: var(--la-green);
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
@@ -119,16 +120,15 @@
   flex-shrink: 0;
   min-height: 2.25rem;
   padding: 0 0.9rem;
-  border: 1px solid var(--la-line);
+  border: none;
   border-radius: 999px;
   background: #ffffff;
-  color: #3c4043;
+  color: var(--la-green-dark);
   font-size: 0.85rem;
   cursor: pointer;
 }
 
 .la-chip.active {
-  border-color: var(--la-green);
   background: var(--la-green);
   color: #ffffff;
   font-weight: 700;
@@ -430,8 +430,8 @@
   justify-content: center;
   aspect-ratio: 1 / 1;
   border: none;
-  background: var(--la-bg);
-  color: var(--la-sub);
+  background: var(--la-green);
+  color: #ffffff;
   font-size: 2.25rem;
   cursor: pointer;
 }

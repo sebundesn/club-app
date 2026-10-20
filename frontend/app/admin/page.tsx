@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { backendURL } from '../utils/api';
+import { usePendingApplications } from '../utils/pendingApplications';
 import AccountingSection from './AccountingSection';
 import ApplicationsSection from './ApplicationsSection';
 import ManageCalendar from './ManageCalendar';
@@ -30,6 +31,7 @@ const TABS_BY_ROLE: Record<string, Tab[]> = {
 export default function AdminPage() {
   const [role, setRole] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('accounting');
+  const pending = usePendingApplications(role === '部長' || role === '副部長');
 
   useEffect(() => {
     const loadRole = async () => {
@@ -68,6 +70,7 @@ export default function AdminPage() {
               onClick={() => setTab(t)}
             >
               {TAB_LABEL[t]}
+              {t === 'applications' && pending > 0 && <span className="notify-badge">{pending}</span>}
             </button>
           ))}
         </div>

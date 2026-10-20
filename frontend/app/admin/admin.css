@@ -13,11 +13,12 @@
   gap: 0.5rem;
   max-width: 1152px;
   margin: 0.75rem auto 0;
-  padding: 0 1rem;
+  padding: 0.5rem 1rem 0; /* 上は赤丸がはみ出して切れないぶん */
   overflow-x: auto;
 }
 
 .admin-tab {
+  position: relative;
   flex-shrink: 0;
   min-height: 2.5rem;
   padding: 0 1.1rem;

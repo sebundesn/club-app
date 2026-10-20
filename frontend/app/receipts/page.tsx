@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ReceiptDataStruct } from '../utils/schema';
@@ -146,6 +146,7 @@ function ReceiptDetail({ eventID }: { eventID: number }) {
   const { showToast } = useToast();
   const { receipts, state, reload } = useReceipts(DETAIL_WEEKS);
   const [viewIndex, setViewIndex] = useState<number | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
   const [role, setRole] = useState('');
   // 画面を出し分けるだけ。実際の権限チェックはサーバー側で行っている
   const canDelete = role === '会計' || role === '部長';
@@ -237,9 +238,26 @@ function ReceiptDetail({ eventID }: { eventID: number }) {
       )}
 
       {state === 'ok' && (
-        <Link href={`/receipts/upload?eventID=${eventID}&title=${encodeURIComponent(event?.Title ?? '')}`} className="la-fab" aria-label="レシートを追加">
-          ＋
-        </Link>
+        <>
+          <button type="button" className="la-fab" aria-label="レシートを追加" onClick={() => fileInput.current?.click()}>
+            ＋
+          </button>
+          {/* ＋を押すと、そのままスマホの写真選択が開く */}
+          <input
+            ref={fileInput}
+            type="file"
+            accept="image/jpeg,image/png"
+            multiple
+            hidden
+            onChange={(e) => {
+              const files = Array.from(e.target.files ?? []);
+              e.target.value = '';
+              if (files.length === 0) return;
+              setPendingFiles(files);
+              router.push(`/receipts/upload?eventID=${eventID}&title=${encodeURIComponent(event?.Title ?? '')}`);
+            }}
+          />
+        </>
       )}
 
       {viewIndex !== null && items.length > 0 && (

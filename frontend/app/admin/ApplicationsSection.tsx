@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Application } from '../utils/schema';
 import { backendURL, readErrorMessage } from '../utils/api';
+import { notifyApplicationsChanged } from '../utils/pendingApplications';
 import { useToast } from '../../components/Toast';
 import '../subpages.css';
 
@@ -47,6 +48,7 @@ export default function ApplicationsSection() {
       }
       showToast(`${label}しました。`, 'success');
       await load();
+      notifyApplicationsChanged();
     } catch (e) {
       console.error('failed to decide application:', e);
       showToast('通信に失敗しました。', 'error');

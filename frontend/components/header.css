@@ -145,7 +145,7 @@
   padding: 0 1rem 0 0;
   overflow: hidden;
   border: none;
-  border-radius: 0.25rem;
+  border-radius: 0.375rem; /* 角を2px大きく */
   background-color: #06c755;
   color: #ffffff;
   font-family: inherit;
@@ -215,8 +215,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 3rem; /* 半径を2px大きく */
+  height: 3rem;
   padding: 0;
   overflow: hidden;
   border: 2px solid var(--color-forest-300);
@@ -293,4 +293,29 @@
   right: auto;
   bottom: calc(100% + 0.5rem);
   left: 0;
+}
+
+/* 通知の赤丸(件数)。付けた要素の左上に重ねる */
+.nav-link,
+.nav-link-mobile {
+  position: relative;
+}
+
+.notify-badge {
+  position: absolute;
+  top: -0.35rem;
+  left: -0.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  box-sizing: border-box;
 }

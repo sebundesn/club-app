@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AlbumSummary, MediaAlbum } from '../utils/schema';
@@ -93,6 +93,7 @@ function AlbumDetail({ eventID }: { eventID: number }) {
   const { showToast } = useToast();
   const [album, setAlbum] = useState<MediaAlbum | null>(null);
   const [viewIndex, setViewIndex] = useState<number | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     try {
@@ -193,9 +194,24 @@ function AlbumDetail({ eventID }: { eventID: number }) {
         <li>動画は変換が終わるまで「変換中…」と表示されます。完了まで画面を閉じないでください。</li>
       </ul>
 
-      <Link href={`/album/upload?eventID=${eventID}&title=${encodeURIComponent(album?.title ?? '')}`} className="la-fab" aria-label="写真・動画を追加">
+      <button type="button" className="la-fab" aria-label="写真・動画を追加" onClick={() => fileInput.current?.click()}>
         ＋
-      </Link>
+      </button>
+      {/* ＋を押すと、そのままスマホの写真選択が開く */}
+      <input
+        ref={fileInput}
+        type="file"
+        accept={ALBUM_ACCEPT}
+        multiple
+        hidden
+        onChange={(e) => {
+          const files = Array.from(e.target.files ?? []);
+          e.target.value = '';
+          if (files.length === 0) return;
+          setPendingFiles(files);
+          router.push(`/album/upload?eventID=${eventID}&title=${encodeURIComponent(album?.title ?? '')}`);
+        }}
+      />
 
       {viewIndex !== null && ready.length > 0 && (
         <MediaViewer

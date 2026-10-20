@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserInfoStruct } from '../app/utils/schema';
 import { backendURL, readErrorMessage } from '../app/utils/api';
+import { usePendingApplications } from '../app/utils/pendingApplications';
 import { useToast } from './Toast';
 import Modal from './Modal';
 import LineLoginButton from './LineLoginButton';
@@ -129,13 +130,16 @@ export default function Header() {
     }
   };
 
+  // 入部申請の承認待ち件数(承認できる部長・副部長にだけ出す)
+  const pending = usePendingApplications(['部長', '副部長'].includes(userInfo.role));
+
   // ナビゲーション項目
   const navItems = [
-    { path: '/calendar', label: 'ワンゲル' },
-    { path: '/album', label: 'アルバム' },
-    ...(userInfo.isLoggedIn ? [{ path: '/receipts', label: 'レシート' }] : []),
+    { path: '/calendar', label: 'ワンゲル', badge: 0 },
+    { path: '/album', label: 'アルバム', badge: 0 },
+    ...(userInfo.isLoggedIn ? [{ path: '/receipts', label: 'レシート', badge: 0 }] : []),
     // 部長・副部長・会計には、役職名のページを出す
-    ...(['部長', '副部長', '会計'].includes(userInfo.role) ? [{ path: '/admin', label: userInfo.role }] : []),
+    ...(['部長', '副部長', '会計'].includes(userInfo.role) ? [{ path: '/admin', label: userInfo.role, badge: pending }] : []),
   ];
 
   useEffect(() => {
@@ -198,6 +202,7 @@ export default function Header() {
                 className={`nav-link ${pathname === item.path ? 'active' : ''}`}
               >
                 {item.label}
+                {item.badge > 0 && <span className="notify-badge">{item.badge}</span>}
               </Link>
             ))}
           </nav>
@@ -213,6 +218,7 @@ export default function Header() {
               className={`nav-link-mobile ${pathname === item.path ? 'active' : ''}`}
             >
               {item.label}
+              {item.badge > 0 && <span className="notify-badge">{item.badge}</span>}
             </Link>
           ))}
         </nav>
