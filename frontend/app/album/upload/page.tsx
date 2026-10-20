@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -12,6 +12,7 @@ import {
 } from '../../utils/mediaUpload';
 import { useToast } from '../../../components/Toast';
 import PickGrid from '../../../components/line/PickGrid';
+import { clearPendingFiles, peekPendingFiles } from '../../utils/pendingFiles';
 import '../../line.css';
 
 // 1回に選べる数。サーバーの枠(写真150枚・動画10本)の範囲で、選びすぎて重くならない程度にしている
@@ -27,7 +28,9 @@ function AlbumUpload() {
   const eventID = Number(params.get('eventID')) || null;
   const eventTitle = params.get('title') ?? '';
 
-  const [files, setFiles] = useState<File[]>([]);
+  // 一覧の＋で選んだファイルを受け取る
+  const [files, setFiles] = useState<File[]>(() => peekPendingFiles().slice(0, MAX_PICK));
+  useEffect(() => clearPendingFiles, []);
   const [uploading, setUploading] = useState('');
 
   const upload = async () => {
@@ -95,9 +98,6 @@ function AlbumUpload() {
       {eventID && (
         <>
           <h2 className="la-section">写真・動画を選ぶ</h2>
-          <p className="la-meta" style={{ paddingTop: 0 }}>
-            写真はJPEG・PNG(1枚20MBまで)、動画は{VIDEO_MAX_SEC}秒以内。最大{MAX_PICK}件まで選べます。丸を押すと選択を外せます。
-          </p>
           <PickGrid files={files} onChange={setFiles} accept="image/jpeg,image/png,video/*" max={MAX_PICK} disabled={uploading !== ''} />
           {uploading && <p className="la-progress">{uploading}</p>}
         </>

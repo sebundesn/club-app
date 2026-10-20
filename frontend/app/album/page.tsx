@@ -8,7 +8,11 @@ import { backendURL, readErrorMessage } from '../utils/api';
 import { useToast } from '../../components/Toast';
 import EventStrip from '../../components/line/EventStrip';
 import MediaViewer from '../../components/line/MediaViewer';
+import { VIDEO_MAX_SEC } from '../utils/mediaUpload';
+import { setPendingFiles } from '../utils/pendingFiles';
 import '../line.css';
+
+const ALBUM_ACCEPT = 'image/jpeg,image/png,video/*';
 
 const md = (iso: string) => {
   const [, m, d] = iso.slice(0, 10).split('-').map(Number);
@@ -17,9 +21,16 @@ const md = (iso: string) => {
 
 /** アルバム一覧。写真・動画があるイベントを、表紙つきのカードで新しい順に並べる。 */
 function AlbumList() {
+  const router = useRouter();
   const { showToast } = useToast();
   const [albums, setAlbums] = useState<AlbumSummary[] | null>(null);
   const [loggedOut, setLoggedOut] = useState(false);
+
+  // ＋で選んだファイルをアップロードページに渡して、確認の画面へ進む
+  const pickFor = (eventID: number, title: string, files: File[]) => {
+    setPendingFiles(files);
+    router.push(`/album/upload?eventID=${eventID}&title=${encodeURIComponent(title)}`);
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -64,8 +75,9 @@ function AlbumList() {
               title={a.title}
               sub={`${md(a.date)} ・ 写真${a.photo_count}${a.video_count > 0 ? ` ・ 動画${a.video_count}` : ''}`}
               href={`/album?eventID=${a.event_id}`}
-              uploadHref={`/album/upload?eventID=${a.event_id}`}
               uploadLabel={`${a.title || '(無題)'}に写真・動画を追加`}
+              accept={ALBUM_ACCEPT}
+              onPick={(files) => pickFor(a.event_id, a.title, files)}
               thumbs={a.preview_urls}
             />
           ))}
@@ -169,7 +181,19 @@ function AlbumDetail({ eventID }: { eventID: number }) {
         })}
       </div>
 
-      <Link href={`/album/upload?eventID=${eventID}`} className="la-fab" aria-label="写真・動画を追加">
+      {/* 写真・動画を選ぶときの注意 */}
+      <ul className="la-notes">
+        <li>写真はJPEG・PNG(1枚20MBまで)、動画は{VIDEO_MAX_SEC}秒以内です。</li>
+        {album && (
+          <li>
+            1つのイベントに入れられるのは、写真{album.photo_limit}枚・動画{album.video_limit}本までです。
+          </li>
+        )}
+        <li>1回に選べるのは50件までです。選んだあとの画面で、丸を押すと選択を外せます。</li>
+        <li>動画は変換が終わるまで「変換中…」と表示されます。完了まで画面を閉じないでください。</li>
+      </ul>
+
+      <Link href={`/album/upload?eventID=${eventID}&title=${encodeURIComponent(album?.title ?? '')}`} className="la-fab" aria-label="写真・動画を追加">
         ＋
       </Link>
 

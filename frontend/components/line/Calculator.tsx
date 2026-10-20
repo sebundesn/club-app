@@ -67,6 +67,8 @@ export default function Calculator({ raised = false }: { raised?: boolean }) {
   const [expr, setExpr] = useState('');
   const [history, setHistory] = useState<Entry[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  // 「＝」で出した結果の直後。数字を打ったら結果を消して新しい入力にする
+  const [done, setDone] = useState(false);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- sessionStorage はブラウザでしか読めないので、表示後に読む。
@@ -90,6 +92,7 @@ export default function Calculator({ raised = false }: { raised?: boolean }) {
       const result = format(live);
       saveHistory([{ expr, result }, ...history].slice(0, MAX_HISTORY));
       setExpr(result);
+      setDone(true);
       return;
     }
     // 演算子が続いたら、あとのものに置き換える(マイナスは負数として続けられる)
@@ -97,7 +100,8 @@ export default function Calculator({ raised = false }: { raised?: boolean }) {
       setExpr(expr.replace(/[+\-×÷]+$/, '') + key);
       return;
     }
-    setExpr(expr + key);
+    setExpr(done && /[\d.]/.test(key) ? key : expr + key);
+    setDone(false);
   };
 
   return (
@@ -135,7 +139,15 @@ export default function Calculator({ raised = false }: { raised?: boolean }) {
                 <p className="la-calc-none">履歴はありません</p>
               ) : (
                 history.map((h, i) => (
-                  <button key={i} type="button" className="la-calc-entry" onClick={() => setExpr(h.result)}>
+                  <button
+                    key={i}
+                    type="button"
+                    className="la-calc-entry"
+                    onClick={() => {
+                      setExpr(h.result);
+                      setDone(true);
+                    }}
+                  >
                     <span>{h.expr}</span>
                     <strong>= {Number(h.result).toLocaleString()}</strong>
                   </button>
@@ -157,7 +169,13 @@ export default function Calculator({ raised = false }: { raised?: boolean }) {
                 key={k}
                 type="button"
                 className={`la-calc-key${/[+\-×÷]/.test(k) ? ' op' : ''}${k === '=' ? ' eq' : ''}${k === 'C' || k === '⌫' ? ' fn' : ''}`}
-                onClick={() => (k === 'C' ? setExpr('') : k === '⌫' ? setExpr(expr.slice(0, -1)) : press(k))}
+                onClick={() => {
+                  if (k === 'C' || (k === '⌫' && done)) {
+                    setExpr('');
+                    setDone(false);
+                  } else if (k === '⌫') setExpr(expr.slice(0, -1));
+                  else press(k);
+                }}
               >
                 {k === '-' ? '−' : k}
               </button>

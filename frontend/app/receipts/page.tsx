@@ -9,6 +9,7 @@ import { useToast } from '../../components/Toast';
 import Calculator from '../../components/line/Calculator';
 import EventStrip from '../../components/line/EventStrip';
 import MediaViewer from '../../components/line/MediaViewer';
+import { setPendingFiles } from '../utils/pendingFiles';
 import '../line.css';
 
 const PERIODS = [
@@ -82,7 +83,14 @@ function Notice({ state }: { state: LoadState }) {
 /** レシート一覧。レシートがあるイベントを、表紙つきのカードで新しい順に並べる。 */
 function ReceiptList() {
   const [weeks, setWeeks] = useState(PERIODS[0].weeks);
+  const router = useRouter();
   const { receipts, state } = useReceipts(weeks);
+
+  // ＋で選んだファイルをアップロードページに渡して、確認の画面へ進む
+  const pickFor = (eventID: number, title: string, files: File[]) => {
+    setPendingFiles(files);
+    router.push(`/receipts/upload?eventID=${eventID}&title=${encodeURIComponent(title)}`);
+  };
 
   return (
     <div className="la-page">
@@ -118,8 +126,9 @@ function ReceiptList() {
                 title={r.Title}
                 sub={`${r.Date.slice(5).replace('-', '/')} ・ ${r.Images.length}枚`}
                 href={`/receipts?eventID=${r.ID}`}
-                uploadHref={`/receipts/upload?eventID=${r.ID}`}
                 uploadLabel={`${r.Title || '(無題)'}にレシートを追加`}
+                accept="image/jpeg,image/png"
+                onPick={(files) => pickFor(r.ID, r.Title, files)}
                 thumbs={r.Images.map((img) => receiptSrc(img.url))}
               />
             ))}
@@ -219,8 +228,16 @@ function ReceiptDetail({ eventID }: { eventID: number }) {
 
       <Calculator raised={state === 'ok'} />
 
+      {state === 'ok' && event && (
+        <ul className="la-notes">
+          <li>JPEG・PNG(1枚20MBまで)の画像を選べます。</li>
+          <li>1つのイベントに入れられるのは20枚までです。</li>
+          <li>見られるのは会計・部長・副部長だけです。</li>
+        </ul>
+      )}
+
       {state === 'ok' && (
-        <Link href={`/receipts/upload?eventID=${eventID}`} className="la-fab" aria-label="レシートを追加">
+        <Link href={`/receipts/upload?eventID=${eventID}&title=${encodeURIComponent(event?.Title ?? '')}`} className="la-fab" aria-label="レシートを追加">
           ＋
         </Link>
       )}

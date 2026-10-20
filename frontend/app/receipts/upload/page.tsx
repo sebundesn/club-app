@@ -1,11 +1,12 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { RECEIPTS_PER_REQUEST, uploadInBatches, uploadReceipts } from '../../utils/mediaUpload';
 import { useToast } from '../../../components/Toast';
 import PickGrid from '../../../components/line/PickGrid';
+import { clearPendingFiles, peekPendingFiles } from '../../utils/pendingFiles';
 import '../../line.css';
 
 // サーバーの上限(1イベント20枚)に合わせる
@@ -21,7 +22,9 @@ function ReceiptUpload() {
   const eventID = Number(params.get('eventID')) || null;
   const eventTitle = params.get('title') ?? '';
 
-  const [files, setFiles] = useState<File[]>([]);
+  // 一覧の＋で選んだファイルを受け取る
+  const [files, setFiles] = useState<File[]>(() => peekPendingFiles().slice(0, MAX_PICK));
+  useEffect(() => clearPendingFiles, []);
   const [uploading, setUploading] = useState('');
 
   const upload = async () => {
@@ -58,9 +61,6 @@ function ReceiptUpload() {
       {eventID && (
         <>
           <h2 className="la-section">レシート・領収書の画像を選ぶ</h2>
-          <p className="la-meta" style={{ paddingTop: 0 }}>
-            JPEG・PNG(1枚20MBまで)、1イベント{MAX_PICK}枚まで。見られるのは会計・部長・副部長だけです。丸を押すと選択を外せます。
-          </p>
           <PickGrid files={files} onChange={setFiles} accept="image/jpeg,image/png" max={MAX_PICK} disabled={uploading !== ''} />
           {uploading && <p className="la-progress">{uploading}</p>}
         </>

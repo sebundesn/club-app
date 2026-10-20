@@ -634,14 +634,18 @@
 
 .la-calc-clock,
 .la-calc-close {
-  width: 2rem;
-  height: 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
   border: none;
   border-radius: 0.4rem;
   background: none;
   color: #ffffff;
   font-size: 1.1rem;
   cursor: pointer;
+}
+
+.la-calc-close {
+  font-size: 1.8rem;
 }
 
 .la-calc-clock[aria-pressed='true'] {
@@ -736,4 +740,13 @@
 .la-calc-key:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+/* 詳細ページの下の方の注意書き */
+.la-notes {
+  margin: 0;
+  padding: 1rem 1rem 6rem 2.25rem;
+  color: var(--la-sub);
+  font-size: 0.8rem;
+  line-height: 1.6;
 }
