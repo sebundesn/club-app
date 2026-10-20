@@ -18,7 +18,6 @@ interface MemberRow {
 export default function PaymentStatusCard({ canEdit }: { canEdit: boolean }) {
   const { showToast } = useToast();
   const [rows, setRows] = useState<MemberPayment[] | null>(null);
-  const [onlyUnpaid, setOnlyUnpaid] = useState(true);
   const [open, setOpen] = useState<number | null>(null);
 
   const load = useCallback(async () => {
@@ -74,9 +73,8 @@ export default function PaymentStatusCard({ canEdit }: { canEdit: boolean }) {
     return [...byUser.values()].sort((a, b) => b.unpaidTotal - a.unpaidTotal || a.name.localeCompare(b.name, 'ja'));
   }, [rows]);
 
-  const unpaidMembers = members.filter((m) => m.unpaidTotal > 0);
-  const unpaidSum = unpaidMembers.reduce((sum, m) => sum + m.unpaidTotal, 0);
-  const shown = onlyUnpaid ? unpaidMembers : members;
+  // 未払いの人だけを出す
+  const shown = members.filter((m) => m.unpaidTotal > 0);
 
   return (
     <div className="card p-6">
@@ -86,26 +84,8 @@ export default function PaymentStatusCard({ canEdit }: { canEdit: boolean }) {
         <p className="text-earth-600">読み込み中…</p>
       ) : (
         <>
-          <p className="pay-summary">
-            <span>
-              未払い <strong>{unpaidMembers.length}人</strong>
-            </span>
-            <span>
-              未払い合計 <strong>{yen(unpaidSum)}</strong>
-            </span>
-          </p>
-
-          <div className="pay-filter" role="tablist">
-            <button type="button" role="tab" aria-selected={onlyUnpaid} className={onlyUnpaid ? 'active' : ''} onClick={() => setOnlyUnpaid(true)}>
-              未払いのみ
-            </button>
-            <button type="button" role="tab" aria-selected={!onlyUnpaid} className={!onlyUnpaid ? 'active' : ''} onClick={() => setOnlyUnpaid(false)}>
-              全員
-            </button>
-          </div>
-
           {shown.length === 0 ? (
-            <p className="text-forest-700">{onlyUnpaid ? '未払いの人はいません 🎉' : '徴収の記録がありません。'}</p>
+            <p className="text-forest-700">未払いの人はいません 🎉</p>
           ) : (
             <div>
               {shown.map((m) => {
@@ -127,7 +107,7 @@ export default function PaymentStatusCard({ canEdit }: { canEdit: boolean }) {
                     </button>
                     {expanded && (
                       <ul className="pay-detail">
-                        {m.items.map((p) => (
+                        {m.items.filter((p) => !p.paid).map((p) => (
                           <li key={p.event_id}>
                             <span className="pay-event">
                               {p.title || '(無題)'}

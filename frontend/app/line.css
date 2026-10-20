@@ -489,37 +489,37 @@
 }
 
 /* イベントごとの行: 中央に大きな名前、右に＋ボタン、その下に画像を2列で */
-.la-events {
+.la-ev-list {
   margin: 0;
   padding: 0.5rem 1rem 1rem;
   list-style: none;
 }
 
-.la-event {
+.la-ev {
   padding: 1rem 0;
   border-bottom: 1px solid var(--la-line);
 }
 
 /* 見出し(中央に名前と日付)の右端に＋ボタン。画像のグリッドはその下 */
-.la-event-head {
+.la-ev-head {
   position: relative;
   padding: 0 3.25rem;
   text-align: center;
 }
 
-.la-event-title {
+.la-ev-title {
   margin: 0;
   font-size: 1.3rem;
   font-weight: 700;
   overflow-wrap: anywhere;
 }
 
-.la-event-text {
+.la-ev-text {
   color: inherit;
   text-decoration: none;
 }
 
-.la-event-sub {
+.la-ev-sub {
   margin: 0.15rem 0 0;
 }
 
@@ -562,7 +562,7 @@
   object-fit: cover;
 }
 
-.la-event-name {
+.la-ev-name {
   margin: 0;
   padding: 0.75rem 1rem 0;
   font-size: 1.2rem;
@@ -596,7 +596,7 @@
 .la-calc {
   position: fixed;
   right: max(0.75rem, calc(50% - 20rem + 0.75rem));
-  bottom: 1rem;
+  bottom: 4.5rem; /* 左下に固定のLINEボタンの上 */
   left: max(0.75rem, calc(50% - 20rem + 0.75rem));
   z-index: 20;
   max-height: 70vh;
@@ -606,7 +606,7 @@
   background: #111111;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
   color: #ffffff;
-  opacity: 0.7;
+  opacity: 0.77;
   transform-origin: bottom;
   animation: la-calc-open 0.18s ease-out;
 }
@@ -618,12 +618,12 @@
   }
   to {
     transform: scaleY(1);
-    opacity: 0.7;
+    opacity: 0.77;
   }
 }
 
 .la-calc.raised {
-  bottom: 1rem;
+  bottom: 4.5rem;
 }
 
 .la-calc-top {
@@ -650,6 +650,7 @@
 
 .la-calc-none {
   margin: 0.25rem 0;
+  text-align: right;
   color: #9a9a9a;
   font-size: 0.8rem;
 }
@@ -664,7 +665,7 @@
 .la-calc-entry {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
+  justify-content: flex-end; /* 右揃え: 式のあとに結果 */
   gap: 0.5rem;
   width: 100%;
   padding: 0.2rem 0;
@@ -672,7 +673,7 @@
   background: none;
   color: #9a9a9a;
   font-size: 0.7rem;
-  text-align: left;
+  text-align: right;
   cursor: pointer;
 }
 

@@ -87,7 +87,7 @@ function AlbumUpload() {
       </div>
 
       {eventID ? (
-        <p className="la-event-name">{eventTitle || '(無題)'}</p>
+        <p className="la-ev-name">{eventTitle || '(無題)'}</p>
       ) : (
         <p className="la-notice">一覧のイベントの＋ボタンから開いてください。</p>
       )}

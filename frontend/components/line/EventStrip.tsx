@@ -16,14 +16,14 @@ interface Props {
 export default function EventStrip({ title, sub, href, uploadHref, uploadLabel, thumbs }: Props) {
   const shown = thumbs.slice(0, 4);
   return (
-    <li className="la-event">
-      <div className="la-event-head">
-        <h2 className="la-event-title">
-          <Link href={href} className="la-event-text">
+    <li className="la-ev">
+      <div className="la-ev-head">
+        <h2 className="la-ev-title">
+          <Link href={href} className="la-ev-text">
             {title || '(無題)'}
           </Link>
         </h2>
-        <p className="la-album-sub la-event-sub">{sub}</p>
+        <p className="la-album-sub la-ev-sub">{sub}</p>
         <Link href={`${uploadHref}&title=${encodeURIComponent(title)}`} className="la-plus" aria-label={uploadLabel}>
           ＋
         </Link>

@@ -57,7 +57,7 @@ function AlbumList() {
       ) : albums.length === 0 ? (
         <p className="la-empty">イベントがありません。カレンダーでイベントを登録してください。</p>
       ) : (
-        <ul className="la-events">
+        <ul className="la-ev-list">
           {albums.map((a) => (
             <EventStrip
               key={a.event_id}

@@ -111,7 +111,7 @@ function ReceiptList() {
         (receipts.length === 0 ? (
           <p className="la-empty">この期間のイベントはありません。</p>
         ) : (
-          <ul className="la-events">
+          <ul className="la-ev-list">
             {receipts.map((r) => (
               <EventStrip
                 key={r.ID}

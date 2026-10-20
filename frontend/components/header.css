@@ -9,8 +9,8 @@
   width: calc(100% - 1rem);
   max-width: 1152px;
   border-radius: 1rem;
-  /* 背景を70%の透明にして、スクロールで後ろの内容が透けて見える浮いたバーにする */
-  background-color: rgba(247, 246, 239, 0.7); /* earth-50/70 */
+  /* 背景を63%の透明にして、スクロールで後ろの内容が透けて見える浮いたバーにする */
+  background-color: rgba(247, 246, 239, 0.63); /* earth-50/63 */
   backdrop-filter: blur(6px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
   padding: 0.75rem 0;
@@ -279,12 +279,18 @@
   background: var(--color-earth-300);
 }
 
-/* ログイン/ユーザーメニューの行。浮かせず、ページの先頭に置く */
+/* ログイン/ユーザーメニュー。ページの左下に固定する */
 .account-bar {
-  display: flex;
-  justify-content: flex-end;
-  max-width: 1152px;
-  margin: 0 auto;
-  padding: 0.5rem 1rem 0;
-  box-sizing: border-box;
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 55;
+}
+
+/* 下に固定したので、メニューは上に開く */
+.account-bar .user-menu-panel {
+  top: auto;
+  right: auto;
+  bottom: calc(100% + 0.5rem);
+  left: 0;
 }
