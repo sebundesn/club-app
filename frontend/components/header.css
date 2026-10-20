@@ -278,3 +278,13 @@
 .user-menu-logout:hover {
   background: var(--color-earth-300);
 }
+
+/* ログイン/ユーザーメニューの行。浮かせず、ページの先頭に置く */
+.account-bar {
+  display: flex;
+  justify-content: flex-end;
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 0.5rem 1rem 0;
+  box-sizing: border-box;
+}

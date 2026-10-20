@@ -176,7 +176,17 @@ export default function Header() {
 
   return (
     <>
-      {/* ヘッダー */}
+      {/* ログイン / ログアウト。ヘッダーに含めず、スクロールしても動かない */}
+      <div className="account-bar">
+        {/* ログイン / ログアウト */}
+        {userInfo.isLoggedIn ? (
+          <UserMenu userName={userInfo.userName} picture={userInfo.picture} onLogout={handleLogout} />
+        ) : (
+          <LineLoginButton onClick={goLineLogin} />
+        )}
+      </div>
+
+      {/* ヘッダー(ナビゲーションだけが浮く) */}
       <header className={`site-header ${isScrolled ? 'scrolled' : ''}`}>
         <div className="header-container">
           {/* ナビゲーション（PC用） */}
@@ -192,12 +202,6 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* ログイン / ログアウト */}
-          {userInfo.isLoggedIn ? (
-            <UserMenu userName={userInfo.userName} picture={userInfo.picture} onLogout={handleLogout} />
-          ) : (
-            <LineLoginButton onClick={goLineLogin} />
-          )}
         </div>
 
         {/* ナビゲーション（モバイル用） */}
