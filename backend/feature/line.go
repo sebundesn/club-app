@@ -109,22 +109,23 @@ func LineCallback(w http.ResponseWriter, r *http.Request) error {
 	savedState, _ := session.Values[util.OAuthStateKey].(string)
 	gotState := r.URL.Query().Get("state")
 	if savedState == "" || subtle.ConstantTimeCompare([]byte(savedState), []byte(gotState)) != 1 {
-		return util.BadRequest("ログインに失敗しました。もう一度お試しください。", errors.New("oauth state mismatch"))
+		// PIN認証などで別ブラウザ/別タブに戻されるとセッションCookieが無く、ここに来る
+		return lineCallbackFailed(w, r, errors.New("oauth state mismatch"))
 	}
 
 	code := r.URL.Query().Get("code")
 	if code == "" {
-		return util.BadRequest("ログインに失敗しました。", errors.New("authorization code is missing"))
+		return lineCallbackFailed(w, r, errors.New("authorization code is missing"))
 	}
 
 	accessToken, err := exchangeLineCode(code)
 	if err != nil {
-		return util.Internal("LINEとの通信に失敗しました。", err)
+		return lineCallbackFailed(w, r, err)
 	}
 
 	profile, err := fetchLineProfile(accessToken)
 	if err != nil {
-		return util.Internal("LINEとの通信に失敗しました。", err)
+		return lineCallbackFailed(w, r, err)
 	}
 
 	var user util.SessionUser
@@ -156,6 +157,14 @@ func LineCallback(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	http.Redirect(w, r, frontendURL()+"/calendar?login=link", http.StatusFound)
+	return nil
+}
+
+// lineCallbackFailed はコールバックの失敗をJSONのエラー画面にせず、
+// アプリに戻してトーストで知らせる。原因はログに残す。
+func lineCallbackFailed(w http.ResponseWriter, r *http.Request, cause error) error {
+	log.Printf("line callback failed: %v", cause)
+	http.Redirect(w, r, frontendURL()+"/calendar?login=error", http.StatusFound)
 	return nil
 }
 
