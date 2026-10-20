@@ -312,16 +312,10 @@ export default function ManageCalendar() {
                   <input
                     type="text"
                     placeholder="タイトル"
+                    autoFocus
                     required
                     value={editing.Title}
                     onChange={(e) => setEditing({ ...editing, Title: e.target.value })}
-                    className="input-field"
-                  />
-                  <input
-                    type="text"
-                    placeholder="サブタイトル"
-                    value={editing.Subtitle}
-                    onChange={(e) => setEditing({ ...editing, Subtitle: e.target.value })}
                     className="input-field"
                   />
                   <textarea
@@ -334,13 +328,7 @@ export default function ManageCalendar() {
                 </div>
 
                 <div className="flex-gap-3">
-                  <button
-                    onClick={() => (dayEvents.length === 0 ? closeModal() : setEditing(null))}
-                    className="btn-secondary flex-1"
-                  >
-                    キャンセル
-                  </button>
-                  <button onClick={saveEvent} className="btn-primary flex-1">
+                  <button onClick={saveEvent} className="btn-primary w-full">
                     保存
                   </button>
                 </div>

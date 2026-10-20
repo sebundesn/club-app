@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -79,6 +79,15 @@ function AlbumUpload() {
     setUploading('');
     if (!failed) router.push(`/album?eventID=${eventID}`);
   };
+
+  // 一覧の＋で選んで来たときは、アップロードボタンを待たずにすぐ始める
+  const autoStart = useRef(files.length > 0);
+  useEffect(() => {
+    if (!autoStart.current || !eventID) return;
+    autoStart.current = false;
+    upload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 最初の1回だけ
+  }, []);
 
   return (
     <div className="la-page">

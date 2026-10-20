@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { RECEIPTS_PER_REQUEST, uploadInBatches, uploadReceipts } from '../../utils/mediaUpload';
@@ -41,7 +41,18 @@ function ReceiptUpload() {
     if (sent > 0) showToast(`レシートを${sent}枚アップロードしました。`, 'success');
     // 送れた分は選択から外す(失敗したときは、残りをそのまま選び直せる)
     setFiles(files.slice(sent));
+    // すべて送れたら、そのイベントのレシート一覧へ
+    if (!error && sent === files.length) router.push(`/receipts?eventID=${eventID}`);
   };
+
+  // 一覧の＋で選んで来たときは、アップロードボタンを待たずにすぐ始める
+  const autoStart = useRef(files.length > 0);
+  useEffect(() => {
+    if (!autoStart.current || !eventID) return;
+    autoStart.current = false;
+    upload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 最初の1回だけ
+  }, []);
 
   return (
     <div className="la-page">

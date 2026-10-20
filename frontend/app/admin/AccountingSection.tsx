@@ -502,18 +502,18 @@ export default function AccountingSection({ role }: { role: string }) {
           {/* 新規追加フォーム(会計・部長のみ) */}
           {canEditPayment && (
           <div className="card p-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="money-form-head">
               <h3 className="text-xl font-bold text-forest-800">部費：支出・収益</h3>
               <button
                 type="button"
                 onClick={addAccountLog}
                 aria-label="追加"
-                className="w-10 h-10 flex-shrink-0 rounded-full bg-forest-600 hover:bg-forest-700 text-white text-2xl leading-none"
+                className="money-form-add"
               >
                 ＋
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="money-form-grid">
               <input
                 type="date"
                 value={newLog.date}
@@ -544,7 +544,7 @@ export default function AccountingSection({ role }: { role: string }) {
                 placeholder="内容（例：熊スプレー購入）"
                 value={newLog.content}
                 onChange={(e) => setNewLog({ ...newLog, content: e.target.value })}
-                className="input-field col-span-2"
+                className="input-field money-form-wide"
               />
             </div>
           </div>

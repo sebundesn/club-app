@@ -738,3 +738,52 @@
   color: #b91c1c;
   font-weight: 700;
 }
+
+/* 部費：支出・収益の記入欄。タイトルの右に＋、日付と金額を2列、内容はその下に全幅 */
+.money-form-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.money-form-head h3 {
+  margin: 0;
+}
+
+.money-form-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: none;
+  border-radius: 50%;
+  background: #4c7c3e;
+  color: #ffffff;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.money-form-add:hover {
+  background: #3b5e2f;
+}
+
+.money-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+/* 日付の入力は端末によって最小幅が大きく、列からはみ出すので縮められるようにする */
+.money-form-grid .input-field {
+  min-width: 0;
+  padding: 0.75rem 0.5rem;
+}
+
+.money-form-wide {
+  grid-column: 1 / -1;
+}
