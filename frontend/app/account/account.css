@@ -582,3 +582,159 @@
     height: 10rem;
   }
 }
+
+/* 権限のない人は部費の収支だけなので、1列で中央に寄せる */
+@media (min-width: 1024px) {
+  .main-grid.main-grid-single {
+    grid-template-columns: minmax(0, 36rem);
+    justify-content: center;
+  }
+
+  .main-grid.main-grid-single > div:first-child {
+    grid-column: auto;
+  }
+}
+
+/* 参加者・徴収を設定するイベントの行 */
+.event-pick-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--color-earth-200);
+  border-radius: 0.5rem;
+  background: var(--color-earth-50);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.event-pick-row:hover {
+  background: var(--color-earth-100);
+}
+
+/* 全部員の支払い状況 */
+.pay-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: var(--color-earth-700);
+}
+
+.pay-summary strong {
+  color: var(--color-forest-800);
+}
+
+.pay-filter {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.pay-filter button {
+  min-height: 2.25rem;
+  padding: 0 0.9rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-earth-100);
+  color: var(--color-forest-700);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pay-filter button.active {
+  background: var(--color-forest-600);
+  color: #ffffff;
+}
+
+.pay-member {
+  border-top: 1px solid var(--color-earth-100);
+}
+
+.pay-member:first-of-type {
+  border-top: none;
+}
+
+.pay-member-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.5rem 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pay-member-name {
+  font-weight: 700;
+  color: var(--color-forest-800);
+}
+
+.pay-badge {
+  flex-shrink: 0;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.pay-badge.unpaid {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.pay-badge.done {
+  background: var(--color-forest-100);
+  color: var(--color-forest-700);
+}
+
+.pay-detail {
+  margin: 0 0 0.5rem;
+  padding: 0 0 0 0.25rem;
+  list-style: none;
+}
+
+.pay-detail li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  font-size: 0.875rem;
+}
+
+.pay-detail .pay-event {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pay-detail .pay-date {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-earth-600);
+}
+
+.pay-detail .pay-amount {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.pay-detail .pay-amount.paid {
+  color: var(--color-forest-600);
+}
+
+.pay-detail .pay-amount.unpaid {
+  color: #b91c1c;
+  font-weight: 700;
+}

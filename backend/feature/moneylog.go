@@ -36,14 +36,10 @@ func SaveMoneyLog(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// GetAccountInfo は部費の収支の一覧を返す。部員なら誰でも見られる(使い道の透明化のため)が、
-// 外部の人には見せないよう、ログインは必須にしている。
+// GetAccountInfo は部費の収支の一覧を返す。使い道の透明化のため、ログインなしで誰でも見られる。
 func GetAccountInfo(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodGet {
 		return util.MethodNotAllowed(r.Method)
-	}
-	if _, err := util.RequireLogin(r); err != nil {
-		return err
 	}
 
 	year := r.URL.Query().Get("year")
@@ -70,13 +66,10 @@ func GetAccountInfo(w http.ResponseWriter, r *http.Request) error {
 	return json.NewEncoder(w).Encode(moneyLogs)
 }
 
-// GetMoneyTotal は部費の残高を返す。GetAccountInfo と同じく、ログインが必須。
+// GetMoneyTotal は部費の残高を返す。GetAccountInfo と同じく、ログインなしで見られる。
 func GetMoneyTotal(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodGet {
 		return util.MethodNotAllowed(r.Method)
-	}
-	if _, err := util.RequireLogin(r); err != nil {
-		return err
 	}
 
 	var sum int

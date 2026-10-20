@@ -82,6 +82,39 @@ func GetAllUnpaid(w http.ResponseWriter, r *http.Request) error {
 	return json.NewEncoder(w).Encode(res)
 }
 
+// GetAllPayments は全部員の支払い状況(支払い済みも含む)を返す。会計と部長・副部長だけが見られる。
+func GetAllPayments(w http.ResponseWriter, r *http.Request) error {
+	if r.Method != http.MethodGet {
+		return utility.MethodNotAllowed(r.Method)
+	}
+	if _, err := utility.RequireRole(r, utility.RoleTreasurer, utility.RoleChief, utility.RoleViceChief); err != nil {
+		return err
+	}
+
+	rows, err := utility.DB.QueryContext(r.Context(), SQLquery.SelectPaymentsAll)
+	if err != nil {
+		return utility.Internal("支払い状況の取得に失敗しました。", err)
+	}
+	defer rows.Close()
+
+	res := []schema.MemberPayment{}
+	for rows.Next() {
+		var p schema.MemberPayment
+		var title, name sql.NullString
+		if err := rows.Scan(&p.EventID, &title, &p.Date, &p.UserID, &name, &p.Amount, &p.Paid); err != nil {
+			return utility.Internal("支払い状況の取得に失敗しました。", err)
+		}
+		p.Title, p.UserName = title.String, name.String
+		res = append(res, p)
+	}
+	if err := rows.Err(); err != nil {
+		return utility.Internal("支払い状況の取得に失敗しました。", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	return json.NewEncoder(w).Encode(res)
+}
+
 // SetPaid は支払いの確認・取り消しをする。会計だけができる。
 func SetPaid(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {

@@ -7,13 +7,13 @@ import { backendURL } from '../utils/api';
 const yen = (n: number) => `${n.toLocaleString()}円`;
 const RECENT = 5;
 
-/** ホームに出す、部費の残高と収入・支出の詳細。ログインしていなければ何も出さない。 */
+/** ホームに出す、部費の残高と収入・支出の詳細。ログインしなくても見られる。 */
 export default function AccountSummaryCard() {
   const [year, setYear] = useState(() => new Date().getFullYear());
   const [balance, setBalance] = useState<number | null>(null);
   const [logs, setLogs] = useState<MoneyLogStruct[] | null>(null);
   const [showAll, setShowAll] = useState(false);
-  const [loggedOut, setLoggedOut] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const load = useCallback(async (y: number) => {
     try {
@@ -21,16 +21,16 @@ export default function AccountSummaryCard() {
         fetch(`${backendURL}/api/getMoneySum`, { credentials: 'include' }),
         fetch(`${backendURL}/api/accountInfo?year=${y}`, { credentials: 'include' }),
       ]);
-      // 未ログイン(401)などのときは、エラーを出さずにカードごと出さない
+      // 取得できなかったときは、エラーを出さずにカードごと出さない
       if (!sumRes.ok || !logRes.ok) {
-        setLoggedOut(true);
+        setFailed(true);
         return;
       }
       setBalance(await sumRes.json());
       setLogs((await logRes.json()) ?? []);
     } catch (e) {
       console.error('failed to load account summary:', e);
-      setLoggedOut(true);
+      setFailed(true);
     }
   }, []);
 
@@ -48,7 +48,7 @@ export default function AccountSummaryCard() {
   const expense = sorted.filter((l) => l.amount < 0).reduce((sum, l) => sum + -l.amount, 0);
   const shown = showAll ? sorted : sorted.slice(0, RECENT);
 
-  if (loggedOut || balance === null || logs === null) return null;
+  if (failed || balance === null || logs === null) return null;
 
   const changeYear = (delta: number) => {
     setShowAll(false);

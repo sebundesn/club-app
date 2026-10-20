@@ -3,27 +3,27 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   ReceiptDataStruct,
-  ReceiptImage,
   MoneyLogStruct,
   NewMoneyLog,
   MemberOption,
   EventMember,
 } from '../utils/schema';
-import { backendURL, readErrorMessage, receiptSrc } from '../utils/api';
+import { backendURL, readErrorMessage } from '../utils/api';
+import PaymentStatusCard from './PaymentStatusCard';
 import { useToast } from '../../components/Toast';
 import './account.css';
 import Select, { SelectInstance } from 'react-select';
 
-// 直近何週間分のレシートを表示するか（バックエンドの howLongWeek と同じ単位）
-const HOW_LONG_WEEK = 2;
+// 直近何週間分のイベントを出すか（バックエンドの howLongWeek と同じ単位）
+const HOW_LONG_WEEK = 4;
 
-// 会計ページ：部費の管理とレシートのアップロード機能を提供
+// 会計ページ(管理画面)：部費の収支、全部員の支払い状況、イベントの参加者・徴収額の管理。
+// 部費の収支はログインなしで誰でも見られる。管理の操作は権限のある人にだけ出す。
 export default function Account() {
   const { showToast } = useToast();
   const [moneyLogs, setMoneyLogs] = useState<MoneyLogStruct[]>([]);
   const [totalSum, setTotalSum] = useState<number>(0);
   const [receiptDatas, setReceiptDatas] = useState<ReceiptDataStruct[]>([]);
-  const [fullScreenImg, setFullScreenImg] = useState<string | null>(null);
   const [receiptModal, setReceiptModal] = useState<ReceiptDataStruct | null>(null);
   const [newLog, setNewLog] = useState<NewMoneyLog>({
     date: new Date().toISOString().split('T')[0],
@@ -39,34 +39,34 @@ export default function Account() {
   const [feeInput, setFeeInput] = useState('');
   // 画面を出し分けるだけ。実際の権限チェックはサーバー側で行っている
   const canEditPayment = role === '会計' || role === '部長';
+  const canView = canEditPayment || role === '副部長';
   const year = new Date().getFullYear();
   const selectRef = useRef<SelectInstance<MemberOption, true> | null>(null);
 
-  // レシート情報を取得
-  const getReceipts = useCallback(async () => {
+  // 直近のイベント一覧を取得(会計・役員のみ)
+  const getEvents = useCallback(async () => {
     try {
       const res = await fetch(`${backendURL}/api/getReceiptsInfo?howLongWeek=${HOW_LONG_WEEK}`, {
         credentials: 'include',
       });
 
       if (!res.ok) {
-        showToast(await readErrorMessage(res, 'レシートの取得に失敗しました。'), 'error');
+        showToast(await readErrorMessage(res, 'イベントの取得に失敗しました。'), 'error');
         return;
       }
 
-      const data: { id: number; title: string; date: string; images: ReceiptImage[] | null }[] =
-        (await res.json()) ?? [];
+      const data: { id: number; title: string; date: string }[] = (await res.json()) ?? [];
 
       const formattedData: ReceiptDataStruct[] = data.map((item) => ({
         ID: item.id,
         Title: item.title,
         Date: item.date.split('T')[0],
-        Images: item.images || [],
+        Images: [],
       }));
 
       setReceiptDatas(formattedData);
     } catch (e) {
-      console.error('failed to getReceipts:', e);
+      console.error('failed to getEvents:', e);
       showToast('通信に失敗しました。', 'error');
     }
   }, [showToast]);
@@ -137,41 +137,6 @@ export default function Account() {
     }
   };
 
-  // ファイルアップロード処理
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, eventID: number) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    const formData = new FormData();
-    formData.append('eventID', String(eventID));
-
-    for (let i = 0; i < files.length; i++) {
-      formData.append('images', files[i]);
-    }
-
-    try {
-      const res = await fetch(`${backendURL}/api/uploadReceipt`, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      });
-
-      if (!res.ok) {
-        showToast(await readErrorMessage(res, '画像のアップロードに失敗しました。'), 'error');
-        return;
-      }
-
-      await getReceipts();
-      showToast('画像をアップロードしました。', 'success');
-    } catch (err) {
-      console.error('failed to upload receipt:', err);
-      showToast('通信に失敗しました。', 'error');
-    } finally {
-      // 同じファイルを選び直せるように入力をリセットする
-      e.target.value = '';
-    }
-  };
-
   // 会計ログを削除
   const deleteMoneyLog = async (oneMoneyLog: MoneyLogStruct) => {
     try {
@@ -193,49 +158,6 @@ export default function Account() {
       showToast('削除しました。', 'success');
     } catch (error) {
       console.error('failed to delete money log:', error);
-      showToast('通信に失敗しました。', 'error');
-    }
-  };
-
-  // 画像を削除
-  const deleteImage = async (eventID: number, imageID: number) => {
-    try {
-      const res = await fetch(`${backendURL}/api/deleteImage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event_id: eventID, image_id: imageID }),
-        credentials: 'include',
-      });
-
-      if (!res.ok) {
-        showToast(await readErrorMessage(res, '画像の削除に失敗しました。'), 'error');
-        return;
-      }
-
-      setReceiptModal((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          Images: prev.Images.filter((img) => img.id !== imageID),
-        };
-      });
-
-      setReceiptDatas((prev) =>
-        prev.map((item) => {
-          if (item.ID === eventID) {
-            return {
-              ...item,
-              Images: item.Images.filter((img) => img.id !== imageID),
-            };
-          }
-          return item;
-        }),
-      );
-
-      await getReceipts();
-      showToast('画像を削除しました。', 'success');
-    } catch (error) {
-      console.error('failed to delete image:', error);
       showToast('通信に失敗しました。', 'error');
     }
   };
@@ -384,8 +306,13 @@ export default function Account() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 非同期の取得なので state 更新は await のあと。同期的な連鎖レンダリングは起きない。
     getAccountInfo();
     getMoneySum();
-    getReceipts();
-  }, [getAccountInfo, getMoneySum, getReceipts]);
+  }, [getAccountInfo, getMoneySum]);
+
+  useEffect(() => {
+    if (!canView) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 同上
+    getEvents();
+  }, [canView, getEvents]);
 
   useEffect(() => {
     if (!receiptModal) return;
@@ -397,49 +324,34 @@ export default function Account() {
 
   return (
     <div className="account-container max-w-6xl mx-auto px-4 py-8">
-      <div className="main-grid grid lg:grid-cols-3 gap-8">
-        {/* レシートエリア */}
-        <div className="space-y-6">
-          <div className="card p-6">
-            <h2 className="text-2xl font-bold text-forest-800 mb-6">レシート管理</h2>
-            <div className="receipt-grid grid md:grid-cols-2 gap-4">
-              {receiptDatas.map((event) => (
-                <div key={event.ID} className="receipt-item-card bg-earth-50 rounded-xl p-5 border border-earth-200">
-                  <div className="receipt-card-top flex items-start justify-between mb-3">
-                    <div>
-                      <span className="text-sm text-earth-600 font-medium">{event.Date}</span>
-                      <h3 className="text-lg font-bold text-forest-800">{event.Title}</h3>
-                    </div>
-                    <span className="badge-count px-3 py-1 bg-forest-100 text-forest-700 text-sm rounded-full font-medium">
-                      {event.Images.length}枚
-                    </span>
-                  </div>
-                  <div className="flex-actions flex gap-2">
-                    <label className="flex-1">
-                      <div className="btn-add-image w-full px-4 py-2 bg-forest-600 text-white text-center rounded-lg font-medium cursor-pointer hover:bg-forest-700 transition-all">
-                        画像を追加
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png"
-                        multiple
-                        className="hidden"
-                        onChange={(e) => handleFileChange(e, event.ID)}
-                      />
-                    </label>
+      <div className={`main-grid grid lg:grid-cols-3 gap-8${canView ? '' : ' main-grid-single'}`}>
+        {/* 管理エリア(会計・役員のみ) */}
+        {canView && (
+          <div className="space-y-6">
+            <PaymentStatusCard canEdit={canEditPayment} />
+
+            <div className="card p-6">
+              <h2 className="text-2xl font-bold text-forest-800 mb-2">イベントの参加者・徴収</h2>
+              <p className="text-sm text-earth-600 mb-4">直近{HOW_LONG_WEEK}週間のイベントです。参加者と徴収額を設定します。</p>
+              {receiptDatas.length === 0 ? (
+                <p className="text-earth-600">イベントはありません。</p>
+              ) : (
+                <div className="space-y-3">
+                  {receiptDatas.map((event) => (
                     <button
+                      key={event.ID}
                       type="button"
                       onClick={() => setReceiptModal(event)}
-                      className="btn-view-receipt flex-1 px-4 py-2 bg-earth-200 text-forest-800 rounded-lg font-medium hover:bg-earth-300 transition-all"
+                      className="event-pick-row"
                     >
-                      レシートを見る
+                      <span className="text-sm text-earth-600 font-medium">{event.Date}</span>
+                      <span className="text-forest-800 font-bold">{event.Title || '(無題)'}</span>
                     </button>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          </div>
-          {/* レシートモーダル */}
+          {/* 参加者モーダル */}
           {receiptModal && (
             <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setReceiptModal(null)}>
               <div className="modal-content bg-earth-50 rounded-2xl p-6 max-w-3xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
@@ -555,48 +467,11 @@ export default function Account() {
                   <hr className="participants-divider" />
                 </div>
 
-                {receiptModal.Images.length === 0 ? (
-                  <p className="modal-empty-text text-center text-earth-600 py-8">登録されているレシート画像はありません。</p>
-                ) : (
-                  <div className="image-thumbnail-grid grid md:grid-cols-2 gap-4">
-                    {receiptModal.Images.map((img) => (
-                      <div key={img.id} className="image-wrapper relative group">
-                        <img
-                          src={receiptSrc(img.url)}
-                          alt="receipt"
-                          className="receipt-thumbnail w-full h-48 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-all"
-                          onClick={() => setFullScreenImg(img.url)}
-                        />
-                        <button
-                          className="btn-delete-image absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (window.confirm('写真を削除しますか？')) {
-                              deleteImage(receiptModal.ID, img.id);
-                            }
-                          }}
-                        >
-                          <img src="/trash.svg" alt="削除" className="icon-trash w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
           )}
-
-          {/* フルスクリーン画像 */}
-          {fullScreenImg && (
-            <div className="fullscreen-overlay fixed inset-0 z-[60] flex items-center justify-center bg-black/90" onClick={() => setFullScreenImg(null)}>
-              <img
-                src={receiptSrc(fullScreenImg)}
-                alt="receiptImg"
-                className="fullscreen-image max-w-[90vw] max-h-[90vh] object-contain"
-              />
-            </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* 会計エリア */}
         <div className="space-y-6">
@@ -616,16 +491,18 @@ export default function Account() {
                 const isPlus = Number(oneMoneyLog.amount) > 0;
                 return (
                   <div key={oneMoneyLog.id} className="history-item flex items-center gap-3 p-3 bg-earth-50 rounded-lg border border-earth-200">
-                    <button
-                      onClick={() => {
-                        if (window.confirm(`「${oneMoneyLog.content}」の履歴を削除しますか？`)) {
-                          deleteMoneyLog(oneMoneyLog);
-                        }
-                      }}
-                      className="btn-history-delete w-8 h-8 flex-shrink-0 rounded-lg bg-red-100 hover:bg-red-200 flex items-center justify-center"
-                    >
-                      <img src="/trash.svg" alt="削除" className="w-4 h-4" />
-                    </button>
+                    {canEditPayment && (
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`「${oneMoneyLog.content}」の履歴を削除しますか？`)) {
+                            deleteMoneyLog(oneMoneyLog);
+                          }
+                        }}
+                        className="btn-history-delete w-8 h-8 flex-shrink-0 rounded-lg bg-red-100 hover:bg-red-200 flex items-center justify-center"
+                      >
+                        <img src="/trash.svg" alt="削除" className="w-4 h-4" />
+                      </button>
+                    )}
                     <div className="history-content-wrap flex-1 min-w-0">
                       <div className="history-header-row flex items-center justify-between gap-2">
                         <span className="text-sm text-earth-600 font-medium">{oneMoneyLog.date}</span>
@@ -642,7 +519,8 @@ export default function Account() {
             </div>
           </div>
 
-          {/* 新規追加フォーム */}
+          {/* 新規追加フォーム(会計・部長のみ) */}
+          {canEditPayment && (
           <div className="card p-6">
             <h3 className="text-xl font-bold text-forest-800 mb-4">部費：支出・収益</h3>
             <div className="space-y-3">
@@ -683,6 +561,7 @@ export default function Account() {
               </button>
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>

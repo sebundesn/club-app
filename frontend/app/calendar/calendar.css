@@ -545,13 +545,6 @@
   margin: 0;
 }
 
-.unpaid-more {
-  font-size: 0.875rem;
-  color: #336c2e;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
 .unpaid-ok {
   margin: 0;
   color: #2a5627;
@@ -599,10 +592,10 @@
   white-space: nowrap;
 }
 
-.unpaid-rest {
-  margin: 0.25rem 0 0;
-  font-size: 0.8rem;
+.unpaid-login {
+  margin: 0;
   color: #7a6253;
+  font-size: 0.95rem;
 }
 
 /* ホームの「部費の残高」 */

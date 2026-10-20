@@ -25,3 +25,14 @@ type SetEventFeeRequest struct {
 	EventID int `json:"event_id"`
 	Fee     int `json:"fee"`
 }
+
+// MemberPayment は部員1人・イベント1件ぶんの支払い状況。会計用の全員分の一覧で使う。
+type MemberPayment struct {
+	EventID  int    `json:"event_id"`
+	Title    string `json:"title"`
+	Date     string `json:"date"`
+	UserID   int    `json:"user_id"`
+	UserName string `json:"user_name"`
+	Amount   int    `json:"amount"`
+	Paid     bool   `json:"paid"`
+}

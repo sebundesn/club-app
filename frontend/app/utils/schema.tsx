@@ -99,6 +99,8 @@ export interface MediaItem {
 
 export interface MediaAlbum {
   event_id: number;
+  title: string;
+  date: string;
   items: MediaItem[];
   photo_count: number;
   photo_limit: number;
@@ -127,4 +129,25 @@ export interface Application {
   student_id: string;
   name: string;
   created_at: string;
+}
+
+/** 会計用の全部員の支払い状況(部員1人・イベント1件ぶん) */
+export interface MemberPayment {
+  event_id: number;
+  title: string;
+  date: string;
+  user_id: number;
+  user_name: string;
+  amount: number;
+  paid: boolean;
+}
+
+/** アルバム一覧の1件(イベントごとの表紙と枚数) */
+export interface AlbumSummary {
+  event_id: number;
+  title: string;
+  date: string;
+  cover_url: string;
+  photo_count: number;
+  video_count: number;
 }

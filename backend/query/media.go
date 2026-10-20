@@ -75,3 +75,25 @@ const DeleteProcessingMedia = `
 	DELETE FROM event_media WHERE status = 'processing'
 	RETURNING object_key, thumb_key;
 `
+
+// アルバム一覧: 写真・動画があるイベントを新しい順に。表紙は最初の写真(なければ動画)のサムネイル。
+// 変換中・失敗は数えない。
+const SelectAlbumSummaries = `
+	SELECT e.id, e.title, e.date,
+		COALESCE((
+			SELECT m.thumb_key FROM event_media m
+			WHERE m.event_id = e.id AND m.status = 'ready' AND m.thumb_key IS NOT NULL
+			ORDER BY (m.kind = 'photo') DESC, m.created_at, m.id
+			LIMIT 1
+		), ''),
+		COUNT(*) FILTER (WHERE em.kind = 'photo'),
+		COUNT(*) FILTER (WHERE em.kind = 'video')
+	FROM events e
+	INNER JOIN event_media em ON em.event_id = e.id AND em.status = 'ready'
+	GROUP BY e.id, e.title, e.date
+	ORDER BY e.date DESC, e.id DESC;
+`
+
+const SelectEventTitleDate = `
+	SELECT title, date FROM events WHERE id = $1;
+`

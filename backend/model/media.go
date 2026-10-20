@@ -14,6 +14,8 @@ type MediaItem struct {
 // MediaAlbum はイベントのアルバムと、残り枠の表示に必要な数。
 type MediaAlbum struct {
 	EventID    int         `json:"event_id"`
+	Title      string      `json:"title"`
+	Date       string      `json:"date"`
 	Items      []MediaItem `json:"items"`
 	PhotoCount int         `json:"photo_count"`
 	PhotoLimit int         `json:"photo_limit"`
@@ -23,4 +25,14 @@ type MediaAlbum struct {
 
 type DeleteMediaRequest struct {
 	ID int `json:"id"`
+}
+
+// AlbumSummary はアルバム一覧の1件(イベントごとの表紙と枚数)。
+type AlbumSummary struct {
+	EventID    int    `json:"event_id"`
+	Title      string `json:"title"`
+	Date       string `json:"date"`
+	CoverURL   string `json:"cover_url"`
+	PhotoCount int    `json:"photo_count"`
+	VideoCount int    `json:"video_count"`
 }

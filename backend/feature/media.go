@@ -460,6 +460,18 @@ func GetAlbum(w http.ResponseWriter, r *http.Request) error {
 		return utility.BadRequest("イベントが指定されていません。", err)
 	}
 
+	var (
+		title     sql.NullString
+		eventDate time.Time
+	)
+	err = utility.DB.QueryRowContext(r.Context(), SQLquery.SelectEventTitleDate, eventID).Scan(&title, &eventDate)
+	if errors.Is(err, sql.ErrNoRows) {
+		return utility.NotFound("イベントが見つかりません。", err)
+	}
+	if err != nil {
+		return utility.Internal("アルバムの取得に失敗しました。", err)
+	}
+
 	rows, err := utility.DB.QueryContext(r.Context(), SQLquery.SelectEventMedia, eventID)
 	if err != nil {
 		return utility.Internal("アルバムの取得に失敗しました。", err)
@@ -468,6 +480,8 @@ func GetAlbum(w http.ResponseWriter, r *http.Request) error {
 
 	album := schema.MediaAlbum{
 		EventID:    eventID,
+		Title:      title.String,
+		Date:       eventDate.Format("2006-01-02"),
 		Items:      []schema.MediaItem{},
 		PhotoLimit: maxPhotosPerEvent,
 		VideoLimit: maxVideosPerEvent,
@@ -512,6 +526,47 @@ func GetAlbum(w http.ResponseWriter, r *http.Request) error {
 
 	w.Header().Set("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(album)
+}
+
+// GetAlbums はアルバム一覧(写真・動画があるイベントの表紙と枚数)を返す。
+func GetAlbums(w http.ResponseWriter, r *http.Request) error {
+	if r.Method != http.MethodGet {
+		return utility.MethodNotAllowed(r.Method)
+	}
+	if _, err := utility.RequireLogin(r); err != nil {
+		return err
+	}
+
+	rows, err := utility.DB.QueryContext(r.Context(), SQLquery.SelectAlbumSummaries)
+	if err != nil {
+		return utility.Internal("アルバムの取得に失敗しました。", err)
+	}
+	defer rows.Close()
+
+	albums := []schema.AlbumSummary{}
+	for rows.Next() {
+		var (
+			a     schema.AlbumSummary
+			title sql.NullString
+			date  time.Time
+			cover string
+		)
+		if err := rows.Scan(&a.EventID, &title, &date, &cover, &a.PhotoCount, &a.VideoCount); err != nil {
+			return utility.Internal("アルバムの取得に失敗しました。", err)
+		}
+		a.Title = title.String
+		a.Date = date.Format("2006-01-02")
+		if cover != "" {
+			a.CoverURL = Store.URL(cover)
+		}
+		albums = append(albums, a)
+	}
+	if err := rows.Err(); err != nil {
+		return utility.Internal("アルバムの取得に失敗しました。", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	return json.NewEncoder(w).Encode(albums)
 }
 
 // DeleteMedia は写真・動画を削除する。アップロードした本人か、役員だけができる。

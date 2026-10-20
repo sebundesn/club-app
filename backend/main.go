@@ -57,11 +57,13 @@ func main() {
 	// アルバム(写真・動画)
 	http.Handle("/api/uploadMedia", util.AppHandler(feature.UploadMedia))
 	http.Handle("/api/getAlbum", util.AppHandler(feature.GetAlbum))
+	http.Handle("/api/getAlbums", util.AppHandler(feature.GetAlbums))
 	http.Handle("/api/deleteMedia", util.AppHandler(feature.DeleteMedia))
 
 	// 部費の未払い
 	http.Handle("/api/myUnpaid", util.AppHandler(feature.GetMyUnpaid))
 	http.Handle("/api/allUnpaid", util.AppHandler(feature.GetAllUnpaid))
+	http.Handle("/api/allPayments", util.AppHandler(feature.GetAllPayments))
 	http.Handle("/api/setPaid", util.AppHandler(feature.SetPaid))
 	http.Handle("/api/setEventFee", util.AppHandler(feature.SetEventFee))
 

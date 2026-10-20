@@ -91,3 +91,13 @@ const InsertEventMember = `
 	VALUES ($1, $2, (SELECT fee FROM events WHERE id = $1))
 	ON CONFLICT (event_id, user_id) DO NOTHING;
 `
+
+// 会計用: 全員分の支払い状況(支払い済みも含む)。請求額が0の行は払うものがないので除く。
+const SelectPaymentsAll = `
+	SELECT e.id, e.title, e.date, u.id, u.name, em.amount, em.paid_at IS NOT NULL
+	FROM event_members em
+	INNER JOIN events e ON e.id = em.event_id
+	INNER JOIN users u ON u.id = em.user_id
+	WHERE em.amount > 0
+	ORDER BY u.name, e.date DESC;
+`
