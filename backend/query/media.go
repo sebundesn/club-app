@@ -88,7 +88,7 @@ const SelectAlbumSummaries = `
 	ORDER BY e.date DESC, e.id DESC;
 `
 
-// 一覧に並べる見本のサムネイル。イベントごとに写真を先に、最大4枚。
+// 一覧に並べる見本のサムネイル。イベントごとに写真を先に、最大10枚(一覧のカバーフローで横に流して見せる)。
 const SelectAlbumPreviews = `
 	SELECT event_id, thumb_key FROM (
 		SELECT event_id, thumb_key,
@@ -96,7 +96,7 @@ const SelectAlbumPreviews = `
 		FROM event_media
 		WHERE status = 'ready' AND thumb_key IS NOT NULL
 	) t
-	WHERE n <= 4
+	WHERE n <= 10
 	ORDER BY event_id, n;
 `
 

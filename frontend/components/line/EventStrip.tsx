@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 import Link from 'next/link';
+import CoverFlow from './CoverFlow';
 
 interface Props {
   title: string;
@@ -15,10 +16,12 @@ interface Props {
   onPick: (files: File[]) => void;
   /** 見本のサムネイル(先頭4枚まで使う) */
   thumbs: string[];
+  /** true なら、画像を4枚のグリッドではなく横スワイプのカバーフローで全部見せる */
+  coverflow?: boolean;
 }
 
 /** イベント名と＋ボタン、その下に画像(最大4枚)。画像がなければ場所を空けない。押すとそのイベントの全件ページへ。 */
-export default function EventStrip({ title, sub, href, uploadLabel, accept, onPick, thumbs }: Props) {
+export default function EventStrip({ title, sub, href, uploadLabel, accept, onPick, thumbs, coverflow }: Props) {
   const input = useRef<HTMLInputElement>(null);
   const shown = thumbs.slice(0, 4);
   return (
@@ -47,7 +50,10 @@ export default function EventStrip({ title, sub, href, uploadLabel, accept, onPi
           }}
         />
       </div>
-      {shown.length > 0 && (
+      {coverflow && thumbs.length > 0 && (
+        <CoverFlow href={href} label={`${title || '(無題)'}の写真・動画`} thumbs={thumbs} />
+      )}
+      {!coverflow && shown.length > 0 && (
         <Link href={href} className="la-strip" aria-label={`${title || '(無題)'}をすべて見る`}>
           {shown.map((src, i) => (
             <span key={i} className="la-strip-cell">

@@ -562,6 +562,42 @@
   object-fit: cover;
 }
 
+/* アルバム一覧: 横にスワイプするカバーフロー。両端の画像も真ん中まで来られるよう左右に余白 */
+.la-flow {
+  position: relative;
+  display: flex;
+  margin-top: 0.75rem;
+  padding: 0.5rem 20%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.la-flow::-webkit-scrollbar {
+  display: none;
+}
+
+.la-flow-cell {
+  flex: 0 0 60%;
+  aspect-ratio: 1 / 1;
+  margin: 0 -6%;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background: var(--la-bg);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+  scroll-snap-align: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.la-flow-cell img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
 .la-ev-name {
   margin: 0;
   padding: 0.75rem 1rem 0;
