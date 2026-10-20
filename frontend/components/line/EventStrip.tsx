@@ -18,11 +18,12 @@ export default function EventStrip({ title, sub, href, uploadHref, uploadLabel, 
   return (
     <li className="la-event">
       <div className="la-event-head">
+        <span className="la-event-side" aria-hidden="true" />
         <Link href={href} className="la-event-text">
           <span className="la-album-title">{title || '(無題)'}</span>
           <span className="la-album-sub">{sub}</span>
         </Link>
-        <Link href={uploadHref} className="la-plus" aria-label={uploadLabel}>
+        <Link href={`${uploadHref}&title=${encodeURIComponent(title)}`} className="la-plus" aria-label={uploadLabel}>
           ＋
         </Link>
       </div>

@@ -3,10 +3,8 @@
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { DateTitle } from '../../utils/schema';
 import { RECEIPTS_PER_REQUEST, uploadInBatches, uploadReceipts } from '../../utils/mediaUpload';
 import { useToast } from '../../../components/Toast';
-import EventSelect from '../../../components/line/EventSelect';
 import PickGrid from '../../../components/line/PickGrid';
 import '../../line.css';
 
@@ -19,10 +17,9 @@ function ReceiptUpload() {
   const params = useSearchParams();
   const { showToast } = useToast();
 
-  const presetID = Number(params.get('eventID')) || null;
-  const [picked, setPicked] = useState<DateTitle | null>(null);
-  const eventID = picked?.id ?? presetID;
-  const [changing, setChanging] = useState(false);
+  // イベントは一覧の＋ボタンで決まって渡される
+  const eventID = Number(params.get('eventID')) || null;
+  const eventTitle = params.get('title') ?? '';
 
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState('');
@@ -52,21 +49,15 @@ function ReceiptUpload() {
         <h1 className="la-bar-title">レシートを提出</h1>
       </div>
 
-      <h2 className="la-section">1. イベントを選ぶ</h2>
-      {presetID && !changing ? (
-        <p className="la-notice">
-          選択中のイベントに追加します。{' '}
-          <button type="button" className="la-chip" onClick={() => setChanging(true)}>
-            イベントを変える
-          </button>
-        </p>
+      {eventID ? (
+        <p className="la-event-name">{eventTitle || '(無題)'}</p>
       ) : (
-        <EventSelect selectedID={eventID} onSelect={setPicked} />
+        <p className="la-notice">一覧のイベントの＋ボタンから開いてください。</p>
       )}
 
       {eventID && (
         <>
-          <h2 className="la-section">2. レシート・領収書の画像を選ぶ</h2>
+          <h2 className="la-section">レシート・領収書の画像を選ぶ</h2>
           <p className="la-meta" style={{ paddingTop: 0 }}>
             JPEG・PNG(1枚20MBまで)、1イベント{MAX_PICK}枚まで。見られるのは会計・部長・副部長だけです。丸を押すと選択を外せます。
           </p>
@@ -77,7 +68,7 @@ function ReceiptUpload() {
 
       <div className="la-footbar">
         <div className="la-footbar-inner">
-          <span className="la-footbar-info">{eventID ? `${files.length}枚を選択中` : 'イベントを選んでください'}</span>
+          <span className="la-footbar-info">{eventID ? `${files.length}枚を選択中` : '＋ボタンから開いてください'}</span>
           <button type="button" className="la-text-btn" disabled={!eventID || files.length === 0 || uploading !== ''} onClick={upload}>
             アップロード
           </button>

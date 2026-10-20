@@ -3,7 +3,6 @@
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { DateTitle } from '../../utils/schema';
 import {
   PHOTOS_PER_REQUEST,
   VIDEO_MAX_SEC,
@@ -12,7 +11,6 @@ import {
   uploadMedia,
 } from '../../utils/mediaUpload';
 import { useToast } from '../../../components/Toast';
-import EventSelect from '../../../components/line/EventSelect';
 import PickGrid from '../../../components/line/PickGrid';
 import '../../line.css';
 
@@ -25,11 +23,9 @@ function AlbumUpload() {
   const params = useSearchParams();
   const { showToast } = useToast();
 
-  const presetID = Number(params.get('eventID')) || null;
-  const [picked, setPicked] = useState<DateTitle | null>(null);
-  const eventID = picked?.id ?? presetID;
-  // 追加ボタンから来たときはイベントが決まっているので、選び直したいときだけ一覧を出す
-  const [changing, setChanging] = useState(false);
+  // イベントは一覧の＋ボタンで決まって渡される
+  const eventID = Number(params.get('eventID')) || null;
+  const eventTitle = params.get('title') ?? '';
 
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState('');
@@ -90,21 +86,15 @@ function AlbumUpload() {
         <h1 className="la-bar-title">アルバムに追加</h1>
       </div>
 
-      <h2 className="la-section">1. イベントを選ぶ</h2>
-      {presetID && !changing ? (
-        <p className="la-notice">
-          選択中のアルバムに追加します。{' '}
-          <button type="button" className="la-chip" onClick={() => setChanging(true)}>
-            イベントを変える
-          </button>
-        </p>
+      {eventID ? (
+        <p className="la-event-name">{eventTitle || '(無題)'}</p>
       ) : (
-        <EventSelect selectedID={eventID} onSelect={setPicked} />
+        <p className="la-notice">一覧のイベントの＋ボタンから開いてください。</p>
       )}
 
       {eventID && (
         <>
-          <h2 className="la-section">2. 写真・動画を選ぶ</h2>
+          <h2 className="la-section">写真・動画を選ぶ</h2>
           <p className="la-meta" style={{ paddingTop: 0 }}>
             写真はJPEG・PNG(1枚20MBまで)、動画は{VIDEO_MAX_SEC}秒以内。最大{MAX_PICK}件まで選べます。丸を押すと選択を外せます。
           </p>
@@ -116,7 +106,7 @@ function AlbumUpload() {
       <div className="la-footbar">
         <div className="la-footbar-inner">
           <span className="la-footbar-info">
-            {eventID ? `${files.length}件を選択中` : 'イベントを選んでください'}
+            {eventID ? `${files.length}件を選択中` : '＋ボタンから開いてください'}
           </span>
           <button type="button" className="la-text-btn" disabled={!eventID || files.length === 0 || uploading !== ''} onClick={upload}>
             アップロード

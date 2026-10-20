@@ -488,7 +488,7 @@
   color: var(--la-green-dark);
 }
 
-/* イベントごとの行: 名前と＋ボタン、その下に見本4枚 */
+/* イベントごとの行: 中央に大きな名前、右に＋ボタン、その下に画像を2列で */
 .la-events {
   margin: 0;
   padding: 0.5rem 1rem 1rem;
@@ -496,21 +496,34 @@
 }
 
 .la-event {
-  padding: 0.75rem 0;
+  padding: 1rem 0;
   border-bottom: 1px solid var(--la-line);
 }
 
 .la-event-head {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
+}
+
+/* ＋ボタンと同じ幅の空きを左に置いて、名前を真ん中に保つ */
+.la-event-side {
+  flex-shrink: 0;
+  width: 2.75rem;
 }
 
 .la-event-text {
   flex: 1;
   min-width: 0;
   color: inherit;
+  text-align: center;
   text-decoration: none;
+}
+
+.la-event-text .la-album-title {
+  font-size: 1.3rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .la-plus {
@@ -518,20 +531,20 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: 50%;
   background: var(--la-green);
   color: #ffffff;
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   text-decoration: none;
 }
 
 .la-strip {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 2px;
-  margin-top: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  margin-top: 0.75rem;
   overflow: hidden;
   border-radius: 0.5rem;
 }
@@ -549,19 +562,28 @@
   object-fit: cover;
 }
 
-/* 電卓: 右下のボタンと、下から開くパネル */
+.la-event-name {
+  margin: 0;
+  padding: 0.75rem 1rem 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* 電卓: 右下の黒いボタンと、小さく浮かぶパネル(後ろのページも操作できる) */
 .la-calc-fab {
   position: fixed;
   right: max(1rem, calc(50% - 20rem + 1rem));
   bottom: 1.25rem;
   z-index: 6;
-  width: 3.5rem;
-  height: 3.5rem;
-  border: 1px solid var(--la-line);
+  width: 3rem;
+  height: 3rem;
+  border: none;
   border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-  font-size: 1.6rem;
+  background: #111111;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  color: #ffffff;
+  font-size: 1.3rem;
   line-height: 1;
   cursor: pointer;
 }
@@ -571,100 +593,108 @@
   bottom: 5.5rem;
 }
 
-.la-calc-overlay {
+.la-calc {
   position: fixed;
-  inset: 0;
+  right: max(0.75rem, calc(50% - 20rem + 0.75rem));
+  bottom: 1rem;
   z-index: 20;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.45);
+  width: 13.5rem;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 0.5rem;
+  border-radius: 0.75rem;
+  background: #111111;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  color: #ffffff;
 }
 
-.la-calc {
-  width: 100%;
-  max-width: 26rem;
-  max-height: 92vh;
-  overflow-y: auto;
-  padding: 0.75rem 1rem 1.25rem;
-  border-radius: 1rem 1rem 0 0;
-  background: #ffffff;
+.la-calc.raised {
+  bottom: 5.5rem;
 }
 
 .la-calc-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  font-size: 0.8rem;
 }
 
-.la-calc-title {
-  font-weight: 700;
+.la-calc-close {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  background: none;
+  color: #ffffff;
+  font-size: 1.2rem;
+  cursor: pointer;
 }
 
 .la-calc-history {
-  max-height: 7.5rem;
-  margin-bottom: 0.5rem;
+  max-height: 4.5rem;
+  margin-bottom: 0.25rem;
   overflow-y: auto;
-  border-bottom: 1px solid var(--la-line);
+  border-bottom: 1px solid #333333;
 }
 
 .la-calc-entry {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.5rem;
   width: 100%;
-  padding: 0.35rem 0;
+  padding: 0.2rem 0;
   border: none;
   background: none;
-  color: var(--la-sub);
-  font-size: 0.85rem;
+  color: #9a9a9a;
+  font-size: 0.7rem;
   text-align: left;
   cursor: pointer;
 }
 
 .la-calc-entry strong {
   flex-shrink: 0;
-  color: var(--la-text);
+  color: #ffffff;
 }
 
 .la-calc-display {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  min-height: 4rem;
-  padding: 0.5rem 0.25rem;
+  min-height: 2.6rem;
+  padding: 0.25rem;
   overflow-wrap: anywhere;
 }
 
 .la-calc-expr {
-  font-size: 1.8rem;
+  font-size: 1.15rem;
   font-weight: 700;
 }
 
 .la-calc-live {
-  min-height: 1.2rem;
-  color: var(--la-sub);
+  min-height: 0.9rem;
+  color: #9a9a9a;
+  font-size: 0.75rem;
 }
 
 .la-calc-keys {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.5rem;
+  gap: 0.3rem;
 }
 
 .la-calc-key {
-  min-height: 3.25rem;
+  min-height: 2.1rem;
   border: none;
-  border-radius: 0.75rem;
-  background: var(--la-bg);
-  color: var(--la-text);
-  font-size: 1.3rem;
+  border-radius: 0.5rem;
+  background: #2a2a2a;
+  color: #ffffff;
+  font-size: 1rem;
   cursor: pointer;
 }
 
 .la-calc-key.fn {
-  font-size: 1rem;
+  background: #4a4a4a;
+  font-size: 0.75rem;
 }
 
 .la-calc-key.fn.wide {
@@ -672,13 +702,13 @@
 }
 
 .la-calc-key.op {
-  background: #e3f7ea;
-  color: var(--la-green-dark);
+  background: #555555;
 }
 
 .la-calc-key.eq {
-  background: var(--la-green);
-  color: #ffffff;
+  background: #ffffff;
+  color: #111111;
+  font-weight: 700;
 }
 
 .la-calc-key:disabled {
