@@ -136,9 +136,6 @@ export default function CalendarPage() {
       {/* 自分の部費の未払い */}
       <MyUnpaidCard />
 
-      {/* 部費の残高と収入・支出 */}
-      <AccountSummaryCard />
-
       {/* 予定の一覧(日付・曜日・内容)。「これから」は今日を最上段に1か月先まで、「月別」は月ごと */}
       <div className="card mb-8">
         <div className="list-modes" role="tablist">
@@ -183,6 +180,9 @@ export default function CalendarPage() {
           emptyMessage="この月の予定はありません。"
         />
       </div>
+
+      {/* 部費の残高(新しい順、5件ぶんの高さでスクロール) */}
+      <AccountSummaryCard />
 
       {/* 予定の詳細モーダル(閲覧のみ。登録・編集は管理ページ) */}
       {isModalOpen && (

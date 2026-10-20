@@ -76,22 +76,28 @@ const DeleteProcessingMedia = `
 	RETURNING object_key, thumb_key;
 `
 
-// アルバム一覧: 写真・動画があるイベントを新しい順に。表紙は最初の写真(なければ動画)のサムネイル。
+// アルバム一覧: カレンダーに登録された全イベントを新しい順に。写真・動画がなくても出す(＋から追加できるように)。
 // 変換中・失敗は数えない。
 const SelectAlbumSummaries = `
 	SELECT e.id, e.title, e.date,
-		COALESCE((
-			SELECT m.thumb_key FROM event_media m
-			WHERE m.event_id = e.id AND m.status = 'ready' AND m.thumb_key IS NOT NULL
-			ORDER BY (m.kind = 'photo') DESC, m.created_at, m.id
-			LIMIT 1
-		), ''),
-		COUNT(*) FILTER (WHERE em.kind = 'photo'),
-		COUNT(*) FILTER (WHERE em.kind = 'video')
+		COUNT(em.id) FILTER (WHERE em.kind = 'photo'),
+		COUNT(em.id) FILTER (WHERE em.kind = 'video')
 	FROM events e
-	INNER JOIN event_media em ON em.event_id = e.id AND em.status = 'ready'
+	LEFT JOIN event_media em ON em.event_id = e.id AND em.status = 'ready'
 	GROUP BY e.id, e.title, e.date
 	ORDER BY e.date DESC, e.id DESC;
+`
+
+// 一覧に並べる見本のサムネイル。イベントごとに写真を先に、最大4枚。
+const SelectAlbumPreviews = `
+	SELECT event_id, thumb_key FROM (
+		SELECT event_id, thumb_key,
+			ROW_NUMBER() OVER (PARTITION BY event_id ORDER BY (kind = 'photo') DESC, created_at, id) AS n
+		FROM event_media
+		WHERE status = 'ready' AND thumb_key IS NOT NULL
+	) t
+	WHERE n <= 4
+	ORDER BY event_id, n;
 `
 
 const SelectEventTitleDate = `

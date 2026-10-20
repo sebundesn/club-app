@@ -549,19 +549,39 @@ func GetAlbums(w http.ResponseWriter, r *http.Request) error {
 			a     schema.AlbumSummary
 			title sql.NullString
 			date  time.Time
-			cover string
 		)
-		if err := rows.Scan(&a.EventID, &title, &date, &cover, &a.PhotoCount, &a.VideoCount); err != nil {
+		if err := rows.Scan(&a.EventID, &title, &date, &a.PhotoCount, &a.VideoCount); err != nil {
 			return utility.Internal("アルバムの取得に失敗しました。", err)
 		}
 		a.Title = title.String
 		a.Date = date.Format("2006-01-02")
-		if cover != "" {
-			a.CoverURL = Store.URL(cover)
-		}
+		a.Previews = []string{}
 		albums = append(albums, a)
 	}
 	if err := rows.Err(); err != nil {
+		return utility.Internal("アルバムの取得に失敗しました。", err)
+	}
+
+	prows, err := utility.DB.QueryContext(r.Context(), SQLquery.SelectAlbumPreviews)
+	if err != nil {
+		return utility.Internal("アルバムの取得に失敗しました。", err)
+	}
+	defer prows.Close()
+	index := make(map[int]int, len(albums))
+	for i, a := range albums {
+		index[a.EventID] = i
+	}
+	for prows.Next() {
+		var eventID int
+		var key string
+		if err := prows.Scan(&eventID, &key); err != nil {
+			return utility.Internal("アルバムの取得に失敗しました。", err)
+		}
+		if i, ok := index[eventID]; ok {
+			albums[i].Previews = append(albums[i].Previews, Store.URL(key))
+		}
+	}
+	if err := prows.Err(); err != nil {
 		return utility.Internal("アルバムの取得に失敗しました。", err)
 	}
 

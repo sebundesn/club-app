@@ -29,10 +29,10 @@ type DeleteMediaRequest struct {
 
 // AlbumSummary はアルバム一覧の1件(イベントごとの表紙と枚数)。
 type AlbumSummary struct {
-	EventID    int    `json:"event_id"`
-	Title      string `json:"title"`
-	Date       string `json:"date"`
-	CoverURL   string `json:"cover_url"`
-	PhotoCount int    `json:"photo_count"`
-	VideoCount int    `json:"video_count"`
+	EventID    int      `json:"event_id"`
+	Title      string   `json:"title"`
+	Date       string   `json:"date"`
+	Previews   []string `json:"preview_urls"`
+	PhotoCount int      `json:"photo_count"`
+	VideoCount int      `json:"video_count"`
 }

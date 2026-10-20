@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { AlbumSummary, MediaAlbum } from '../utils/schema';
 import { backendURL, readErrorMessage } from '../utils/api';
 import { useToast } from '../../components/Toast';
+import EventStrip from '../../components/line/EventStrip';
 import MediaViewer from '../../components/line/MediaViewer';
 import '../line.css';
 
@@ -47,9 +48,6 @@ function AlbumList() {
     <div className="la-page">
       <div className="la-bar">
         <h1 className="la-bar-title" style={{ paddingLeft: '0.75rem' }}>アルバム</h1>
-        <Link href="/album/upload" className="la-text-btn">
-          ＋ アップロード
-        </Link>
       </div>
 
       {loggedOut ? (
@@ -57,27 +55,19 @@ function AlbumList() {
       ) : albums === null ? (
         <p className="la-empty">読み込み中…</p>
       ) : albums.length === 0 ? (
-        <p className="la-empty">まだアルバムがありません。右上からアップロードできます。</p>
+        <p className="la-empty">イベントがありません。カレンダーでイベントを登録してください。</p>
       ) : (
-        <ul className="la-albums">
+        <ul className="la-events">
           {albums.map((a) => (
-            <li key={a.event_id}>
-              <Link href={`/album?eventID=${a.event_id}`} className="la-album">
-                <span className="la-cover">
-                  {a.cover_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- 静的エクスポートでは next/image の最適化が使えない
-                    <img src={a.cover_url} alt="" loading="lazy" />
-                  ) : (
-                    <span className="la-cover-empty">▶</span>
-                  )}
-                </span>
-                <span className="la-album-title">{a.title || '(無題)'}</span>
-                <span className="la-album-sub">
-                  {md(a.date)} ・ 写真{a.photo_count}
-                  {a.video_count > 0 && ` ・ 動画${a.video_count}`}
-                </span>
-              </Link>
-            </li>
+            <EventStrip
+              key={a.event_id}
+              title={a.title}
+              sub={`${md(a.date)} ・ 写真${a.photo_count}${a.video_count > 0 ? ` ・ 動画${a.video_count}` : ''}`}
+              href={`/album?eventID=${a.event_id}`}
+              uploadHref={`/album/upload?eventID=${a.event_id}`}
+              uploadLabel={`${a.title || '(無題)'}に写真・動画を追加`}
+              thumbs={a.preview_urls}
+            />
           ))}
         </ul>
       )}

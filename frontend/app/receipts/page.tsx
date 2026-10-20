@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ReceiptDataStruct } from '../utils/schema';
 import { backendURL, readErrorMessage, receiptSrc } from '../utils/api';
 import { useToast } from '../../components/Toast';
+import Calculator from '../../components/line/Calculator';
+import EventStrip from '../../components/line/EventStrip';
 import MediaViewer from '../../components/line/MediaViewer';
 import '../line.css';
 
@@ -81,15 +83,11 @@ function Notice({ state }: { state: LoadState }) {
 function ReceiptList() {
   const [weeks, setWeeks] = useState(PERIODS[0].weeks);
   const { receipts, state } = useReceipts(weeks);
-  const withImages = receipts.filter((r) => r.Images.length > 0);
 
   return (
     <div className="la-page">
       <div className="la-bar">
         <h1 className="la-bar-title" style={{ paddingLeft: '0.75rem' }}>レシート管理</h1>
-        <Link href="/receipts/upload" className="la-text-btn">
-          ＋ アップロード
-        </Link>
       </div>
 
       <div className="la-chips" role="tablist">
@@ -110,26 +108,25 @@ function ReceiptList() {
       <Notice state={state} />
 
       {state === 'ok' &&
-        (withImages.length === 0 ? (
-          <p className="la-empty">この期間のレシートはありません。</p>
+        (receipts.length === 0 ? (
+          <p className="la-empty">この期間のイベントはありません。</p>
         ) : (
-          <ul className="la-albums">
-            {withImages.map((r) => (
-              <li key={r.ID}>
-                <Link href={`/receipts?eventID=${r.ID}`} className="la-album">
-                  <span className="la-cover">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- 静的エクスポートでは next/image の最適化が使えない */}
-                    <img src={receiptSrc(r.Images[0].url)} alt="" loading="lazy" />
-                  </span>
-                  <span className="la-album-title">{r.Title || '(無題)'}</span>
-                  <span className="la-album-sub">
-                    {r.Date.slice(5).replace('-', '/')} ・ {r.Images.length}枚
-                  </span>
-                </Link>
-              </li>
+          <ul className="la-events">
+            {receipts.map((r) => (
+              <EventStrip
+                key={r.ID}
+                title={r.Title}
+                sub={`${r.Date.slice(5).replace('-', '/')} ・ ${r.Images.length}枚`}
+                href={`/receipts?eventID=${r.ID}`}
+                uploadHref={`/receipts/upload?eventID=${r.ID}`}
+                uploadLabel={`${r.Title || '(無題)'}にレシートを追加`}
+                thumbs={r.Images.map((img) => receiptSrc(img.url))}
+              />
             ))}
           </ul>
         ))}
+
+      <Calculator />
     </div>
   );
 }
@@ -219,6 +216,8 @@ function ReceiptDetail({ eventID }: { eventID: number }) {
           </div>
         </>
       )}
+
+      <Calculator raised={state === 'ok'} />
 
       {state === 'ok' && (
         <Link href={`/receipts/upload?eventID=${eventID}`} className="la-fab" aria-label="レシートを追加">

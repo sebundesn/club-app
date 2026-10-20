@@ -147,7 +147,7 @@ export interface AlbumSummary {
   event_id: number;
   title: string;
   date: string;
-  cover_url: string;
+  preview_urls: string[];
   photo_count: number;
   video_count: number;
 }

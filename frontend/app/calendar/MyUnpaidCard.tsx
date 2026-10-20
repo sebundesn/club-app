@@ -33,7 +33,7 @@ export default function MyUnpaidCard() {
     return (
       <div className="card mb-8 unpaid-card">
         <div className="unpaid-head">
-          <h2 className="upcoming-title">あなたの部費</h2>
+          <h2 className="upcoming-title">Your 未払い状況</h2>
         </div>
         <p className="unpaid-login">ログインしてください。右上の「LINEでログイン」から入れます。</p>
       </div>
@@ -45,11 +45,11 @@ export default function MyUnpaidCard() {
   return (
     <div className="card mb-8 unpaid-card">
       <div className="unpaid-head">
-        <h2 className="upcoming-title">あなたの部費</h2>
+        <h2 className="upcoming-title">Your 未払い状況</h2>
       </div>
 
       {data.items.length === 0 ? (
-        <p className="unpaid-ok">未払いはありません 🎉</p>
+        <p className="unpaid-ok">No 未払い 🎉</p>
       ) : (
         <>
           <p className="unpaid-total">
