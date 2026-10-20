@@ -129,7 +129,6 @@ function ReceiptList() {
                 uploadLabel={`${r.Title || '(無題)'}にレシートを追加`}
                 accept="image/jpeg,image/png"
                 onPick={(files) => pickFor(r.ID, r.Title, files)}
-                thumbs={r.Images.map((img) => receiptSrc(img.url))}
               />
             ))}
           </ul>

@@ -79,7 +79,6 @@ function AlbumList() {
               accept={ALBUM_ACCEPT}
               onPick={(files) => pickFor(a.event_id, a.title, files)}
               thumbs={a.preview_urls}
-              coverflow
             />
           ))}
         </ul>

@@ -14,16 +14,13 @@ interface Props {
   accept: string;
   /** ファイルを選び終えたとき */
   onPick: (files: File[]) => void;
-  /** 見本のサムネイル(先頭4枚まで使う) */
-  thumbs: string[];
-  /** true なら、画像を4枚のグリッドではなく横スワイプのカバーフローで全部見せる */
-  coverflow?: boolean;
+  /** 見出しの下にカバーフローで流す画像。渡さなければ見出しと＋だけ */
+  thumbs?: string[];
 }
 
-/** イベント名と＋ボタン、その下に画像(最大4枚)。画像がなければ場所を空けない。押すとそのイベントの全件ページへ。 */
-export default function EventStrip({ title, sub, href, uploadLabel, accept, onPick, thumbs, coverflow }: Props) {
+/** イベント名と＋ボタン、その下に画像のカバーフロー。画像がなければ場所を空けない。名前を押すとそのイベントの全件ページへ。 */
+export default function EventStrip({ title, sub, href, uploadLabel, accept, onPick, thumbs = [] }: Props) {
   const input = useRef<HTMLInputElement>(null);
-  const shown = thumbs.slice(0, 4);
   return (
     <li className="la-ev">
       <div className="la-ev-head">
@@ -50,19 +47,7 @@ export default function EventStrip({ title, sub, href, uploadLabel, accept, onPi
           }}
         />
       </div>
-      {coverflow && thumbs.length > 0 && (
-        <CoverFlow href={href} label={`${title || '(無題)'}の写真・動画`} thumbs={thumbs} />
-      )}
-      {!coverflow && shown.length > 0 && (
-        <Link href={href} className="la-strip" aria-label={`${title || '(無題)'}をすべて見る`}>
-          {shown.map((src, i) => (
-            <span key={i} className="la-strip-cell">
-              {/* eslint-disable-next-line @next/next/no-img-element -- 静的エクスポートでは next/image の最適化が使えない */}
-              <img src={src} alt="" loading="lazy" />
-            </span>
-          ))}
-        </Link>
-      )}
+      {thumbs.length > 0 && <CoverFlow href={href} label={`${title || '(無題)'}の写真・動画`} thumbs={thumbs} />}
     </li>
   );
 }

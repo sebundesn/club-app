@@ -10,15 +10,19 @@ interface Props {
   thumbs: string[];
 }
 
-/** 自動で次の画像へ進む間隔と、指で触ったあと自動に戻るまでの時間 */
-const AUTO_MS = 3000;
-const RESUME_MS = 5000;
+/** 自動で流れる速さ(1秒に何px)と、指で触ったあと自動に戻るまでの時間 */
+const SPEED_PX = 25;
+const RESUME_MS = 4000;
+/** 2枚以上なら同じ並びを3回つなげ、端に来たら1周ぶん戻して切れ目なく回す */
+const COPIES = 3;
 
-/** 横にスワイプして見るカバーフロー。真ん中の画像は大きく正面、左右は奥へ傾く。数秒ごとに自動で次へ進み、最後まで行くと最初に戻る。
+/** 横にスワイプして見るカバーフロー。真ん中の画像は大きく正面、左右は奥へ傾く。止まらずゆっくり流れ続ける。
  *  真ん中を押すと全件ページへ、左右を押すとその画像が真ん中に来る。 */
 export default function CoverFlow({ href, label, thumbs }: Props) {
   const track = useRef<HTMLDivElement>(null);
   const center = useRef(0);
+  const loops = thumbs.length >= 2;
+  const cells = loops ? Array.from({ length: COPIES }, () => thumbs).flat() : thumbs;
 
   useEffect(() => {
     const el = track.current;
@@ -48,15 +52,68 @@ export default function CoverFlow({ href, label, thumbs }: Props) {
     const onScroll = () => {
       if (!frame) frame = requestAnimationFrame(apply);
     };
+
+    // 1周ぶんの幅(1組目の先頭から2組目の先頭まで)。最初は真ん中の組から始める
+    const cellAt = (i: number) => el.children[i] as HTMLElement | undefined;
+    const loopWidth = () => (loops ? (cellAt(thumbs.length)?.offsetLeft ?? 0) - (cellAt(0)?.offsetLeft ?? 0) : 0);
+    // 真ん中の組の範囲に戻す。同じ並びが続いているので、戻しても見た目は変わらない
+    const wrap = (x: number) => {
+      const w = loopWidth();
+      if (w <= 0) return x;
+      while (x < w * 0.5) x += w;
+      while (x >= w * 1.5) x -= w;
+      return x;
+    };
+    if (loops) el.scrollLeft = loopWidth();
     apply();
+
+    let auto = 0;
+    let pos = el.scrollLeft;
+    let last = 0;
+    let pausedUntil = 0;
+    let visible = true;
+    // 流れている間はスナップを外す(付けたままだと少し動かすたびに引き戻される)。触ったら付け直して1枚ずつ止まるように
+    const pause = () => {
+      pausedUntil = Date.now() + RESUME_MS;
+      el.classList.remove('flowing');
+    };
+    const tick = (now: number) => {
+      auto = requestAnimationFrame(tick);
+      const dt = last ? Math.min(now - last, 100) : 0;
+      last = now;
+      if (!visible || document.hidden || Date.now() < pausedUntil) return;
+      if (!el.classList.contains('flowing')) {
+        el.classList.add('flowing');
+        pos = el.scrollLeft;
+      }
+      pos = wrap(pos + (SPEED_PX * dt) / 1000);
+      el.scrollLeft = pos;
+    };
+    const io = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+    });
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (loops && !reduced) {
+      io.observe(el);
+      auto = requestAnimationFrame(tick);
+      el.addEventListener('pointerdown', pause);
+      el.addEventListener('touchstart', pause, { passive: true });
+      el.addEventListener('wheel', pause, { passive: true });
+    }
+
     el.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
     return () => {
       cancelAnimationFrame(frame);
+      cancelAnimationFrame(auto);
+      io.disconnect();
       el.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
+      el.removeEventListener('pointerdown', pause);
+      el.removeEventListener('touchstart', pause);
+      el.removeEventListener('wheel', pause);
     };
-  }, [thumbs]);
+  }, [thumbs, loops]);
 
   const bringToCenter = (i: number) => {
     const el = track.current;
@@ -65,43 +122,16 @@ export default function CoverFlow({ href, label, thumbs }: Props) {
     el.scrollTo({ left: cell.offsetLeft - (el.clientWidth - cell.offsetWidth) / 2, behavior: 'smooth' });
   };
 
-  // 自動で回す。触っている間とその少しあと、画面外や裏にあるとき、動きを減らす設定のときは止める
-  useEffect(() => {
-    const el = track.current;
-    if (!el || thumbs.length < 2) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    let pausedUntil = 0;
-    let visible = true;
-    const pause = () => {
-      pausedUntil = Date.now() + RESUME_MS;
-    };
-    const io = new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting;
-    });
-    io.observe(el);
-    const timer = setInterval(() => {
-      if (!visible || document.hidden || Date.now() < pausedUntil) return;
-      bringToCenter((center.current + 1) % thumbs.length);
-    }, AUTO_MS);
-    el.addEventListener('pointerdown', pause);
-    el.addEventListener('touchstart', pause, { passive: true });
-    el.addEventListener('wheel', pause, { passive: true });
-    return () => {
-      clearInterval(timer);
-      io.disconnect();
-      el.removeEventListener('pointerdown', pause);
-      el.removeEventListener('touchstart', pause);
-      el.removeEventListener('wheel', pause);
-    };
-  }, [thumbs]);
-
   return (
     <div className="la-flow" ref={track} aria-label={label}>
-      {thumbs.map((src, i) => (
+      {cells.map((src, i) => (
         <Link
           key={i}
           href={href}
           className="la-flow-cell"
+          // つなげた2組目以降は、読み上げやタブ移動で同じ画像を繰り返さない
+          aria-hidden={i >= thumbs.length || undefined}
+          tabIndex={i >= thumbs.length ? -1 : undefined}
           onClick={(e) => {
             if (i === center.current) return;
             e.preventDefault();
