@@ -1,7 +1,6 @@
 'use client';
 
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AlbumSummary, MediaAlbum } from '../utils/schema';
 import { backendURL, readErrorMessage } from '../utils/api';

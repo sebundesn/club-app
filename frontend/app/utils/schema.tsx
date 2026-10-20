@@ -48,20 +48,6 @@ export interface ReceiptDataStruct {
   Images: ReceiptImage[];
 };
 
-/** 学務システムからエクスポートしたCSVの列名に合わせている */
-export interface CSVRow {
-  学籍番号: string;
-  学生氏名: string;
-  役職?: string;
-  [key: string]: string | undefined;
-};
-
-export interface MemberInfo {
-  student_id: string;
-  name: string;
-  role: string;
-};
-
 export interface UserInfoStruct {
   ID: number | null;
   userName: string;
