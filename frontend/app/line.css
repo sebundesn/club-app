@@ -750,3 +750,20 @@
   font-size: 0.8rem;
   line-height: 1.6;
 }
+
+/* ＋ボタン(button)の標準の枠線と、押したときの色の変化・囲みを消す */
+.la-plus,
+.la-fab {
+  padding: 0;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.la-plus:hover,
+.la-plus:active,
+.la-fab:hover,
+.la-fab:active {
+  background: var(--la-green);
+}

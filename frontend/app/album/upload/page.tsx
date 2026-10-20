@@ -32,6 +32,8 @@ function AlbumUpload() {
   const [files, setFiles] = useState<File[]>(() => peekPendingFiles().slice(0, MAX_PICK));
   useEffect(() => clearPendingFiles, []);
   const [uploading, setUploading] = useState('');
+  // 選んだ状態で来たとき(自動で送る間)は true。失敗したら false にして、フォームから送り直せるようにする
+  const [autoMode, setAutoMode] = useState(() => peekPendingFiles().length > 0);
 
   const upload = async () => {
     if (!eventID || files.length === 0) return;
@@ -77,7 +79,8 @@ function AlbumUpload() {
     }
 
     setUploading('');
-    if (!failed) router.push(`/album?eventID=${eventID}`);
+    if (failed) setAutoMode(false);
+    else router.push(`/album?eventID=${eventID}`);
   };
 
   // 一覧の＋で選んで来たときは、アップロードボタンを待たずにすぐ始める
@@ -88,6 +91,15 @@ function AlbumUpload() {
     upload();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 最初の1回だけ
   }, []);
+
+  // 一覧の＋から来て自動で送っている間は、フォームを出さず進み具合だけを見せる
+  if (autoMode) {
+    return (
+      <div className="la-page">
+        <p className="la-progress">{uploading || 'アップロードを準備中…'}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="la-page">
