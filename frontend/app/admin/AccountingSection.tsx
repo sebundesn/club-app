@@ -461,17 +461,11 @@ export default function AccountingSection({ role }: { role: string }) {
 
         {/* 会計エリア */}
         <div className="space-y-6">
-          {/* 残高カード */}
-          <div className="card p-6 balance-card bg-gradient-to-br from-forest-600 to-forest-800">
-            <p className="text-earth-100 text-lg mb-2">現在の部費残高</p>
-            <p className="text-4xl font-bold text-white">
-              ￥{totalSum.toLocaleString()}
-            </p>
-          </div>
-
           {/* 履歴リスト */}
           <div className="card p-6">
-            <h3 className="text-xl font-bold text-forest-800 mb-4">部費</h3>
+            <h3 className="text-xl font-bold text-forest-800 mb-4">
+              部費 <span className="ml-2 text-base font-semibold text-forest-600">残高 ￥{totalSum.toLocaleString()}</span>
+            </h3>
             <div className="space-y-3 history-list max-h-96 overflow-y-auto">
               {[...moneyLogs].reverse().map((oneMoneyLog) => {
                 const isPlus = Number(oneMoneyLog.amount) > 0;

@@ -501,6 +501,8 @@
 }
 
 .la-event-head {
+  margin: 0;
+  font-size: inherit;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -597,40 +599,65 @@
   position: fixed;
   right: max(0.75rem, calc(50% - 20rem + 0.75rem));
   bottom: 1rem;
+  left: max(0.75rem, calc(50% - 20rem + 0.75rem));
   z-index: 20;
-  width: 13.5rem;
-  max-height: 80vh;
+  max-height: 70vh;
   overflow-y: auto;
-  padding: 0.5rem;
+  padding: 0.5rem 0.75rem 0.75rem;
   border-radius: 0.75rem;
   background: #111111;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
   color: #ffffff;
+  opacity: 0.7;
+  transform-origin: bottom;
+  animation: la-calc-open 0.18s ease-out;
+}
+
+@keyframes la-calc-open {
+  from {
+    transform: scaleY(0.2);
+    opacity: 0;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 0.7;
+  }
 }
 
 .la-calc.raised {
-  bottom: 5.5rem;
+  bottom: 1rem;
 }
 
 .la-calc-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.8rem;
 }
 
+.la-calc-clock,
 .la-calc-close {
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2rem;
+  height: 2rem;
   border: none;
+  border-radius: 0.4rem;
   background: none;
   color: #ffffff;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   cursor: pointer;
 }
 
+.la-calc-clock[aria-pressed='true'] {
+  background: #444444;
+}
+
+.la-calc-none {
+  margin: 0.25rem 0;
+  color: #9a9a9a;
+  font-size: 0.8rem;
+}
+
 .la-calc-history {
-  max-height: 4.5rem;
+  max-height: 6rem;
   margin-bottom: 0.25rem;
   overflow-y: auto;
   border-bottom: 1px solid #333333;
@@ -678,7 +705,7 @@
 
 .la-calc-keys {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 0.3rem;
 }
 
@@ -695,10 +722,6 @@
 .la-calc-key.fn {
   background: #4a4a4a;
   font-size: 0.75rem;
-}
-
-.la-calc-key.fn.wide {
-  grid-column: span 2;
 }
 
 .la-calc-key.op {

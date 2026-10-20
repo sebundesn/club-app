@@ -17,7 +17,7 @@ export default function EventStrip({ title, sub, href, uploadHref, uploadLabel, 
   const shown = thumbs.slice(0, 4);
   return (
     <li className="la-event">
-      <div className="la-event-head">
+      <h2 className="la-event-head">
         <span className="la-event-side" aria-hidden="true" />
         <Link href={href} className="la-event-text">
           <span className="la-album-title">{title || '(無題)'}</span>
@@ -26,7 +26,7 @@ export default function EventStrip({ title, sub, href, uploadHref, uploadLabel, 
         <Link href={`${uploadHref}&title=${encodeURIComponent(title)}`} className="la-plus" aria-label={uploadLabel}>
           ＋
         </Link>
-      </div>
+      </h2>
       <Link href={href} className="la-strip" aria-label={`${title || '(無題)'}をすべて見る`}>
         {[0, 1, 2, 3].map((i) => (
           <span key={i} className="la-strip-cell">

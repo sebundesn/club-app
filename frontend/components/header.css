@@ -3,19 +3,23 @@
    fixed + 固定高さの空きブロックだと、スマホの2段のヘッダーでページの上が隠れていた。 */
 .site-header {
   position: sticky;
-  top: 0;
+  top: 0.5rem;
   z-index: 50;
-  background-color: var(--color-earth-50);
-  padding: 1rem 0;
+  margin: 0.5rem auto 0;
+  width: calc(100% - 1rem);
+  max-width: 1152px;
+  border-radius: 1rem;
+  /* 背景を70%の透明にして、スクロールで後ろの内容が透けて見える浮いたバーにする */
+  background-color: rgba(247, 246, 239, 0.7); /* earth-50/70 */
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  padding: 0.75rem 0;
   transition: all 0.3s ease;
 }
 
-/* スクロール検知時のスタイリング */
+/* スクロール検知時は、影を少し濃くする */
 .site-header.scrolled {
-  background-color: rgba(247, 246, 239, 0.95); /* earth-50/95 */
-  backdrop-filter: blur(4px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  padding: 0.75rem 0;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
 }
 
 /* ヘッダー内インナーコンテナ */
