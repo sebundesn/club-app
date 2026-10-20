@@ -17,9 +17,9 @@ import Select, { SelectInstance } from 'react-select';
 // 直近何週間分のイベントを出すか（バックエンドの howLongWeek と同じ単位）
 const HOW_LONG_WEEK = 4;
 
-// 会計ページ(管理画面)：部費の収支、全部員の支払い状況、イベントの参加者・徴収額の管理。
+// 管理ページの「会計」：部費の収支、全部員の支払い状況、イベントの参加者・徴収額の管理。
 // 部費の収支はログインなしで誰でも見られる。管理の操作は権限のある人にだけ出す。
-export default function Account() {
+export default function AccountingSection({ role }: { role: string }) {
   const { showToast } = useToast();
   const [moneyLogs, setMoneyLogs] = useState<MoneyLogStruct[]>([]);
   const [totalSum, setTotalSum] = useState<number>(0);
@@ -35,10 +35,10 @@ export default function Account() {
   const [allClubMembers, setAllClubMembers] = useState<MemberOption[]>([]);
   const [participants, setParticipants] = useState<EventMember[]>([]);
   const [selectedOptions, setSelectedOptions] = useState<MemberOption[]>([]);
-  const [role, setRole] = useState('');
   const [feeInput, setFeeInput] = useState('');
   // 画面を出し分けるだけ。実際の権限チェックはサーバー側で行っている
   const canEditPayment = role === '会計' || role === '部長';
+  // 副部長は会計の画面を見るだけで、操作はできない
   const canView = canEditPayment || role === '副部長';
   const year = new Date().getFullYear();
   const selectRef = useRef<SelectInstance<MemberOption, true> | null>(null);
@@ -287,20 +287,6 @@ export default function Account() {
       showToast('通信に失敗しました。', 'error');
     }
   };
-
-  useEffect(() => {
-    const loadRole = async () => {
-      try {
-        const res = await fetch(`${backendURL}/api/checkAuth`, { credentials: 'include' });
-        if (!res.ok) return;
-        const data = await res.json();
-        setRole(typeof data.role === 'string' ? data.role : '');
-      } catch (e) {
-        console.error('failed to check role:', e);
-      }
-    };
-    loadRole();
-  }, []);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 非同期の取得なので state 更新は await のあと。同期的な連鎖レンダリングは起きない。

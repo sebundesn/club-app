@@ -1,29 +1,19 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { generateCalendarDays, toDateKey } from '../utils/calendar';
 import { getNowTime } from '../utils/getTime';
 import { buildMonthRows, buildUpcomingRows, monthsToFetch } from '../utils/upcoming';
 import EventTable from './EventTable';
 import MyUnpaidCard from './MyUnpaidCard';
 import AccountSummaryCard from './AccountSummaryCard';
-import { DateTitle, EventDetail, EventStruct } from '../utils/schema';
+import { DateTitle, EventDetail } from '../utils/schema';
 import { backendURL, readErrorMessage } from '../utils/api';
 import { useToast } from '../../components/Toast';
 import './calendar.css';
 
-const emptyEvent: EventStruct = {
-  ID: 0,
-  Date: '',
-  Title: '',
-  Subtitle: '',
-  PDFPath: '',
-  Content: '',
-};
-
 export default function CalendarPage() {
   const { showToast } = useToast();
-  const [thisYear, thisMonth, today, dayNames] = getNowTime();
+  const [thisYear, thisMonth, , dayNames] = getNowTime();
 
   const [year, setYear] = useState<number>(thisYear);
   const [month, setMonth] = useState<number>(thisMonth);
@@ -31,14 +21,8 @@ export default function CalendarPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [eventMap, setEventMap] = useState<Record<string, DateTitle[]>>({});
   const [dayEvents, setDayEvents] = useState<EventDetail[]>([]);
-  const [editing, setEditing] = useState<EventStruct | null>(null);
   const [upcomingEvents, setUpcomingEvents] = useState<DateTitle[]>([]);
   const [viewMode, setViewMode] = useState<'upcoming' | 'month'>('upcoming');
-  const [role, setRole] = useState('');
-  // 予定の登録・編集は部長・副部長だけ。画面の出し分けだけで、実際の権限チェックはサーバー側で行っている。
-  const isManager = role === '部長' || role === '副部長';
-  const days = generateCalendarDays(year, month);
-
   const handlePrevMonth = () => {
     if (month === 1) {
       setMonth(12);
@@ -119,58 +103,9 @@ export default function CalendarPage() {
     try {
       const events = await getDateEvents(dateStr);
       setDayEvents(events);
-      // その日にイベントがなければ、部長・副部長はいきなり作成フォームを開く
-      setEditing(events.length === 0 && isManager ? { ...emptyEvent, Date: dateStr } : null);
       setIsModalOpen(true);
     } catch (e) {
       console.error('詳細取得失敗', e);
-      showToast('通信に失敗しました。', 'error');
-    }
-  };
-
-  const handleDateClick = (date: number) => {
-    if (!date) return;
-    return openDay(toDateKey(year, month, date));
-  };
-
-  // イベント保存（新規作成 / 更新）
-  const saveEvent = async () => {
-    if (!editing) return;
-
-    if (!editing.Title.trim()) {
-      showToast('タイトルを入力してください。', 'error');
-      return;
-    }
-
-    try {
-      const res = await fetch(`${backendURL}/api/saveEvent`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: editing.ID,
-          date: selectedDate,
-          title: editing.Title,
-          subtitle: editing.Subtitle,
-          content: editing.Content,
-          pdf_path: editing.PDFPath,
-        }),
-        credentials: 'include',
-      });
-
-      if (!res.ok) {
-        showToast(await readErrorMessage(res, '保存に失敗しました。'), 'error');
-        return;
-      }
-
-      await getMonthEvents();
-      await getUpcomingEvents();
-      setDayEvents(await getDateEvents(selectedDate));
-      setEditing(null);
-      showToast('保存しました。', 'success');
-    } catch (e) {
-      console.error('通信エラーが発生', e);
       showToast('通信に失敗しました。', 'error');
     }
   };
@@ -180,7 +115,6 @@ export default function CalendarPage() {
     setIsModalOpen(false);
     setSelectedDate('');
     setDayEvents([]);
-    setEditing(null);
   };
 
   useEffect(() => {
@@ -192,20 +126,6 @@ export default function CalendarPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 同上
     getUpcomingEvents();
   }, [getUpcomingEvents]);
-
-  useEffect(() => {
-    const loadRole = async () => {
-      try {
-        const res = await fetch(`${backendURL}/api/checkAuth`, { credentials: 'include' });
-        if (!res.ok) return;
-        const data = await res.json();
-        setRole(typeof data.role === 'string' ? data.role : '');
-      } catch (e) {
-        console.error('failed to check role:', e);
-      }
-    };
-    loadRole();
-  }, []);
 
   const upcomingRows = useMemo(() => buildUpcomingRows(upcomingEvents, new Date()), [upcomingEvents]);
   // 月別の一覧は、表示中の月(下の月カレンダーと共通)の予定を使う
@@ -260,106 +180,11 @@ export default function CalendarPage() {
           rows={viewMode === 'upcoming' ? upcomingRows : monthRows}
           dayNames={dayNames}
           onSelect={openDay}
-          canSelectEmpty={isManager}
           emptyMessage="この月の予定はありません。"
         />
       </div>
 
-      {/* 月カレンダー。予定を登録できる部長・副部長だけに出す(部員は上の一覧で見られる) */}
-      {isManager && (
-        <div className="card mb-8">
-          <div className="calendar-header">
-            <h1 className="calendar-title">
-              {year}年 {month}月
-            </h1>
-            <div className="nav-buttons">
-              <button
-                onClick={handlePrevMonth}
-                className="nav-btn"
-                aria-label="前の月"
-              >
-                ◀
-              </button>
-              <button
-                onClick={handleNextMonth}
-                className="nav-btn"
-                aria-label="次の月"
-              >
-                ▶
-              </button>
-            </div>
-          </div>
-
-          {/* 曜日ヘッダー */}
-          <div className="grid-cols-7 mb-2">
-            {dayNames.map((name, i) => (
-              <div
-                key={name}
-                className={`day-name ${
-                  i === 0 ? 'sunday' : i === 6 ? 'saturday' : 'weekday'
-                }`}
-              >
-                {name}
-              </div>
-            ))}
-          </div>
-
-          {/* 日付グリッド */}
-          <div className="grid-cols-7">
-            {days.map((date, i) => {
-              const isToday = year === thisYear && month === thisMonth && date === today;
-              const dayEventList = date ? eventMap[toDateKey(year, month, date)] ?? [] : [];
-
-              return (
-                <div
-                  key={i}
-                  className={`day-cell ${
-                    !date
-                      ? 'empty'
-                      : isToday
-                      ? 'today'
-                      : 'normal'
-                  }`}
-                  onClick={() => date && handleDateClick(date)}
-                >
-                  {date && (
-                    <>
-                      <span
-                        className={`day-number ${
-                          isToday ? 'text-today' : 'text-normal'
-                        }`}
-                      >
-                        {date}
-                      </span>
-                      {dayEventList.length > 0 && (
-                        <>
-                          {/* スマホではタイトルが読めないので点だけにする(詳細は日付を押すか、上の一覧で見る) */}
-                          <div className="event-dots" aria-label={`予定${dayEventList.length}件`}>
-                            {dayEventList.slice(0, 3).map((event) => (
-                              <span key={event.id} className="event-dot" />
-                            ))}
-                          </div>
-                          <div className="event-badge-container">
-                            {dayEventList.map((event) =>
-                              event.title ? (
-                                <span key={event.id} className="event-badge">
-                                  {event.title}
-                                </span>
-                              ) : null,
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* イベント編集モーダル */}
+      {/* 予定の詳細モーダル(閲覧のみ。登録・編集は管理ページ) */}
       {isModalOpen && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -367,98 +192,29 @@ export default function CalendarPage() {
               {selectedDate.slice(5, 7)}月{selectedDate.slice(8, 10)}日
             </p>
 
-            {editing === null ? (
-              /* その日のイベント一覧。1日に複数登録できる。 */
-              <>
-                <ul className="day-event-list">
-                  {dayEvents.map((event) => (
-                    <li key={event.id} className="day-event-item">
-                      <div className="day-event-text">
-                        <p className="day-event-title">{event.title}</p>
-                        {event.subtitle && <p className="day-event-subtitle">{event.subtitle}</p>}
-                        {event.content && <p className="day-event-content">{event.content}</p>}
-                      </div>
-                      <div className="day-event-actions">
-                        <a href={`/album?eventID=${event.id}`} className="btn-secondary">
-                          アルバム
-                        </a>
-                        {isManager && (
-                          <button
-                            type="button"
-                            className="btn-secondary"
-                            onClick={() =>
-                              setEditing({
-                                ID: event.id,
-                                Date: selectedDate,
-                                Title: event.title,
-                                Subtitle: event.subtitle,
-                                Content: event.content,
-                                PDFPath: event.pdf_path,
-                              })
-                            }
-                          >
-                            編集
-                          </button>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+            {/* その日のイベント一覧。1日に複数登録できる。 */}
+            <ul className="day-event-list">
+              {dayEvents.map((event) => (
+                <li key={event.id} className="day-event-item">
+                  <div className="day-event-text">
+                    <p className="day-event-title">{event.title}</p>
+                    {event.subtitle && <p className="day-event-subtitle">{event.subtitle}</p>}
+                    {event.content && <p className="day-event-content">{event.content}</p>}
+                  </div>
+                  <div className="day-event-actions">
+                    <a href={`/album?eventID=${event.id}`} className="btn-secondary">
+                      アルバム
+                    </a>
+                  </div>
+                </li>
+              ))}
+            </ul>
 
-                <div className="flex-gap-3">
-                  <button onClick={closeModal} className="btn-secondary flex-1">
-                    閉じる
-                  </button>
-                  {isManager && (
-                    <button
-                      onClick={() => setEditing({ ...emptyEvent, Date: selectedDate })}
-                      className="btn-primary flex-1"
-                    >
-                      ＋ イベントを追加
-                    </button>
-                  )}
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="space-y-4 mb-2" style={{ marginBottom: '1.5rem' }}>
-                  <input
-                    type="text"
-                    placeholder="タイトル"
-                    required
-                    value={editing.Title}
-                    onChange={(e) => setEditing({ ...editing, Title: e.target.value })}
-                    className="input-field"
-                  />
-                  <input
-                    type="text"
-                    placeholder="サブタイトル"
-                    value={editing.Subtitle}
-                    onChange={(e) => setEditing({ ...editing, Subtitle: e.target.value })}
-                    className="input-field"
-                  />
-                  <textarea
-                    placeholder="内容"
-                    value={editing.Content}
-                    onChange={(e) => setEditing({ ...editing, Content: e.target.value })}
-                    rows={5}
-                    className="input-field resize-none"
-                  />
-                </div>
-
-                <div className="flex-gap-3">
-                  <button
-                    onClick={() => (dayEvents.length === 0 ? closeModal() : setEditing(null))}
-                    className="btn-secondary flex-1"
-                  >
-                    キャンセル
-                  </button>
-                  <button onClick={saveEvent} className="btn-primary flex-1">
-                    保存
-                  </button>
-                </div>
-              </>
-            )}
+            <div className="flex-gap-3">
+              <button onClick={closeModal} className="btn-secondary flex-1">
+                閉じる
+              </button>
+            </div>
           </div>
         </div>
       )}

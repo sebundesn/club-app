@@ -131,11 +131,11 @@ export default function Header() {
 
   // ナビゲーション項目
   const navItems = [
-    { path: '/calendar', label: 'HOME' },
-    { path: '/account', label: '会計' },
+    { path: '/calendar', label: 'ワンゲル' },
     { path: '/album', label: 'アルバム' },
     ...(userInfo.isLoggedIn ? [{ path: '/receipts', label: 'レシート' }] : []),
-    ...(['部長', '副部長'].includes(userInfo.role) ? [{ path: '/members', label: '入部申請' }] : []),
+    // 部長・副部長・会計には、役職名のページを出す
+    ...(['部長', '副部長', '会計'].includes(userInfo.role) ? [{ path: '/admin', label: userInfo.role }] : []),
   ];
 
   useEffect(() => {
@@ -179,11 +179,6 @@ export default function Header() {
       {/* ヘッダー */}
       <header className={`site-header ${isScrolled ? 'scrolled' : ''}`}>
         <div className="header-container">
-          {/* ロゴ */}
-          <Link href="/calendar" className="header-logo">
-            ワンダーフォーゲル部
-          </Link>
-
           {/* ナビゲーション（PC用） */}
           <nav className="nav-desktop">
             {navItems.map((item) => (

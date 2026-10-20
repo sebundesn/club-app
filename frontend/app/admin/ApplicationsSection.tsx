@@ -6,7 +6,7 @@ import { backendURL, readErrorMessage } from '../utils/api';
 import { useToast } from '../../components/Toast';
 import '../subpages.css';
 
-export default function MembersPage() {
+export default function ApplicationsSection() {
   const { showToast } = useToast();
   const [apps, setApps] = useState<Application[] | null>(null);
 
@@ -55,7 +55,7 @@ export default function MembersPage() {
 
   return (
     <div className="sp-page">
-      <h1 className="sp-title">入部申請</h1>
+      <h2 className="sp-title">入部申請</h2>
       <p className="sp-lead">
         名簿と照らし合わせて、部員本人かどうかを確認してから承認してください(部長・副部長のみ)。
       </p>

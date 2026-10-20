@@ -5,13 +5,13 @@ interface EventTableProps {
   dayNames: string[];
   /** 行を押したときの動作。undefined を返す行(押せない行)は渡さない側で判断する */
   onSelect: (date: string) => void;
-  /** 予定のない行も押せるか(部長・副部長は予定を登録できるので押せる) */
-  canSelectEmpty: boolean;
+  /** 予定のない行も押せるか。既定は押せない */
+  canSelectEmpty?: boolean;
   emptyMessage: string;
 }
 
 /** 日付・曜日・内容の3列で予定を並べる表 */
-export default function EventTable({ rows, dayNames, onSelect, canSelectEmpty, emptyMessage }: EventTableProps) {
+export default function EventTable({ rows, dayNames, onSelect, canSelectEmpty = false, emptyMessage }: EventTableProps) {
   if (rows.length === 0) {
     return <p className="upcoming-empty">{emptyMessage}</p>;
   }
