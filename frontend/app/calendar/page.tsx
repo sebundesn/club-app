@@ -20,7 +20,8 @@ export default function CalendarPage() {
   const [month, setMonth] = useState<number>(thisMonth);
   const [selectedDate, setSelectedDate] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [eventMap, setEventMap] = useState<Record<string, DateTitle[]>>({});
+  // 表示中の月と、その前後の月の予定。前後の月は、月をまたぐ予定を1行にまとめるためだけに使う
+  const [monthEvents, setMonthEvents] = useState<DateTitle[]>([]);
   const [dayEvents, setDayEvents] = useState<EventDetail[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<DateTitle[]>([]);
   const [viewMode, setViewMode] = useState<'upcoming' | 'month'>('upcoming');
@@ -43,26 +44,22 @@ export default function CalendarPage() {
   };
 
   const getMonthEvents = useCallback(async () => {
+    const monthKey = (offset: number) => {
+      const d = new Date(year, month - 1 + offset, 1);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    };
     try {
-      const res = await fetch(
-        `${backendURL}/api/getMonthEvents?month=${String(year)}-${String(month).padStart(2, '0')}`
+      const lists = await Promise.all(
+        [-1, 0, 1].map(async (offset) => {
+          const res = await fetch(`${backendURL}/api/getMonthEvents?month=${monthKey(offset)}`);
+          if (!res.ok) throw new Error(await readErrorMessage(res, 'イベントの取得に失敗しました。'));
+          return ((await res.json()) as DateTitle[] | null) ?? [];
+        }),
       );
-
-      if (!res.ok) {
-        showToast(await readErrorMessage(res, 'イベントの取得に失敗しました。'), 'error');
-        return;
-      }
-
-      const data: DateTitle[] = (await res.json()) ?? [];
-
-      const newMap: Record<string, DateTitle[]> = {};
-      data.forEach((d) => {
-        (newMap[d.date] ||= []).push(d);
-      });
-      setEventMap(newMap);
+      setMonthEvents(lists.flat());
     } catch (e) {
       console.error('event failed', e);
-      showToast('通信に失敗しました。', 'error');
+      showToast(e instanceof Error ? e.message : '通信に失敗しました。', 'error');
     }
   }, [year, month, showToast]);
 
@@ -130,7 +127,7 @@ export default function CalendarPage() {
 
   const upcomingRows = useMemo(() => buildUpcomingRows(upcomingEvents, new Date()), [upcomingEvents]);
   // 月別の一覧は、表示中の月(下の月カレンダーと共通)の予定を使う
-  const monthRows = useMemo(() => buildMonthRows(Object.values(eventMap).flat(), new Date()), [eventMap]);
+  const monthRows = useMemo(() => buildMonthRows(monthEvents, year, month, new Date()), [monthEvents, year, month]);
 
   return (
     <div className="calendar-container">

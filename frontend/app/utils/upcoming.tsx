@@ -115,8 +115,18 @@ export const buildUpcomingRows = (events: DateTitle[], today: Date, days = UPCOM
   return rows;
 };
 
-/** 1か月分の予定を、予定のある日だけ日付順に並べる。同じタイトルが連日続く予定は1行にまとめる。 */
-export const buildMonthRows = (events: DateTitle[], today: Date): UpcomingRow[] => toRows(buildRanges(events), keyOf(today));
+/**
+ * year 年 month 月の予定を、予定のある日だけ日付順に並べる。同じタイトルが連日続く予定は1行にまとめる。
+ * events に前後の月の予定も入れておくと、月をまたぐ予定(9/30〜10/2 など)も途中で切れずに1行になる。
+ */
+export const buildMonthRows = (events: DateTitle[], year: number, month: number, today: Date): UpcomingRow[] => {
+  const first = toDateKey(year, month, 1);
+  const last = toDateKey(year, month, new Date(year, month, 0).getDate());
+  return toRows(
+    buildRanges(events).filter((r) => r.end >= first && r.start <= last),
+    keyOf(today),
+  );
+};
 
 /** 月カレンダーの1週に引くバー。同じタイトルが連日続く予定は日付をまたいで1本にする */
 export interface WeekBar {
