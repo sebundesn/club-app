@@ -6,6 +6,7 @@ import { backendURL, readErrorMessage } from '../utils/api';
 import { notifyApplicationsChanged } from '../utils/pendingApplications';
 import { useToast } from '../../components/Toast';
 import Modal from '../../components/Modal';
+import { DropTarget, useLongPressDrag } from './useLongPressDrag';
 import '../subpages.css';
 
 const ROLES = ['部長', '副部長', '会計'] as const;
@@ -41,6 +42,15 @@ interface Picking {
   replace?: number;
 }
 
+/** 長押しで動かしている人。from は下書きでの今の役職 */
+interface Dragged {
+  id: number;
+  from?: Role;
+}
+
+// 部員一覧に落とすと役職なしになる
+const NO_ROLE_ZONE = 'none';
+
 /**
  * 役職ページの「部員」: 入部申請の承認、役職の付け替え、部員の一覧。部長・副部長のみ。
  * myID は自分の役職が変わったときに画面を開き直すために使う。
@@ -54,6 +64,8 @@ export default function MembersSection({ myID }: { myID: number | null }) {
   const [picking, setPicking] = useState<Picking | null>(null);
   const [search, setSearch] = useState('');
   const [confirming, setConfirming] = useState(false);
+  // ドラッグで変えた直後の確認で「やめる」を押したら、この下書きに戻す
+  const [undoDraft, setUndoDraft] = useState<RoleDraft | null>(null);
 
   const loadApps = useCallback(async () => {
     try {
@@ -141,6 +153,51 @@ export default function MembersSection({ myID }: { myID: number | null }) {
 
   const unassign = (role: Role, id: number) => setDraft((d) => ({ ...d, [role]: d[role].filter((x) => x !== id) }));
 
+  /**
+   * 長押しで人を落としたとき。役職のカードに落とせばそこへ移し、人の上に重ねれば入れ替える。
+   * 部員一覧に落とせば役職を外す。変わるときは保存の確認をすぐ出す。
+   */
+  const dropMember = (item: Dragged, target: DropTarget | null) => {
+    if (!target) return;
+    const to = isRole(target.zone) ? target.zone : target.zone === NO_ROLE_ZONE ? undefined : null;
+    if (to === null) return;
+    const other = target.memberID !== undefined && target.memberID !== item.id ? target.memberID : undefined;
+    if (to === item.from && other === undefined) return;
+    if (to !== undefined && to === item.from) return; // 同じ役職の中での並べ替えは意味がない
+
+    const next = Object.fromEntries(ROLES.map((r) => [r, draft[r].filter((x) => x !== item.id)])) as RoleDraft;
+    if (to === undefined) {
+      // 役職を外すだけ
+    } else if (other !== undefined) {
+      // 重ねた相手と入れ替える。相手は動かした人の元の役職へ(元が役職なしなら、相手も役職なしに)
+      next[to] = next[to].map((x) => (x === other ? item.id : x));
+      if (item.from) next[item.from] = [...next[item.from], other];
+    } else {
+      if (next[to].length >= MAX_PER_ROLE) {
+        showToast(`${to}は${MAX_PER_ROLE}人までです。名前の上に重ねると入れ替えられます。`, 'error');
+        return;
+      }
+      next[to] = [...next[to], item.id];
+    }
+
+    const empty = ROLES.find((r) => next[r].length < MIN_PER_ROLE);
+    if (empty) {
+      showToast(`${empty}が誰もいなくなるので、この移動はできません。`, 'error');
+      return;
+    }
+    setUndoDraft(draft);
+    setDraft(next);
+    setConfirming(true);
+  };
+
+  const { drag, bind, justDropped } = useLongPressDrag<Dragged>(dropMember);
+
+  const cancelConfirm = () => {
+    if (undoDraft) setDraft(undoDraft);
+    setUndoDraft(null);
+    setConfirming(false);
+  };
+
   const saveRoles = async () => {
     setSaving(true);
     try {
@@ -161,6 +218,7 @@ export default function MembersSection({ myID }: { myID: number | null }) {
       }
       showToast('役職を保存しました。', 'success');
       setConfirming(false);
+      setUndoDraft(null);
       await loadMembers();
     } catch (e) {
       console.error('failed to save roles:', e);
@@ -212,14 +270,20 @@ export default function MembersSection({ myID }: { myID: number | null }) {
         <p className="sp-muted">読み込み中…</p>
       ) : (
         <>
-          <p className="sp-muted role-hint">名前を押すと入れ替え、× で外せます。1つの役職は{MIN_PER_ROLE}〜{MAX_PER_ROLE}人です。</p>
+          <p className="sp-muted role-hint">名前を押すと入れ替え、× で外せます。長押しでつかんで、ほかの役職や人の上へ動かすこともできます。1つの役職は{MIN_PER_ROLE}〜{MAX_PER_ROLE}人です。</p>
           <div className="role-cards">
             {ROLES.map((role) => {
               const ids = draft[role];
               const changed = changedRoles.includes(role);
               const empty = ids.length < MIN_PER_ROLE;
               return (
-                <section key={role} className={`sp-card role-card${changed ? ' changed' : ''}${empty ? ' invalid' : ''}`}>
+                <section
+                  key={role}
+                  data-drop={role}
+                  className={`sp-card role-card${changed ? ' changed' : ''}${empty ? ' invalid' : ''}${
+                    drag?.over?.zone === role && drag.item.from !== role ? ' drop-over' : ''
+                  }`}
+                >
                   <header className="role-card-head">
                     <h3 className="role-card-title">{role}</h3>
                     <span className="role-card-count">
@@ -229,12 +293,20 @@ export default function MembersSection({ myID }: { myID: number | null }) {
                   </header>
                   <ul className="role-slots">
                     {ids.map((id) => (
-                      <li key={id} className="role-slot">
+                      <li
+                        key={id}
+                        data-drop-member={id}
+                        className={`role-slot${drag?.item.id === id ? ' dragging' : ''}${
+                          drag?.over?.memberID === id && drag.item.id !== id && drag.item.from !== role ? ' drop-swap' : ''
+                        }`}
+                      >
                         <button
                           type="button"
                           className="role-slot-name"
                           aria-label={`${role}の${nameOf(id)}をほかの人と入れ替える`}
+                          {...bind({ id, from: role }, nameOf(id))}
                           onClick={() => {
+                            if (justDropped()) return;
                             setSearch('');
                             setPicking({ role, replace: id });
                           }}
@@ -331,7 +403,7 @@ export default function MembersSection({ myID }: { myID: number | null }) {
       )}
 
       {confirming && (
-        <Modal title="役職を保存しますか？" onClose={saving ? undefined : () => setConfirming(false)}>
+        <Modal title="役職を保存しますか？" onClose={saving ? undefined : cancelConfirm}>
           <ul className="role-diff">
             {changedRoles.map((r) => (
               <li key={r}>
@@ -348,7 +420,7 @@ export default function MembersSection({ myID }: { myID: number | null }) {
             </p>
           )}
           <div className="role-save">
-            <button className="sp-btn-sub" onClick={() => setConfirming(false)} disabled={saving}>
+            <button className="sp-btn-sub" onClick={cancelConfirm} disabled={saving}>
               やめる
             </button>
             <button className="sp-btn" onClick={saveRoles} disabled={saving}>
@@ -360,26 +432,45 @@ export default function MembersSection({ myID }: { myID: number | null }) {
 
       <h2 className="sp-title">
         部員一覧{members && <span className="member-count">{members.length}人</span>}
+        {drag?.item.from && <span className="member-drop-hint">ここに落とすと役職を外せます</span>}
       </h2>
       {members === null ? (
         <p className="sp-muted">読み込み中…</p>
       ) : members.length === 0 ? (
         <p className="sp-empty">部員はいません。</p>
       ) : (
-        <ul className="sp-card sp-list">
-          {members.map((m) => (
-            <li key={m.id} className="sp-row">
-              <span className="sp-row-main">
-                {m.name || '(名前未設定)'}
-                <span className="sp-row-sub">
-                  {m.student_id}
-                  {!m.linked && ' ・ LINE未連携'}
+        <ul
+          data-drop={NO_ROLE_ZONE}
+          className={`sp-card sp-list member-list${drag?.over?.zone === NO_ROLE_ZONE && drag.item.from ? ' drop-over' : ''}`}
+        >
+          {members.map((m) => {
+            const draftRole = roleOf(draft, m.id);
+            return (
+              <li
+                key={m.id}
+                className={`sp-row${m.name ? ' member-draggable' : ''}${drag?.item.id === m.id ? ' dragging' : ''}`}
+                // 名前のない人は役職に選べないので、つかめないようにする
+                {...(m.name ? bind({ id: m.id, from: draftRole }, m.name) : {})}
+              >
+                <span className="sp-row-main">
+                  {m.name || '(名前未設定)'}
+                  <span className="sp-row-sub">
+                    {m.student_id}
+                    {!m.linked && ' ・ LINE未連携'}
+                  </span>
                 </span>
-              </span>
-              {m.role && <span className="role-badge">{m.role}</span>}
-            </li>
-          ))}
+                {draftRole && <span className={`role-badge${draftRole !== m.role ? ' changed' : ''}`}>{draftRole}</span>}
+              </li>
+            );
+          })}
         </ul>
+      )}
+
+      {/* 指(カーソル)についてくる名前 */}
+      {drag && (
+        <div className="drag-ghost" style={{ left: drag.x, top: drag.y }} aria-hidden="true">
+          {drag.label}
+        </div>
       )}
     </div>
   );

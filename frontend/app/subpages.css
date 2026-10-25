@@ -434,3 +434,68 @@
   font-weight: 600;
   color: var(--color-earth-600);
 }
+
+/* ---- 長押しのドラッグ&ドロップ(役職) ---- */
+
+/* 長押しで文字が選ばれたり、iPhoneのメニューが出たりしないように */
+[data-draggable] {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+body.is-dragging,
+body.is-dragging * {
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: grabbing !important;
+}
+
+.member-draggable {
+  cursor: grab;
+}
+
+.role-slot.dragging,
+.sp-row.dragging {
+  opacity: 0.35;
+}
+
+.role-card.drop-over,
+.member-list.drop-over {
+  border-color: var(--color-forest-600);
+  background: var(--color-forest-100);
+  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.25);
+}
+
+.role-slot.drop-swap {
+  outline: 2px solid #b45309;
+  outline-offset: 2px;
+}
+
+.member-drop-hint {
+  margin-left: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #b45309;
+}
+
+.role-badge.changed {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.drag-ghost {
+  position: fixed;
+  z-index: 80;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  background: var(--color-forest-600);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  pointer-events: none;
+  /* 指で隠れないよう、少し上に出す */
+  transform: translate(-50%, -150%);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
