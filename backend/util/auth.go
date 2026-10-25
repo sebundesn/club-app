@@ -1,6 +1,7 @@
 package util
 
 import (
+	"database/sql"
 	"errors"
 	"log"
 	"net/http"
@@ -53,10 +54,20 @@ func CurrentUser(r *http.Request) (*SessionUser, error) {
 	if !ok {
 		return nil, nil
 	}
-	name, _ := session.Values["name"].(string)
-	role, _ := session.Values["role"].(string)
 
-	return &SessionUser{ID: id, Name: name, Role: role}, nil
+	// 役職は部長・副部長が付け替えるので、セッションの値ではなく毎回DBから読む
+	// (ログインし直さなくても新しい役職が効き、外された人の権限もすぐ消える)。
+	var name, role sql.NullString
+	err = DB.QueryRow(`SELECT name, role FROM users WHERE id = $1`, id).Scan(&name, &role)
+	if errors.Is(err, sql.ErrNoRows) {
+		// 部員の行が消えていたら未ログイン扱い
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &SessionUser{ID: id, Name: name.String, Role: role.String}, nil
 }
 
 // RequireLogin はログイン必須のハンドラで使う。未ログインなら401を返す。

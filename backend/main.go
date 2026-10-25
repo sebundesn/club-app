@@ -34,9 +34,11 @@ func main() {
 	http.Handle("/api/logout", util.AppHandler(feature.Logout))
 	http.Handle("/api/firstLogin", util.AppHandler(feature.FirstLogin))
 
-	// 入部申請の承認(部長・副部長)
+	// 入部申請の承認と部員の役職(部長・副部長)
 	http.Handle("/api/applications", util.AppHandler(feature.GetApplications))
 	http.Handle("/api/decideApplication", util.AppHandler(feature.DecideApplication))
+	http.Handle("/api/members", util.AppHandler(feature.GetMembers))
+	http.Handle("/api/setRoles", util.AppHandler(feature.SetRoles))
 
 	// カレンダー / イベント
 	http.Handle("/api/saveEvent", util.AppHandler(feature.SaveNote))

@@ -137,3 +137,14 @@ export interface AlbumSummary {
   photo_count: number;
   video_count: number;
 }
+
+/** 役職ページの部員一覧の1人分 */
+export interface Member {
+  id: number;
+  student_id: string;
+  name: string;
+  /** 部長・副部長・会計。役職なしは空 */
+  role: string;
+  /** LINEと連携済み(ログインできる)か */
+  linked: boolean;
+}

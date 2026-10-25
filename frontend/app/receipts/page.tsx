@@ -8,6 +8,7 @@ import { backendURL, readErrorMessage, receiptSrc } from '../utils/api';
 import { useToast } from '../../components/Toast';
 import Calculator from '../../components/line/Calculator';
 import EventStrip from '../../components/line/EventStrip';
+import EventParticipants from '../../components/EventParticipants';
 import MediaViewer from '../../components/line/MediaViewer';
 import { setPendingFiles } from '../utils/pendingFiles';
 import '../line.css';
@@ -139,7 +140,10 @@ function ReceiptList() {
   );
 }
 
-/** 1つのイベントのレシート。押すと黒地で1枚ずつ見られる。削除できるのは会計・部長。 */
+/**
+ * 1つのイベントのレシートと参加者・徴収。レシートは押すと黒地で1枚ずつ見られる。
+ * レシートの削除・支払い済みの切り替え・徴収額の設定は会計・部長だけ。
+ */
 function ReceiptDetail({ eventID }: { eventID: number }) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -222,6 +226,9 @@ function ReceiptDetail({ eventID }: { eventID: number }) {
                 <img src={receiptSrc(img.url)} alt="レシート" loading="lazy" />
               </button>
             ))}
+          </div>
+          <div className="la-participants">
+            <EventParticipants eventID={eventID} canEdit={canDelete} />
           </div>
         </>
       )}

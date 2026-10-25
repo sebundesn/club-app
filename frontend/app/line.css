@@ -207,6 +207,11 @@
   }
 }
 
+/* レシートの下の参加者・徴収の欄 */
+.la-participants {
+  margin: 1rem 0.75rem 0;
+}
+
 .la-cell {
   position: relative;
   display: block;

@@ -215,8 +215,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 3rem; /* 半径を2px大きく */
-  height: 3rem;
+  width: 3.75rem;
+  height: 3.75rem;
   padding: 0;
   overflow: hidden;
   border: 2px solid var(--color-forest-300);

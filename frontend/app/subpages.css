@@ -1,4 +1,4 @@
-/* 入部申請の画面。スマホ(幅360px〜)を基準に作り、広い画面では余白と列数を増やす。 */
+/* 入部申請・部員の画面。スマホ(幅360px〜)を基準に作り、広い画面では余白と列数を増やす。 */
 
 .sp-page {
   box-sizing: border-box;
@@ -165,4 +165,53 @@
 
 .sp-muted a {
   color: var(--color-forest-600);
+}
+
+/* 承認待ちがないときの一文と、次の見出しの間 */
+.sp-section-gap {
+  margin-bottom: 1.5rem;
+}
+
+/* 役職の付け替え。狭い画面では役職名の下に選択欄 */
+.role-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.6rem 0;
+}
+
+.role-row-label {
+  flex: 0 0 4rem;
+  font-weight: 700;
+  color: var(--color-forest-800);
+}
+
+.role-row-select {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+.role-save {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.role-badge {
+  flex-shrink: 0;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  background: var(--color-forest-100);
+  color: var(--color-forest-700);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.member-count {
+  margin-left: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-earth-600);
 }

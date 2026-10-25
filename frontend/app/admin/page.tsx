@@ -4,32 +4,33 @@ import { useEffect, useState } from 'react';
 import { backendURL } from '../utils/api';
 import { usePendingApplications } from '../utils/pendingApplications';
 import AccountingSection from './AccountingSection';
-import ApplicationsSection from './ApplicationsSection';
+import MembersSection from './MembersSection';
 import ManageCalendar from './ManageCalendar';
 import './admin.css';
 
-type Tab = 'accounting' | 'calendar' | 'applications';
+type Tab = 'accounting' | 'calendar' | 'members';
 
 const TAB_LABEL: Record<Tab, string> = {
   accounting: '会計',
   calendar: 'カレンダー',
-  applications: '入部申請',
+  members: '部員',
 };
 
 /** 役職ごとに開ける内容。画面の出し分けだけで、実際の権限チェックはサーバー側で行っている。 */
 const TABS_BY_ROLE: Record<string, Tab[]> = {
-  部長: ['accounting', 'calendar', 'applications'],
-  副部長: ['accounting', 'calendar', 'applications'],
+  部長: ['accounting', 'calendar', 'members'],
+  副部長: ['accounting', 'calendar', 'members'],
   会計: ['accounting'],
 };
 
 /**
  * 部長・副部長・会計のページ。ナビの名前は役職名。
- * 会計: 会計の処理と全体の支払い状況。部長: それに加えてカレンダーの登録と入部申請。
+ * 会計: 会計の処理と全体の支払い状況。部長: それに加えてカレンダーの登録と、部員(入部申請・役職・一覧)。
  * 副部長: 部長と同じ画面だが、会計は見るだけ。
  */
 export default function AdminPage() {
   const [role, setRole] = useState<string | null>(null);
+  const [myID, setMyID] = useState<number | null>(null);
   const [tab, setTab] = useState<Tab>('accounting');
   const pending = usePendingApplications(role === '部長' || role === '副部長');
 
@@ -39,6 +40,7 @@ export default function AdminPage() {
         const res = await fetch(`${backendURL}/api/checkAuth`, { credentials: 'include' });
         const data = res.ok ? await res.json() : null;
         setRole(data && typeof data.role === 'string' ? data.role : '');
+        setMyID(data && typeof data.id === 'number' ? data.id : null);
       } catch (e) {
         console.error('failed to check role:', e);
         setRole('');
@@ -70,7 +72,7 @@ export default function AdminPage() {
               onClick={() => setTab(t)}
             >
               {TAB_LABEL[t]}
-              {t === 'applications' && pending > 0 && <span className="notify-badge">{pending}</span>}
+              {t === 'members' && pending > 0 && <span className="notify-badge">{pending}</span>}
             </button>
           ))}
         </div>
@@ -78,7 +80,7 @@ export default function AdminPage() {
 
       {tab === 'accounting' && <AccountingSection role={role} />}
       {tab === 'calendar' && tabs.includes('calendar') && <ManageCalendar />}
-      {tab === 'applications' && tabs.includes('applications') && <ApplicationsSection />}
+      {tab === 'members' && tabs.includes('members') && <MembersSection myID={myID} />}
     </div>
   );
 }

@@ -184,7 +184,7 @@ export default function CalendarPage() {
       {/* 部費の残高(新しい順、5件ぶんの高さでスクロール) */}
       <AccountSummaryCard />
 
-      {/* 予定の詳細モーダル(閲覧のみ。登録・編集は管理ページ) */}
+      {/* 予定の詳細モーダル(閲覧のみ。登録・編集は管理ページ)。外側を押すと閉じる */}
       {isModalOpen && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -201,20 +201,9 @@ export default function CalendarPage() {
                     {event.subtitle && <p className="day-event-subtitle">{event.subtitle}</p>}
                     {event.content && <p className="day-event-content">{event.content}</p>}
                   </div>
-                  <div className="day-event-actions">
-                    <a href={`/album?eventID=${event.id}`} className="btn-secondary">
-                      アルバム
-                    </a>
-                  </div>
                 </li>
               ))}
             </ul>
-
-            <div className="flex-gap-3">
-              <button onClick={closeModal} className="btn-secondary flex-1">
-                閉じる
-              </button>
-            </div>
           </div>
         </div>
       )}

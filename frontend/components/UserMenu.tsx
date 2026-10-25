@@ -47,7 +47,7 @@ export default function UserMenu({ userName, picture, onLogout }: UserMenuProps)
         {src ? (
           // LINEの画像サーバーから直接読み込む。静的エクスポートでは next/image の最適化が使えない。
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={src} alt="" width={44} height={44} onError={() => setImageFailed(true)} />
+          <img src={src} alt="" width={60} height={60} onError={() => setImageFailed(true)} />
         ) : (
           <span className="user-avatar-initial">{userName[0] || '?'}</span>
         )}
