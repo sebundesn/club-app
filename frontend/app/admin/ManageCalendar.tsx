@@ -34,7 +34,8 @@ export default function ManageCalendar() {
   const [month, setMonth] = useState<number>(thisMonth);
   const [selectedDate, setSelectedDate] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [eventMap, setEventMap] = useState<Record<string, DateTitle[]>>({});
+  // 表示中の月と、その前後の月の予定。前後の月は、月をまたぐ予定のバーをつなげるためだけに使う
+  const [events, setEvents] = useState<DateTitle[]>([]);
   const [dayEvents, setDayEvents] = useState<EventDetail[]>([]);
   const [editing, setEditing] = useState<EventStruct | null>(null);
   // 保存したときにアップロードする、まだ送っていないPDF・画像
@@ -42,8 +43,8 @@ export default function ManageCalendar() {
   const [saving, setSaving] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const weeks = useMemo(
-    () => buildCalendarWeeks(year, month, generateCalendarDays(year, month), Object.values(eventMap).flat()),
-    [year, month, eventMap],
+    () => buildCalendarWeeks(year, month, generateCalendarDays(year, month), events),
+    [year, month, events],
   );
 
   const handlePrevMonth = () => {
@@ -65,24 +66,22 @@ export default function ManageCalendar() {
   };
 
   const getMonthEvents = useCallback(async () => {
+    const monthKey = (offset: number) => {
+      const d = new Date(year, month - 1 + offset, 1);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    };
     try {
-      const res = await fetch(`${backendURL}/api/getMonthEvents?month=${String(year)}-${String(month).padStart(2, '0')}`);
-
-      if (!res.ok) {
-        showToast(await readErrorMessage(res, 'イベントの取得に失敗しました。'), 'error');
-        return;
-      }
-
-      const data: DateTitle[] = (await res.json()) ?? [];
-
-      const newMap: Record<string, DateTitle[]> = {};
-      data.forEach((d) => {
-        (newMap[d.date] ||= []).push(d);
-      });
-      setEventMap(newMap);
+      const lists = await Promise.all(
+        [-1, 0, 1].map(async (offset) => {
+          const res = await fetch(`${backendURL}/api/getMonthEvents?month=${monthKey(offset)}`);
+          if (!res.ok) throw new Error(await readErrorMessage(res, 'イベントの取得に失敗しました。'));
+          return ((await res.json()) as DateTitle[] | null) ?? [];
+        }),
+      );
+      setEvents(lists.flat());
     } catch (e) {
       console.error('event failed', e);
-      showToast('通信に失敗しました。', 'error');
+      showToast(e instanceof Error ? e.message : '通信に失敗しました。', 'error');
     }
   }, [year, month, showToast]);
 
