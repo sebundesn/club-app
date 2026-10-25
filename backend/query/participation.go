@@ -63,6 +63,12 @@ const SelectUnpaidAll = `
 	ORDER BY e.date, u.name;
 `
 
+// 人によって金額が違うとき(学年・グループ別など)に、選んだ未払いの人の請求額だけを変える。
+const ApplyFeeToUnpaidMembers = `
+	UPDATE event_members SET amount = $2
+	WHERE event_id = $1 AND user_id = ANY($3) AND paid_at IS NULL;
+`
+
 const GetEventMembers = `
 	SELECT em.event_id, em.user_id, u.name AS user_name, em.amount, em.paid_at IS NOT NULL
 	FROM event_members em

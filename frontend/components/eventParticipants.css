@@ -116,19 +116,12 @@
   transition: width 0.25s ease;
 }
 
-.ep-filters,
-.ep-copy {
+.ep-filters {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.4rem;
   margin-bottom: 0.5rem;
-}
-
-.ep-copy-label {
-  width: 100%;
-  font-size: 0.8rem;
-  color: var(--ep-sub);
 }
 
 .ep-chip {
@@ -167,19 +160,6 @@
 
 .ep-row:last-child {
   border-bottom: none;
-}
-
-.ep-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  color: #ffffff;
-  font-size: 0.85rem;
-  font-weight: 700;
 }
 
 .ep-name {
@@ -237,11 +217,58 @@
   border-top: 1px solid var(--ep-line);
 }
 
+.ep-fee-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
 .ep-fee-label {
-  display: block;
-  margin-bottom: 0.4rem;
   font-size: 0.85rem;
   font-weight: 700;
+}
+
+.ep-fee-same {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.25rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.ep-fee-same input,
+.ep-fee-member input {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+  accent-color: var(--ep-green);
+}
+
+/* 人ごとの金額: 金額を付ける人を選ぶ */
+.ep-fee-list {
+  max-height: 40dvh;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--ep-line);
+  border-radius: 0.75rem;
+}
+
+.ep-fee-list li + li {
+  border-top: 1px solid var(--ep-line);
+}
+
+.ep-fee-member {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2.75rem;
+  padding: 0 0.75rem;
+  cursor: pointer;
 }
 
 .ep-fee-row {
@@ -269,25 +296,21 @@
   color: var(--ep-sub);
 }
 
-/* 編集: 検索と部員の選択 */
-.ep-search {
+/* 編集: 部員の選択 */
+.ep-pick-tools {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
-.ep-search-input {
-  box-sizing: border-box;
-  flex: 1;
-  min-width: 10rem;
-  min-height: 2.5rem;
-  padding: 0 0.75rem;
-  border: 1px solid var(--ep-line);
-  border-radius: 999px;
-  background: var(--ep-bg);
-  font-size: 1rem;
+.ep-pick-tools .ep-hint {
+  margin: 0;
+}
+
+.ep-pick-tools .ep-link:only-child {
+  margin-left: auto;
 }
 
 .ep-link {
@@ -355,19 +378,6 @@
   flex-shrink: 0;
   font-size: 0.7rem;
   color: var(--ep-green-dark);
-}
-
-.ep-alldays {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  font-size: 0.85rem;
-}
-
-.ep-alldays input {
-  width: 1.1rem;
-  height: 1.1rem;
 }
 
 /* 保存・キャンセルは画面の下に貼りつけて、長い一覧でも押せるようにする */

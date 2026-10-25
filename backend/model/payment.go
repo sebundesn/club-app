@@ -24,6 +24,8 @@ type SetPaidRequest struct {
 type SetEventFeeRequest struct {
 	EventID int `json:"event_id"`
 	Fee     int `json:"fee"`
+	// UserIDs を指定したときは、その人たち(未払いのみ)の請求額だけを変える。イベントの徴収額は変えない。
+	UserIDs []int `json:"user_ids,omitempty"`
 }
 
 // MemberPayment は部員1人・イベント1件ぶんの支払い状況。会計用の全員分の一覧で使う。

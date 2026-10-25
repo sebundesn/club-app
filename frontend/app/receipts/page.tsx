@@ -146,7 +146,7 @@ function ReceiptList() {
 
 /**
  * 1つのイベントのレシートと参加者・徴収。レシートは押すと黒地で1枚ずつ見られる。
- * 連日のイベント(合宿など)は上の日付タブで日を切り替える。レシート・参加者・徴収額は日ごと。
+ * 連日のイベント(合宿など)は上の日付タブでレシートの日を切り替える。参加者・徴収額は全日程で共通(初日に記録する)。
  * レシートの削除・支払い済みの切り替え・徴収額の設定は会計・部長だけ。
  */
 function ReceiptDetail({ eventIDs, initialDay }: { eventIDs: number[]; initialDay: number }) {
@@ -273,13 +273,9 @@ function ReceiptDetail({ eventIDs, initialDay }: { eventIDs: number[]; initialDa
               </button>
             ))}
           </div>
+          {/* 参加者・徴収は連日でも全日程で共通。初日のイベントにまとめて記録する */}
           <div className="la-participants">
-            <EventParticipants
-              key={event.ID}
-              eventID={event.ID}
-              canEdit={canDelete}
-              days={multi ? events.map((e, i) => ({ id: e.ID, label: `${i + 1}日目 ${formatEventDate(e.Date)}` })) : undefined}
-            />
+            <EventParticipants key={first.ID} eventID={first.ID} canEdit={canDelete} />
           </div>
         </>
       )}
@@ -290,7 +286,7 @@ function ReceiptDetail({ eventIDs, initialDay }: { eventIDs: number[]; initialDa
         <ul className="la-notes">
           <li>JPEG・PNG(1枚20MBまで)の画像を選べます。</li>
           <li>{multi ? '1日' : '1つのイベント'}に入れられるのは20枚までです。</li>
-          {multi && <li>レシート・参加者・徴収額は日ごとです。右下の＋は、選んでいる日に追加します。</li>}
+          {multi && <li>レシートは日ごと、参加者・徴収額は全日程で共通です。右下の＋は、選んでいる日に追加します。</li>}
           <li>見られるのは会計・部長・副部長だけです。</li>
         </ul>
       )}

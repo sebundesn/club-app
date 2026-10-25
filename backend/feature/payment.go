@@ -9,6 +9,8 @@ import (
 	schema "club-app/model"
 	SQLquery "club-app/query"
 	utility "club-app/util"
+
+	"github.com/lib/pq"
 )
 
 const maxEventFee = 1_000_000
@@ -146,6 +148,7 @@ func SetPaid(w http.ResponseWriter, r *http.Request) error {
 }
 
 // SetEventFee はイベントの徴収額を決め、未払いの参加者の請求額に反映する。会計だけができる。
+// user_ids を指定したときは、その人たちの請求額だけを変える(人によって金額が違うとき)。
 func SetEventFee(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
 		return utility.MethodNotAllowed(r.Method)
@@ -164,6 +167,14 @@ func SetEventFee(w http.ResponseWriter, r *http.Request) error {
 	}
 	if req.Fee < 0 || req.Fee > maxEventFee {
 		return utility.BadRequest("金額が不正です。", errors.New("fee out of range"))
+	}
+
+	if len(req.UserIDs) > 0 {
+		if _, err := utility.DB.ExecContext(r.Context(), SQLquery.ApplyFeeToUnpaidMembers, req.EventID, req.Fee, pq.Array(req.UserIDs)); err != nil {
+			return utility.Internal("更新に失敗しました。", err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		return json.NewEncoder(w).Encode(map[string]string{"message": "updated"})
 	}
 
 	tx, err := utility.DB.BeginTx(r.Context(), nil)
