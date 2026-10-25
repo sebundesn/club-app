@@ -13,6 +13,7 @@ import {
 import { useToast } from '../../../components/Toast';
 import PickGrid from '../../../components/line/PickGrid';
 import { clearPendingFiles, peekPendingFiles } from '../../utils/pendingFiles';
+import { detailURLAfterUpload } from '../../utils/eventGroup';
 import '../../line.css';
 
 // 1回に選べる数。サーバーの枠(写真150枚・動画10本)の範囲で、選びすぎて重くならない程度にしている
@@ -27,6 +28,8 @@ function AlbumUpload() {
   // イベントは一覧の＋ボタンで決まって渡される
   const eventID = Number(params.get('eventID')) || null;
   const eventTitle = params.get('title') ?? '';
+  // 連日のイベントの詳細から来たときは、終わったらまとめた詳細ページへ戻る
+  const group = params.get('group');
 
   // 一覧の＋で選んだファイルを受け取る
   const [files, setFiles] = useState<File[]>(() => peekPendingFiles().slice(0, MAX_PICK));
@@ -80,7 +83,7 @@ function AlbumUpload() {
 
     setUploading('');
     if (failed) setAutoMode(false);
-    else router.push(`/album?eventID=${eventID}`);
+    else router.push(detailURLAfterUpload('/album', eventID, group));
   };
 
   // 一覧の＋で選んで来たときは、アップロードボタンを待たずにすぐ始める

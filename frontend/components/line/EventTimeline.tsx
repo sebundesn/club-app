@@ -32,13 +32,52 @@ export const formatEventDate = (date: string, thisYear = todayKey().slice(0, 4))
   return `${y === thisYear ? '' : `${y}/`}${m}/${d}(${weekday})`;
 };
 
+/** 1日なら 10/25(土)、連日なら 10/25(土)〜10/27(月) */
+export const formatEventRange = (start: string, end: string, thisYear = todayKey().slice(0, 4)) =>
+  start === end ? formatEventDate(start, thisYear) : `${formatEventDate(start, thisYear)}〜${formatEventDate(end, thisYear)}`;
+
+const nextDay = (date: string) => {
+  const [y, m, d] = date.split('-').map(Number);
+  const n = new Date(y, m - 1, d + 1);
+  return toDateKey(n.getFullYear(), n.getMonth() + 1, n.getDate());
+};
+
+/**
+ * 同じタイトルで日付が続いているイベントを1つにまとめる(合宿の3日分など)。
+ * 間に別のイベントが挟まっていてもまとめる。items は日付順に並んでいること。
+ */
+export const groupConsecutive = <T,>(items: T[], dateOf: (item: T) => string, titleOf: (item: T) => string): T[][] => {
+  const groups: T[][] = [];
+  // タイトルごとに、まだ続きを受け付けているグループ
+  const open = new Map<string, T[]>();
+  for (const item of items) {
+    const title = titleOf(item) || '(無題)';
+    const date = dateOf(item);
+    const g = open.get(title);
+    const last = g && dateOf(g[g.length - 1]);
+    if (g && last && (date === last || date === nextDay(last))) {
+      g.push(item);
+      continue;
+    }
+    const fresh = [item];
+    groups.push(fresh);
+    open.set(title, fresh);
+  }
+  return groups;
+};
+
 interface Props<T, S extends string> {
   /** `dir=past|future&date=YYYY-MM-DD&id=N&limit=N` を受け取って1回分を取る */
   fetchPage: (query: string) => Promise<TimelineResult<T, S>>;
   /** カーソルに使う、その行のイベントの日付(YYYY-MM-DD)とID */
   cursorOf: (item: T) => { date: string; id: number };
-  /** isNext は今日以降でいちばん近いイベント。最初はここが画面の中央に来る */
-  renderItem: (item: T, isNext: boolean) => ReactNode;
+  /** 連日のイベントをまとめるためのタイトル */
+  titleOf: (item: T) => string;
+  /**
+   * 1行分を描く。同じタイトルが連日続くイベントは group にまとめて渡す(1日だけなら1件)。
+   * isNext は今日以降でいちばん近いイベント。最初はここが画面の中央に来る
+   */
+  renderGroup: (group: T[], isNext: boolean) => ReactNode;
   /** 読み込み中や、ok 以外のときの表示 */
   renderState: (state: 'loading' | S) => ReactNode;
   emptyMessage: string;
@@ -47,8 +86,16 @@ interface Props<T, S extends string> {
 /**
  * イベントを古い順に上から並べる一覧。最初は今日以降でいちばん近いイベントが画面の中央に来て、
  * 上へスクロールすると過去、下へスクロールすると未来のイベントを読み足していく(レシート・アルバムで共通)。
+ * 同じタイトルが連日続くイベントは1行にまとめる。
  */
-export default function EventTimeline<T, S extends string>({ fetchPage, cursorOf, renderItem, renderState, emptyMessage }: Props<T, S>) {
+export default function EventTimeline<T, S extends string>({
+  fetchPage,
+  cursorOf,
+  titleOf,
+  renderGroup,
+  renderState,
+  emptyMessage,
+}: Props<T, S>) {
   const [today] = useState(todayKey);
   const [items, setItems] = useState<T[]>([]);
   const [state, setState] = useState<'loading' | 'ok' | S>('loading');
@@ -172,7 +219,9 @@ export default function EventTimeline<T, S extends string>({ fetchPage, cursorOf
     return null;
   };
 
-  const nextIndex = items.findIndex((x) => cursorOf(x).date >= today);
+  const groups = groupConsecutive(items, (x) => cursorOf(x).date, titleOf);
+  // 今日が途中に入っている連日のイベント(合宿の2日目など)も「次」に数える
+  const nextIndex = groups.findIndex((g) => cursorOf(g[g.length - 1]).date >= today);
   const thisYear = today.slice(0, 4);
   const todayLine = <li className="la-tl-today">今日 {formatEventDate(today, thisYear)}</li>;
 
@@ -180,10 +229,10 @@ export default function EventTimeline<T, S extends string>({ fetchPage, cursorOf
     <>
       <div ref={topRef}>{edge('past')}</div>
       <ul ref={listRef} className="la-ev-list la-tl">
-        {items.map((item, i) => (
-          <Fragment key={cursorOf(item).id}>
+        {groups.map((g, i) => (
+          <Fragment key={cursorOf(g[0]).id}>
             {i === nextIndex && todayLine}
-            {renderItem(item, i === nextIndex)}
+            {renderGroup(g, i === nextIndex)}
           </Fragment>
         ))}
         {nextIndex === -1 && todayLine}

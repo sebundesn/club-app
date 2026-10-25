@@ -7,6 +7,7 @@ import { RECEIPTS_PER_REQUEST, uploadInBatches, uploadReceipts } from '../../uti
 import { useToast } from '../../../components/Toast';
 import PickGrid from '../../../components/line/PickGrid';
 import { clearPendingFiles, peekPendingFiles } from '../../utils/pendingFiles';
+import { detailURLAfterUpload } from '../../utils/eventGroup';
 import '../../line.css';
 
 // サーバーの上限(1イベント20枚)に合わせる
@@ -21,6 +22,8 @@ function ReceiptUpload() {
   // イベントは一覧の＋ボタンで決まって渡される
   const eventID = Number(params.get('eventID')) || null;
   const eventTitle = params.get('title') ?? '';
+  // 連日のイベントの詳細から来たときは、終わったらまとめた詳細ページへ戻る
+  const group = params.get('group');
 
   // 一覧の＋で選んだファイルを受け取る
   const [files, setFiles] = useState<File[]>(() => peekPendingFiles().slice(0, MAX_PICK));
@@ -44,7 +47,7 @@ function ReceiptUpload() {
     // 送れた分は選択から外す(失敗したときは、残りをそのまま選び直せる)
     setFiles(files.slice(sent));
     // すべて送れたら、そのイベントのレシート一覧へ
-    if (!error && sent === files.length) router.push(`/receipts?eventID=${eventID}`);
+    if (!error && sent === files.length) router.push(detailURLAfterUpload('/receipts', eventID, group));
     else setAutoMode(false);
   };
 

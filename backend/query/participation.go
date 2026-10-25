@@ -71,7 +71,7 @@ const GetEventMembers = `
 	ORDER BY u.name;
 `
 
-// react-select の選択肢に使う部員一覧。名前未設定の部員は選びようがないので除く。
+// 参加者を選ぶときの部員一覧。名前未設定の部員は選びようがないので除く。
 const SelectClubMembers = `
 	SELECT id, name FROM users
 	WHERE name IS NOT NULL AND name <> ''

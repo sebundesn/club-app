@@ -69,7 +69,7 @@ export interface UserInfoStruct {
   isLoggedIn: boolean;
 };
 
-/** react-select の選択肢。バックエンドも同じ形で返す。 */
+/** 部員の選択肢({value: ID, label: 名前})。バックエンドも同じ形で返す。 */
 export interface MemberOption {
   value: number;
   label: string;

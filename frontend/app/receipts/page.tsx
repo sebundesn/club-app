@@ -11,7 +11,8 @@ import EventStrip from '../../components/line/EventStrip';
 import EventParticipants from '../../components/EventParticipants';
 import MediaViewer from '../../components/line/MediaViewer';
 import { setPendingFiles } from '../utils/pendingFiles';
-import EventTimeline, { formatEventDate, TimelineResult } from '../../components/line/EventTimeline';
+import EventTimeline, { formatEventDate, formatEventRange, TimelineResult } from '../../components/line/EventTimeline';
+import { defaultDay, eventIDsParam, parseEventIDs, uploadURL } from '../utils/eventGroup';
 import '../line.css';
 
 type LoadState = 'loading' | 'ok' | 'loggedOut' | 'forbidden' | 'error';
@@ -57,25 +58,27 @@ function useFetchReceipts() {
   );
 }
 
-/** 1つのイベントのレシート。日付に関係なく取れる。 */
-function useEventReceipts(eventID: number) {
+/** イベントのレシート。日付に関係なく取れる。連日のイベントなら日ごとに取って並べる。 */
+function useEventReceipts(eventIDs: number[]) {
   const fetchReceipts = useFetchReceipts();
-  const [event, setEvent] = useState<ReceiptDataStruct | undefined>();
+  const [events, setEvents] = useState<ReceiptDataStruct[]>([]);
   const [state, setState] = useState<LoadState>('loading');
+  const idsKey = eventIDsParam(eventIDs);
 
   const load = useCallback(async () => {
-    const res = await fetchReceipts(`eventID=${eventID}`);
-    if (!res.ok) return setState(res.state);
-    setEvent(res.page.items[0]);
+    const results = await Promise.all(parseEventIDs(idsKey).map((id) => fetchReceipts(`eventID=${id}`)));
+    const failed = results.find((r) => !r.ok);
+    if (failed && !failed.ok) return setState(failed.state);
+    setEvents(results.flatMap((r) => (r.ok ? r.page.items.slice(0, 1) : [])));
     setState('ok');
-  }, [eventID, fetchReceipts]);
+  }, [idsKey, fetchReceipts]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 非同期の取得なので state 更新は await のあと。
     load();
   }, [load]);
 
-  return { event, state, reload: load };
+  return { events, state, reload: load };
 }
 
 function Notice({ state }: { state: LoadState }) {
@@ -95,15 +98,15 @@ function Notice({ state }: { state: LoadState }) {
 
 const cursorOf = (r: ReceiptDataStruct) => ({ date: r.Date, id: r.ID });
 
-/** レシート一覧。直近のイベントを中央に、上へスクロールで過去、下へスクロールで未来を読み足す。 */
+/** レシート一覧。直近のイベントを中央に、上へスクロールで過去、下へスクロールで未来を読み足す。同じタイトルの連日のイベントは1行にまとめる。 */
 function ReceiptList() {
   const router = useRouter();
   const fetchReceipts = useFetchReceipts();
 
   // ＋で選んだファイルをアップロードページに渡して、確認の画面へ進む
-  const pickFor = (eventID: number, title: string, files: File[]) => {
+  const pickFor = (eventID: number, title: string, files: File[], group: number[]) => {
     setPendingFiles(files);
-    router.push(`/receipts/upload?eventID=${eventID}&title=${encodeURIComponent(title)}`);
+    router.push(uploadURL('/receipts/upload', eventID, title, group));
   };
 
   return (
@@ -117,17 +120,23 @@ function ReceiptList() {
         cursorOf={cursorOf}
         renderState={(state) => <Notice state={state} />}
         emptyMessage="イベントがありません。"
-        renderItem={(r, isNext) => (
-          <EventStrip
-            title={r.Title}
-            sub={`${formatEventDate(r.Date)} ・ ${r.Images.length}枚`}
-            href={`/receipts?eventID=${r.ID}`}
-            uploadLabel={`${r.Title || '(無題)'}にレシートを追加`}
-            accept="image/jpeg,image/png"
-            onPick={(files) => pickFor(r.ID, r.Title, files)}
-            next={isNext}
-          />
-        )}
+        titleOf={(r) => r.Title}
+        renderGroup={(g, isNext) => {
+          // 連日のイベントは1行にまとめる。＋は今日(期間外なら初日)に追加する
+          const ids = g.map((r) => r.ID);
+          const target = defaultDay(g.map((r) => ({ ...r, date: r.Date })))!;
+          return (
+            <EventStrip
+              title={g[0].Title}
+              sub={`${formatEventRange(g[0].Date, g[g.length - 1].Date)} ・ ${g.reduce((n, r) => n + r.Images.length, 0)}枚`}
+              href={`/receipts?eventID=${eventIDsParam(ids)}`}
+              uploadLabel={`${g[0].Title || '(無題)'}にレシートを追加`}
+              accept="image/jpeg,image/png"
+              onPick={(files) => pickFor(target.ID, target.Title, files, ids)}
+              next={isNext}
+            />
+          );
+        }}
       />
 
       <Calculator />
@@ -137,17 +146,32 @@ function ReceiptList() {
 
 /**
  * 1つのイベントのレシートと参加者・徴収。レシートは押すと黒地で1枚ずつ見られる。
+ * 連日のイベント(合宿など)は上の日付タブで日を切り替える。レシート・参加者・徴収額は日ごと。
  * レシートの削除・支払い済みの切り替え・徴収額の設定は会計・部長だけ。
  */
-function ReceiptDetail({ eventID }: { eventID: number }) {
+function ReceiptDetail({ eventIDs, initialDay }: { eventIDs: number[]; initialDay: number }) {
   const router = useRouter();
   const { showToast } = useToast();
-  const { event, state, reload } = useEventReceipts(eventID);
+  const { events, state, reload } = useEventReceipts(eventIDs);
   const [viewIndex, setViewIndex] = useState<number | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const [role, setRole] = useState('');
   // 画面を出し分けるだけ。実際の権限チェックはサーバー側で行っている
   const canDelete = role === '会計' || role === '部長';
+  const multi = eventIDs.length > 1;
+
+  // 選んでいる日。URL の day があればその日、なければ今日(期間外なら初日)
+  const [pickedDay, setPickedDay] = useState<number | null>(eventIDs.includes(initialDay) ? initialDay : null);
+  const event =
+    events.find((e) => e.ID === pickedDay) ?? (pickedDay === null ? defaultDay(events.map((e) => ({ ...e, date: e.Date }))) : undefined);
+  const eventID = event?.ID ?? 0;
+
+  const selectDay = (id: number) => {
+    setPickedDay(id);
+    setViewIndex(null);
+    // 戻る・再読み込みでも同じ日を開けるように URL にも残す
+    router.replace(`/receipts?eventID=${eventIDsParam(eventIDs)}&day=${id}`, { scroll: false });
+  };
 
   useEffect(() => {
     const loadRole = async () => {
@@ -194,23 +218,51 @@ function ReceiptDetail({ eventID }: { eventID: number }) {
     }
   };
 
+  const first = events[0];
+  const last = events[events.length - 1];
+  const dayIndex = events.findIndex((e) => e.ID === eventID);
+
   return (
     <div className="la-page">
       <div className="la-bar">
         <button type="button" className="la-icon-btn" aria-label="レシート一覧に戻る" onClick={() => router.push('/receipts')}>
           ‹
         </button>
-        <h1 className="la-bar-title">{event ? event.Title || '(無題)' : 'レシート'}</h1>
+        <h1 className="la-bar-title">{first ? first.Title || '(無題)' : 'レシート'}</h1>
       </div>
 
       <Notice state={state} />
 
       {state === 'ok' && !event && <p className="la-empty">イベントが見つかりません。</p>}
 
+      {event && multi && (
+        <>
+          <p className="la-meta la-meta-tight">
+            {formatEventRange(first.Date, last.Date)} ・ {events.length}日間 ・ 合計{events.reduce((n, e) => n + e.Images.length, 0)}枚
+          </p>
+          <div className="la-chips la-day-tabs" role="tablist" aria-label="日付">
+            {events.map((e, i) => (
+              <button
+                key={e.ID}
+                type="button"
+                role="tab"
+                aria-selected={e.ID === eventID}
+                className={`la-chip${e.ID === eventID ? ' active' : ''}`}
+                onClick={() => selectDay(e.ID)}
+              >
+                {i + 1}日目 {formatEventDate(e.Date)}
+                <span className="la-chip-count">{e.Images.length}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
       {event && (
         <>
           <p className="la-meta">
-            {event.Date} ・ {event.Images.length}枚
+            {multi ? `${dayIndex + 1}日目 ・ ` : ''}
+            {formatEventDate(event.Date)} ・ {event.Images.length}枚
           </p>
           {event.Images.length === 0 && <p className="la-empty">レシートがありません。右下の＋から追加できます。</p>}
           <div className="la-grid">
@@ -222,7 +274,12 @@ function ReceiptDetail({ eventID }: { eventID: number }) {
             ))}
           </div>
           <div className="la-participants">
-            <EventParticipants eventID={eventID} canEdit={canDelete} />
+            <EventParticipants
+              key={event.ID}
+              eventID={event.ID}
+              canEdit={canDelete}
+              days={multi ? events.map((e, i) => ({ id: e.ID, label: `${i + 1}日目 ${formatEventDate(e.Date)}` })) : undefined}
+            />
           </div>
         </>
       )}
@@ -232,12 +289,13 @@ function ReceiptDetail({ eventID }: { eventID: number }) {
       {state === 'ok' && event && (
         <ul className="la-notes">
           <li>JPEG・PNG(1枚20MBまで)の画像を選べます。</li>
-          <li>1つのイベントに入れられるのは20枚までです。</li>
+          <li>{multi ? '1日' : '1つのイベント'}に入れられるのは20枚までです。</li>
+          {multi && <li>レシート・参加者・徴収額は日ごとです。右下の＋は、選んでいる日に追加します。</li>}
           <li>見られるのは会計・部長・副部長だけです。</li>
         </ul>
       )}
 
-      {state === 'ok' && (
+      {state === 'ok' && event && (
         <>
           <button type="button" className="la-fab" aria-label="レシートを追加" onClick={() => fileInput.current?.click()}>
             ＋
@@ -254,7 +312,7 @@ function ReceiptDetail({ eventID }: { eventID: number }) {
               e.target.value = '';
               if (files.length === 0) return;
               setPendingFiles(files);
-              router.push(`/receipts/upload?eventID=${eventID}&title=${encodeURIComponent(event?.Title ?? '')}`);
+              router.push(uploadURL('/receipts/upload', event.ID, event.Title, eventIDs));
             }}
           />
         </>
@@ -276,8 +334,12 @@ function ReceiptDetail({ eventID }: { eventID: number }) {
 
 function ReceiptsContent() {
   const params = useSearchParams();
-  const eventID = Number(params.get('eventID'));
-  return eventID ? <ReceiptDetail eventID={eventID} /> : <ReceiptList />;
+  const eventIDs = parseEventIDs(params.get('eventID'));
+  return eventIDs.length > 0 ? (
+    <ReceiptDetail key={eventIDsParam(eventIDs)} eventIDs={eventIDs} initialDay={Number(params.get('day'))} />
+  ) : (
+    <ReceiptList />
+  );
 }
 
 // useSearchParams は静的エクスポートで Suspense が必要

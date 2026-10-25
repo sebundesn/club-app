@@ -8,7 +8,7 @@ type EventMember struct {
 	Paid     bool   `json:"paid"`
 }
 
-// ClubMember は react-select の選択肢に渡す形。
+// ClubMember は参加者を選ぶときの選択肢の形({value, label})。
 // フロントが {value, label} を要求するのでそのまま合わせている。
 type ClubMember struct {
 	Value int    `json:"value"`

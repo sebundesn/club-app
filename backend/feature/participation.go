@@ -56,7 +56,7 @@ func GetMembersWithPayment(w http.ResponseWriter, r *http.Request) error {
 }
 
 // GetAllClubMembers は参加者選択用の部員一覧を返す。
-// react-select がそのまま使えるよう {value, label} 形式で返す。
+// フロントの選択肢でそのまま使えるよう {value, label} 形式で返す。
 func GetAllClubMembers(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodGet {
 		return util.MethodNotAllowed(r.Method)

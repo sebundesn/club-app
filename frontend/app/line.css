@@ -212,6 +212,86 @@
   margin: 1rem 0.75rem 0;
 }
 
+/* 連日のイベント(合宿など)のアルバム: 日ごとの見出し */
+.la-day + .la-day {
+  margin-top: 0.75rem;
+}
+
+.la-day-head {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-height: 3rem;
+  padding: 0.75rem 3.5rem 0.5rem 1rem;
+  box-sizing: border-box;
+}
+
+.la-day-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.la-day-date {
+  font-size: 0.85rem;
+}
+
+.la-day-count {
+  font-size: 0.75rem;
+  color: var(--la-sub);
+}
+
+.la-day-head .la-plus-sm {
+  right: 0.75rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 1.25rem;
+}
+
+.la-day-empty {
+  margin: 0;
+  padding: 0.75rem 1rem 1rem;
+  font-size: 0.8rem;
+  color: var(--la-sub);
+}
+
+/* 連日のイベント(合宿など)のレシート: 日付のタブ */
+.la-meta-tight {
+  padding-bottom: 0;
+}
+
+.la-day-tabs {
+  padding-bottom: 0.25rem;
+}
+
+.la-day-tabs .la-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--la-line);
+}
+
+.la-day-tabs .la-chip.active {
+  border-color: var(--la-green);
+}
+
+.la-chip-count {
+  min-width: 1.25rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: var(--la-bg);
+  color: var(--la-sub);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.25rem;
+  text-align: center;
+}
+
+.la-chip.active .la-chip-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
 .la-cell {
   position: relative;
   display: block;
