@@ -14,6 +14,12 @@ type EventReceipts struct {
 	Images []ReceiptImage `json:"images"`
 }
 
+// ReceiptsPage は一覧の1回分。HasMore はその向きにまだ続きがあるか。
+type ReceiptsPage struct {
+	Events  []EventReceipts `json:"events"`
+	HasMore bool            `json:"hasMore"`
+}
+
 // DeleteImageRequest は削除対象のレシート画像。
 // 表示用のURLは有効期限付きで毎回変わるので、URLではなく画像の ID で指す。
 type DeleteImageRequest struct {

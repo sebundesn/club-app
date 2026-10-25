@@ -16,13 +16,15 @@ interface Props {
   onPick: (files: File[]) => void;
   /** 見出しの下にカバーフローで流す画像。渡さなければ見出しと＋だけ */
   thumbs?: string[];
+  /** 今日以降でいちばん近いイベント。一覧を開いたとき、ここを画面の中央に出す */
+  next?: boolean;
 }
 
 /** イベント名と＋ボタン、その下に画像のカバーフロー。画像がなければ場所を空けない。名前を押すとそのイベントの全件ページへ。 */
-export default function EventStrip({ title, sub, href, uploadLabel, accept, onPick, thumbs = [] }: Props) {
+export default function EventStrip({ title, sub, href, uploadLabel, accept, onPick, thumbs = [], next = false }: Props) {
   const input = useRef<HTMLInputElement>(null);
   return (
-    <li className="la-ev">
+    <li className={`la-ev${next ? ' la-ev-next' : ''}`} data-next={next || undefined}>
       <div className="la-ev-head">
         <h2 className="la-ev-title">
           <Link href={href} className="la-ev-text">

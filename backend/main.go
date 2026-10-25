@@ -52,7 +52,7 @@ func main() {
 	http.Handle("/api/deleteMoneyLog", util.AppHandler(feature.DeleteMoneyLog))
 
 	// レシート
-	http.Handle("/api/getReceiptsInfo", util.AppHandler(feature.GetMonthReceipts))
+	http.Handle("/api/getReceiptsInfo", util.AppHandler(feature.GetReceipts))
 	http.Handle("/api/uploadReceipt", util.AppHandler(feature.UploadReceipt))
 	http.Handle("/api/deleteImage", util.AppHandler(feature.DeleteImg))
 

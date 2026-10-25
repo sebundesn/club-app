@@ -41,7 +41,18 @@ var allowedImageTypes = map[string]string{
 	"image/png":  ".png",
 }
 
-func GetMonthReceipts(w http.ResponseWriter, r *http.Request) error {
+const (
+	defaultReceiptsLimit = 10
+	maxReceiptsLimit     = 50
+)
+
+// GetReceipts はレシートをイベントごとに返す。
+//   - ?eventID=N: そのイベントだけ(詳細ページ用)
+//   - ?dir=future|past&date=YYYY-MM-DD&id=N&limit=N: (date, id) より後/前のイベントを limit 件(一覧の無限スクロール用)
+//
+// 一覧の最初は date に今日、id に 0 を渡すと、future は今日以降、past は昨日以前になる。
+// 今日の日付はブラウザ側で決める(サーバーのタイムゾーンに左右されないように)。
+func GetReceipts(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodGet {
 		return utility.MethodNotAllowed(r.Method)
 	}
@@ -51,20 +62,71 @@ func GetMonthReceipts(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	howLongWeek := r.URL.Query().Get("howLongWeek")
-	if howLongWeek == "" {
-		howLongWeek = "2"
-	}
-	if _, err := strconv.Atoi(howLongWeek); err != nil {
-		return utility.BadRequest("期間の指定が不正です。", err)
-	}
+	q := r.URL.Query()
+	var (
+		rows  *sql.Rows
+		err   error
+		limit int
+	)
 
-	rows, err := utility.DB.Query(SQLquery.GetReceiptsLog, howLongWeek)
+	if v := q.Get("eventID"); v != "" {
+		eventID, convErr := strconv.Atoi(v)
+		if convErr != nil {
+			return utility.BadRequest("イベントの指定が不正です。", convErr)
+		}
+		rows, err = utility.DB.QueryContext(r.Context(), SQLquery.GetReceiptsOfEvent, eventID)
+	} else {
+		date, convErr := time.Parse(time.DateOnly, q.Get("date"))
+		if convErr != nil {
+			return utility.BadRequest("日付の指定が不正です。", convErr)
+		}
+		cursorID := 0
+		if v := q.Get("id"); v != "" {
+			if cursorID, convErr = strconv.Atoi(v); convErr != nil {
+				return utility.BadRequest("イベントの指定が不正です。", convErr)
+			}
+		}
+		limit = defaultReceiptsLimit
+		if v := q.Get("limit"); v != "" {
+			if limit, convErr = strconv.Atoi(v); convErr != nil || limit < 1 || limit > maxReceiptsLimit {
+				return utility.BadRequest("件数の指定が不正です。", fmt.Errorf("invalid limit %q", v))
+			}
+		}
+
+		var query string
+		switch q.Get("dir") {
+		case "future":
+			query = SQLquery.GetReceiptsAfter
+		case "past":
+			query = SQLquery.GetReceiptsBefore
+		default:
+			return utility.BadRequest("向きの指定が不正です。", fmt.Errorf("invalid dir %q", q.Get("dir")))
+		}
+		// 1件多く取って、続きがあるかを判定する
+		rows, err = utility.DB.QueryContext(r.Context(), query, date.Format(time.DateOnly), cursorID, limit+1)
+	}
 	if err != nil {
 		return utility.Internal("レシートの取得に失敗しました。", err)
 	}
 	defer rows.Close()
 
+	events, err := scanEventReceipts(r.Context(), rows)
+	if err != nil {
+		return err
+	}
+
+	page := schema.ReceiptsPage{Events: events}
+	if limit > 0 && len(events) > limit {
+		page.Events = events[:limit]
+		page.HasMore = true
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	return json.NewEncoder(w).Encode(page)
+}
+
+// scanEventReceipts は「イベント × 画像」の行を、イベントごとにまとめる。並びは行の順のまま。
+func scanEventReceipts(ctx context.Context, rows *sql.Rows) ([]schema.EventReceipts, error) {
 	eventsMap := make(map[int]*schema.EventReceipts)
 	var order []int
 
@@ -75,9 +137,8 @@ func GetMonthReceipts(w http.ResponseWriter, r *http.Request) error {
 		var imgID sql.NullInt64
 		var imgURL, objectKey sql.NullString
 
-		err := rows.Scan(&id, &title, &date, &imgID, &imgURL, &objectKey)
-		if err != nil {
-			return utility.Internal("レシートの取得に失敗しました。", err)
+		if err := rows.Scan(&id, &title, &date, &imgID, &imgURL, &objectKey); err != nil {
+			return nil, utility.Internal("レシートの取得に失敗しました。", err)
 		}
 
 		if _, ok := eventsMap[id]; !ok {
@@ -93,9 +154,9 @@ func GetMonthReceipts(w http.ResponseWriter, r *http.Request) error {
 		if imgID.Valid {
 			url := imgURL.String // 旧データはサーバーのディスクのパスのまま
 			if objectKey.Valid && objectKey.String != "" {
-				signed, err := Store.SignedURL(r.Context(), objectKey.String, receiptURLTTL)
+				signed, err := Store.SignedURL(ctx, objectKey.String, receiptURLTTL)
 				if err != nil {
-					return utility.Internal("レシートの取得に失敗しました。", err)
+					return nil, utility.Internal("レシートの取得に失敗しました。", err)
 				}
 				url = signed
 			}
@@ -103,16 +164,14 @@ func GetMonthReceipts(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 	if err := rows.Err(); err != nil {
-		return utility.Internal("レシートの取得に失敗しました。", fmt.Errorf("error during rows iteration: %w", err))
+		return nil, utility.Internal("レシートの取得に失敗しました。", fmt.Errorf("error during rows iteration: %w", err))
 	}
 
-	receipts := []schema.EventReceipts{}
+	events := []schema.EventReceipts{}
 	for _, id := range order {
-		receipts = append(receipts, *eventsMap[id])
+		events = append(events, *eventsMap[id])
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	return json.NewEncoder(w).Encode(receipts)
+	return events, nil
 }
 
 func UploadReceipt(w http.ResponseWriter, r *http.Request) error {

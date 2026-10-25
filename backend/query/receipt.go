@@ -22,14 +22,43 @@ const CreateReceiptImagesEventIndex = `
 	CREATE INDEX IF NOT EXISTS receipt_images_event_idx ON receipt_images (event_id);
 `
 
-// To get recipt images for certain events
-const GetReceiptsLog = `
+// レシート一覧の無限スクロール用。(date, id) をカーソルにして、イベントを limit 件ずつ取る。
+// 先にイベントだけを絞ってから画像をつなぐので、画像の枚数で件数がずれない。
+// 未来側: カーソルより後を古い順に。
+const GetReceiptsAfter = `
+	WITH ev AS (
+		SELECT id, title, date FROM events
+		WHERE (date, id) > ($1::date, $2)
+		ORDER BY date, id
+		LIMIT $3
+	)
+	SELECT ev.id, ev.title, ev.date, ri.id, ri.image_url, ri.object_key
+	FROM ev
+	LEFT JOIN receipt_images ri ON ev.id = ri.event_id
+	ORDER BY ev.date, ev.id, ri.id;
+`
+
+// 過去側: カーソルより前を新しい順に。
+const GetReceiptsBefore = `
+	WITH ev AS (
+		SELECT id, title, date FROM events
+		WHERE (date, id) < ($1::date, $2)
+		ORDER BY date DESC, id DESC
+		LIMIT $3
+	)
+	SELECT ev.id, ev.title, ev.date, ri.id, ri.image_url, ri.object_key
+	FROM ev
+	LEFT JOIN receipt_images ri ON ev.id = ri.event_id
+	ORDER BY ev.date DESC, ev.id DESC, ri.id;
+`
+
+// 1つのイベントのレシート。詳細ページは日付に関係なく開けるようにする。
+const GetReceiptsOfEvent = `
 	SELECT e.id, e.title, e.date, ri.id, ri.image_url, ri.object_key
 	FROM events e
 	LEFT JOIN receipt_images ri ON e.id = ri.event_id
-	WHERE e.date BETWEEN (NOW() - CAST($1 || ' week' AS INTERVAL))
-		AND (NOW() + INTERVAL '1 week')
-	ORDER BY e.date DESC, ri.id;
+	WHERE e.id = $1
+	ORDER BY ri.id;
 `
 
 const CountReceipts = `
