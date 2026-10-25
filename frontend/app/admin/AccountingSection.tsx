@@ -31,7 +31,7 @@ export default function AccountingSection({ role }: { role: string }) {
       const res = await fetch(`${backendURL}/api/accountInfo?year=${year}`);
 
       if (!res.ok) {
-        showToast(await readErrorMessage(res, '会計情報の取得に失敗しました。'), 'error');
+        showToast(await readErrorMessage(res, '会計情報の取得に失敗'), 'error');
         return;
       }
 
@@ -49,7 +49,7 @@ export default function AccountingSection({ role }: { role: string }) {
       const res = await fetch(`${backendURL}/api/getMoneySum`);
 
       if (!res.ok) {
-        showToast(await readErrorMessage(res, '残高の取得に失敗しました。'), 'error');
+        showToast(await readErrorMessage(res, '残高の取得に失敗'), 'error');
         return;
       }
 
@@ -57,7 +57,7 @@ export default function AccountingSection({ role }: { role: string }) {
       setTotalSum(data ?? 0);
     } catch (e) {
       console.error('failed to getMoneySum:', e);
-      showToast('通信に失敗しました。', 'error');
+      showToast('通信に失敗。', 'error');
     }
   }, [showToast]);
 

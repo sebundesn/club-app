@@ -106,7 +106,7 @@ export default function ManageCalendar() {
     if (!editing) return;
 
     if (!editing.Title.trim()) {
-      showToast('タイトルを入力してください。', 'error');
+      showToast('タイトルを入力', 'error');
       return;
     }
 
@@ -126,7 +126,7 @@ export default function ManageCalendar() {
       });
 
       if (!res.ok) {
-        showToast(await readErrorMessage(res, '保存に失敗しました。'), 'error');
+        showToast(await readErrorMessage(res, '保存に失敗'), 'error');
         return;
       }
 

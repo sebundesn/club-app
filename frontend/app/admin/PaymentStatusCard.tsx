@@ -100,7 +100,7 @@ export default function PaymentStatusCard({ canEdit }: { canEdit: boolean }) {
                     >
                       <span className="pay-member-name">{m.name || '(名前未設定)'}</span>
                       {m.unpaidTotal > 0 ? (
-                        <span className="pay-badge unpaid">未払い {yen(m.unpaidTotal)}</span>
+                        <span className="pay-badge unpaid">{yen(m.unpaidTotal)}</span>
                       ) : (
                         <span className="pay-badge done">完納</span>
                       )}
