@@ -1,0 +1,83 @@
+/* イベントに付いたPDF・画像。カレンダーの詳細と管理ページの編集で共通 */
+.ev-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ev-file {
+  position: relative;
+}
+
+.ev-file-link {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #2d4a22;
+  text-decoration: none;
+}
+
+.ev-file.image .ev-file-link img {
+  display: block;
+  width: 4.5rem;
+  height: 4.5rem;
+  object-fit: cover;
+  border-radius: 0.4rem;
+  border: 1px solid #eaeaea;
+}
+
+.ev-file.pdf .ev-file-link {
+  max-width: 14rem;
+  min-height: 2.5rem;
+  padding: 0 0.75rem 0 0.4rem;
+  border: 1px solid #eaeaea;
+  border-radius: 0.4rem;
+  background: #ffffff;
+  font-size: 0.85rem;
+}
+
+.ev-file.pdf:has(.ev-file-remove) .ev-file-link {
+  padding-right: 2rem;
+}
+
+.ev-file-icon {
+  flex-shrink: 0;
+  padding: 0.15rem 0.3rem;
+  border-radius: 0.25rem;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.ev-file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ev-file-remove {
+  position: absolute;
+  top: -0.4rem;
+  right: -0.4rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #ffffff;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ev-file.pdf .ev-file-remove {
+  top: 50%;
+  right: 0.4rem;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.45);
+}

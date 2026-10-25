@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { generateCalendarDays, toDateKey } from '../utils/calendar';
 import { getNowTime } from '../utils/getTime';
-import { DateTitle, EventDetail, EventStruct } from '../utils/schema';
+import { DateTitle, EventDetail, EventFile, EventStruct } from '../utils/schema';
 import { backendURL, readErrorMessage } from '../utils/api';
 import { useToast } from '../../components/Toast';
+import EventFiles from '../../components/EventFiles';
 import '../calendar/calendar.css';
 
 const emptyEvent: EventStruct = {
@@ -15,7 +16,13 @@ const emptyEvent: EventStruct = {
   Subtitle: '',
   PDFPath: '',
   Content: '',
+  Files: [],
 };
+
+// サーバー側と同じ上限
+const MAX_FILES_PER_EVENT = 10;
+const MAX_FILE_BYTES = 20 << 20;
+const FILE_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
 
 /** 管理ページの「カレンダー」。月カレンダーから日付を選んで、予定の登録・編集をする(部長・副部長)。 */
 export default function ManageCalendar() {
@@ -29,6 +36,10 @@ export default function ManageCalendar() {
   const [eventMap, setEventMap] = useState<Record<string, DateTitle[]>>({});
   const [dayEvents, setDayEvents] = useState<EventDetail[]>([]);
   const [editing, setEditing] = useState<EventStruct | null>(null);
+  // 保存したときにアップロードする、まだ送っていないPDF・画像
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [saving, setSaving] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
   const days = generateCalendarDays(year, month);
 
   const handlePrevMonth = () => {
@@ -94,6 +105,7 @@ export default function ManageCalendar() {
       setDayEvents(events);
       // その日にイベントがなければ、いきなり作成フォームを開く
       setEditing(events.length === 0 ? { ...emptyEvent, Date: dateStr } : null);
+      setPendingFiles([]);
       setIsModalOpen(true);
     } catch (e) {
       console.error('詳細取得失敗', e);
@@ -101,7 +113,59 @@ export default function ManageCalendar() {
     }
   };
 
-  // イベント保存（新規作成 / 更新）
+  const pickFiles = (picked: File[]) => {
+    if (!editing) return;
+    const ok = picked.filter((f) => FILE_TYPES.includes(f.type) && f.size <= MAX_FILE_BYTES);
+    if (ok.length < picked.length) showToast('PDF・JPEG・PNG(1つ20MBまで)だけ追加できます。', 'error');
+    const room = MAX_FILES_PER_EVENT - editing.Files.length - pendingFiles.length;
+    if (ok.length > room) showToast(`PDF・画像は1イベント${MAX_FILES_PER_EVENT}個までです。`, 'error');
+    setPendingFiles((p) => [...p, ...ok.slice(0, Math.max(room, 0))]);
+  };
+
+  /** 1つずつ送る(まとめるとリクエストの大きさの上限に当たりやすい)。失敗した分は返す */
+  const uploadFiles = async (eventID: number, files: File[]): Promise<File[]> => {
+    const failed: File[] = [];
+    for (const file of files) {
+      const form = new FormData();
+      form.append('eventID', String(eventID));
+      form.append('files', file);
+      try {
+        const res = await fetch(`${backendURL}/api/uploadEventFile`, { method: 'POST', body: form, credentials: 'include' });
+        if (!res.ok) {
+          showToast(await readErrorMessage(res, `${file.name}のアップロードに失敗`), 'error');
+          failed.push(file);
+        }
+      } catch (e) {
+        console.error('failed to upload event file:', e);
+        showToast(`${file.name}のアップロードに失敗`, 'error');
+        failed.push(file);
+      }
+    }
+    return failed;
+  };
+
+  const deleteFile = async (file: EventFile) => {
+    if (!editing || !window.confirm(`${file.name || 'このファイル'}を削除しますか？`)) return;
+    try {
+      const res = await fetch(`${backendURL}/api/deleteEventFile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_id: editing.ID, file_id: file.id }),
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        showToast(await readErrorMessage(res, '削除に失敗'), 'error');
+        return;
+      }
+      setEditing({ ...editing, Files: editing.Files.filter((f) => f.id !== file.id) });
+      setDayEvents(await getDateEvents(selectedDate));
+    } catch (e) {
+      console.error('failed to delete event file:', e);
+      showToast('通信に失敗しました。', 'error');
+    }
+  };
+
+  // イベント保存（新規作成 / 更新）。そのあと、追加したPDF・画像を送る
   const saveEvent = async () => {
     if (!editing) return;
 
@@ -110,6 +174,7 @@ export default function ManageCalendar() {
       return;
     }
 
+    setSaving(true);
     try {
       const res = await fetch(`${backendURL}/api/saveEvent`, {
         method: 'POST',
@@ -129,14 +194,27 @@ export default function ManageCalendar() {
         showToast(await readErrorMessage(res, '保存に失敗'), 'error');
         return;
       }
+      const saved: { id: number } = await res.json();
 
+      const failed = await uploadFiles(saved.id, pendingFiles);
       await getMonthEvents();
-      setDayEvents(await getDateEvents(selectedDate));
+      const events = await getDateEvents(selectedDate);
+      setDayEvents(events);
+      if (failed.length > 0) {
+        // 失敗した分だけ残して、編集を続けられるようにする
+        const ev = events.find((e) => e.id === saved.id);
+        setEditing({ ...editing, ID: saved.id, Files: ev?.files ?? [] });
+        setPendingFiles(failed);
+        return;
+      }
       setEditing(null);
+      setPendingFiles([]);
       showToast('保存しました。', 'success');
     } catch (e) {
       console.error('通信エラーが発生', e);
       showToast('通信に失敗しました。', 'error');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -146,6 +224,7 @@ export default function ManageCalendar() {
     setSelectedDate('');
     setDayEvents([]);
     setEditing(null);
+    setPendingFiles([]);
   };
 
   useEffect(() => {
@@ -250,9 +329,35 @@ export default function ManageCalendar() {
       {isModalOpen && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <p className="modal-title">
-              {selectedDate.slice(5, 7)}月{selectedDate.slice(8, 10)}日
-            </p>
+            <div className={editing ? 'edit-date-row' : undefined}>
+              <p className="modal-title">
+                {selectedDate.slice(5, 7)}月{selectedDate.slice(8, 10)}日
+              </p>
+              {editing && (
+                <>
+                  <button
+                    type="button"
+                    className="btn-attach"
+                    onClick={() => fileInput.current?.click()}
+                    disabled={editing.Files.length + pendingFiles.length >= MAX_FILES_PER_EVENT}
+                  >
+                    ＋PDF/画像
+                  </button>
+                  <input
+                    ref={fileInput}
+                    type="file"
+                    accept={FILE_TYPES.join(',')}
+                    multiple
+                    hidden
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files ?? []);
+                      e.target.value = '';
+                      if (files.length > 0) pickFiles(files);
+                    }}
+                  />
+                </>
+              )}
+            </div>
 
             {editing === null ? (
               /* その日のイベント一覧。1日に複数登録できる。 */
@@ -264,6 +369,7 @@ export default function ManageCalendar() {
                         <p className="day-event-title">{event.title}</p>
                         {event.subtitle && <p className="day-event-subtitle">{event.subtitle}</p>}
                         {event.content && <p className="day-event-content">{event.content}</p>}
+                        <EventFiles files={event.files ?? []} />
                       </div>
                       <div className="day-event-actions">
                         <a href={`/album?eventID=${event.id}`} className="btn-secondary">
@@ -281,6 +387,7 @@ export default function ManageCalendar() {
                                 Subtitle: event.subtitle,
                                 Content: event.content,
                                 PDFPath: event.pdf_path,
+                                Files: event.files ?? [],
                               })
                             }
                           >
@@ -325,11 +432,34 @@ export default function ManageCalendar() {
                     rows={5}
                     className="input-field resize-none"
                   />
+                  {(editing.Files.length > 0 || pendingFiles.length > 0) && (
+                    <div className="edit-files">
+                      <EventFiles files={editing.Files} onDelete={deleteFile} />
+                      {pendingFiles.length > 0 && (
+                        <ul className="pending-files">
+                          {pendingFiles.map((f, i) => (
+                            <li key={`${f.name}-${i}`} className="pending-file">
+                              <span className="pending-file-name">{f.name}</span>
+                              <span className="pending-file-note">保存で追加</span>
+                              <button
+                                type="button"
+                                className="pending-file-remove"
+                                aria-label={`${f.name}を取り消す`}
+                                onClick={() => setPendingFiles((p) => p.filter((_, j) => j !== i))}
+                              >
+                                ×
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex-gap-3">
-                  <button onClick={saveEvent} className="btn-primary w-full">
-                    保存
+                  <button onClick={saveEvent} className="btn-primary w-full" disabled={saving}>
+                    {saving ? (pendingFiles.length > 0 ? 'アップロード中…' : '保存中…') : '保存'}
                   </button>
                 </div>
               </>

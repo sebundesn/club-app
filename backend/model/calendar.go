@@ -7,6 +7,24 @@ type EventDetail struct {
 	Subtitle string `json:"subtitle"`
 	Content  string `json:"content"`
 	PDFPath  string `json:"pdf_path"`
+	// 付いているPDF・画像。無ければ空配列
+	Files []EventFile `json:"files"`
+}
+
+// EventFile はイベントに付けたPDF・画像1つ。
+type EventFile struct {
+	ID int `json:"id"`
+	// "pdf" か "image"
+	Kind string `json:"kind"`
+	// 表示用の元のファイル名
+	Name string `json:"name"`
+	URL  string `json:"url"`
+}
+
+// DeleteEventFileRequest は削除するファイル。
+type DeleteEventFileRequest struct {
+	EventID int `json:"event_id"`
+	FileID  int `json:"file_id"`
 }
 
 // EventSummary はカレンダーの各セルに出す最小限の情報。

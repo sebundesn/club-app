@@ -98,6 +98,8 @@ func migrate() error {
 		{"event_media", query.CreateEventMediaTable},
 		{"event_media: event index", query.CreateEventMediaIndex},
 		{"event_media: uploader index", query.CreateEventMediaUploaderIndex},
+		{"event_files", query.CreateEventFilesTable},
+		{"event_files: event index", query.CreateEventFilesIndex},
 	}
 
 	for _, m := range migrations {

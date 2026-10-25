@@ -8,6 +8,9 @@ export const backendURL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8
 export const receiptSrc = (url: string): string =>
   /^https?:\/\//.test(url) ? url : `${backendURL}${url}`;
 
+/** イベントのPDF・画像の表示URL。本番は /media/... の同一オリジン、ローカルはバックエンドの /uploads/... */
+export const eventFileSrc = receiptSrc;
+
 /**
  * バックエンドは失敗時に {"message": "..."} を返す。
  * message はユーザー向けの日本語文言だけで、内部エラーはサーバーのログにしか出ない。

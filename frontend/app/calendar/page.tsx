@@ -9,6 +9,7 @@ import AccountSummaryCard from './AccountSummaryCard';
 import { DateTitle, EventDetail } from '../utils/schema';
 import { backendURL, readErrorMessage } from '../utils/api';
 import { useToast } from '../../components/Toast';
+import EventFiles from '../../components/EventFiles';
 import './calendar.css';
 
 export default function CalendarPage() {
@@ -200,6 +201,7 @@ export default function CalendarPage() {
                     <p className="day-event-title">{event.title}</p>
                     {event.subtitle && <p className="day-event-subtitle">{event.subtitle}</p>}
                     {event.content && <p className="day-event-content">{event.content}</p>}
+                    <EventFiles files={event.files ?? []} />
                   </div>
                 </li>
               ))}

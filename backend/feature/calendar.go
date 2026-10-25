@@ -87,6 +87,17 @@ func GetDateEvents(w http.ResponseWriter, r *http.Request) error {
 		return util.Internal("イベントの取得に失敗しました。", err)
 	}
 
+	files, err := dateEventFiles(r.Context(), date)
+	if err != nil {
+		return util.Internal("イベントの取得に失敗しました。", err)
+	}
+	for i := range events {
+		events[i].Files = files[events[i].ID]
+		if events[i].Files == nil {
+			events[i].Files = []model.EventFile{}
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(events)
 }

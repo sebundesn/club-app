@@ -11,7 +11,18 @@ export interface EventStruct {
   Subtitle: string;
   Content: string;
   PDFPath: string;
+  /** すでに付いているPDF・画像 */
+  Files: EventFile[];
 };
+
+/** イベントに付けたPDF・画像 */
+export interface EventFile {
+  id: number;
+  kind: 'pdf' | 'image';
+  /** 元のファイル名(表示用) */
+  name: string;
+  url: string;
+}
 
 /** バックエンドの /getDateEvent が返す1件分のイベント */
 export interface EventDetail {
@@ -20,6 +31,7 @@ export interface EventDetail {
   subtitle: string;
   content: string;
   pdf_path: string;
+  files: EventFile[] | null;
 };
 
 export interface MoneyLogStruct {
