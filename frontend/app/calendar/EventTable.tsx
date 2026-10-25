@@ -10,6 +10,8 @@ interface EventTableProps {
   emptyMessage: string;
 }
 
+const weekdayClass = (weekday: number) => (weekday === 0 ? 'sunday' : weekday === 6 ? 'saturday' : '');
+
 /** 日付・曜日・内容の3列で予定を並べる表 */
 export default function EventTable({ rows, dayNames, onSelect, canSelectEmpty = false, emptyMessage }: EventTableProps) {
   if (rows.length === 0) {
@@ -28,18 +30,21 @@ export default function EventTable({ rows, dayNames, onSelect, canSelectEmpty = 
         const clickable = hasEvents || canSelectEmpty;
         return (
           <button
-            key={row.date}
+            key={`${row.date}-${row.end?.date ?? ''}`}
             type="button"
             role="row"
             disabled={!clickable}
             className={`upcoming-row upcoming-item${row.isToday ? ' today' : ''}`}
             onClick={() => onSelect(row.date)}
           >
+            {/* 連日の予定は、開始日の下に「〜最終日」を出す */}
             <span className="upcoming-date">
               {row.month}/{row.day}
+              {row.end && <span className="upcoming-until">〜{row.end.month === row.month ? '' : `${row.end.month}/`}{row.end.day}</span>}
             </span>
-            <span className={`upcoming-weekday ${row.weekday === 0 ? 'sunday' : row.weekday === 6 ? 'saturday' : ''}`}>
-              {dayNames[row.weekday]}
+            <span className="upcoming-weekday">
+              <span className={weekdayClass(row.weekday)}>{dayNames[row.weekday]}</span>
+              {row.end && <span className={`upcoming-until ${weekdayClass(row.end.weekday)}`}>〜{dayNames[row.end.weekday]}</span>}
             </span>
             <span className="upcoming-content">
               {hasEvents ? (

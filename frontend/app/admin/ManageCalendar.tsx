@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { generateCalendarDays, toDateKey } from '../utils/calendar';
 import { getNowTime } from '../utils/getTime';
+import { buildCalendarWeeks } from '../utils/upcoming';
 import { DateTitle, EventDetail, EventFile, EventStruct } from '../utils/schema';
 import { backendURL, readErrorMessage } from '../utils/api';
 import { useToast } from '../../components/Toast';
@@ -40,7 +41,10 @@ export default function ManageCalendar() {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
-  const days = generateCalendarDays(year, month);
+  const weeks = useMemo(
+    () => buildCalendarWeeks(year, month, generateCalendarDays(year, month), Object.values(eventMap).flat()),
+    [year, month, eventMap],
+  );
 
   const handlePrevMonth = () => {
     if (month === 1) {
@@ -271,57 +275,40 @@ export default function ManageCalendar() {
             ))}
           </div>
 
-          {/* 日付グリッド */}
-          <div className="grid-cols-7">
-            {days.map((date, i) => {
-              const isToday = year === thisYear && month === thisMonth && date === today;
-              const dayEventList = date ? eventMap[toDateKey(year, month, date)] ?? [] : [];
-
-              return (
-                <div
-                  key={i}
-                  className={`day-cell ${
-                    !date
-                      ? 'empty'
-                      : isToday
-                      ? 'today'
-                      : 'normal'
-                  }`}
-                  onClick={() => date && handleDateClick(date)}
-                >
-                  {date && (
-                    <>
-                      <span
-                        className={`day-number ${
-                          isToday ? 'text-today' : 'text-normal'
-                        }`}
-                      >
-                        {date}
-                      </span>
-                      {dayEventList.length > 0 && (
-                        <>
-                          {/* スマホではタイトルが読めないので点だけにする(詳細は日付を押すか、上の一覧で見る) */}
-                          <div className="event-dots" aria-label={`予定${dayEventList.length}件`}>
-                            {dayEventList.slice(0, 3).map((event) => (
-                              <span key={event.id} className="event-dot" />
-                            ))}
-                          </div>
-                          <div className="event-badge-container">
-                            {dayEventList.map((event) =>
-                              event.title ? (
-                                <span key={event.id} className="event-badge">
-                                  {event.title}
-                                </span>
-                              ) : null,
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </>
-                  )}
-                </div>
-              );
-            })}
+          {/* 日付グリッド。週ごとに、同じタイトルが連日続く予定は日付をまたいだ1本のバーにする */}
+          <div className="cal-weeks">
+            {weeks.map((week, w) => (
+              <div
+                key={w}
+                className="cal-week"
+                style={{ gridTemplateRows: `var(--cal-num-h) repeat(${week.lanes}, var(--cal-bar-h)) minmax(var(--cal-pad-h), 1fr)` }}
+              >
+                {week.days.map((date, col) => {
+                  const isToday = year === thisYear && month === thisMonth && date === today;
+                  return (
+                    <div
+                      key={col}
+                      className={`day-cell ${!date ? 'empty' : isToday ? 'today' : 'normal'}`}
+                      style={{ gridColumn: col + 1, gridRow: '1 / -1' }}
+                      onClick={() => date && handleDateClick(date)}
+                    >
+                      {date && <span className={`day-number ${isToday ? 'text-today' : 'text-normal'}`}>{date}</span>}
+                    </div>
+                  );
+                })}
+                {/* バーは押せないようにして、押した場所の日付のマスが開くようにする */}
+                {week.bars.map((bar, i) => (
+                  <div
+                    key={i}
+                    className={`cal-bar${bar.fromBefore ? ' from-before' : ''}${bar.toAfter ? ' to-after' : ''}`}
+                    style={{ gridColumn: `${bar.col + 1} / span ${bar.span}`, gridRow: bar.lane + 2 }}
+                    title={bar.title}
+                  >
+                    {bar.title}
+                  </div>
+                ))}
+              </div>
+            ))}
           </div>
         </div>
 
@@ -372,9 +359,6 @@ export default function ManageCalendar() {
                         <EventFiles files={event.files ?? []} />
                       </div>
                       <div className="day-event-actions">
-                        <a href={`/album?eventID=${event.id}`} className="btn-secondary">
-                          アルバム
-                        </a>
                         {(
                           <button
                             type="button"

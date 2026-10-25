@@ -139,31 +139,6 @@
   color: #2d4a22;
 }
 
-/* イベントタイトル*/
-/* 1日に複数イベントを持てるので、バッジは縦に積む */
-.event-badge-container {
-  margin-top: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.event-badge {
-  display: inline-block;
-  text-align: center;
-  padding: 0.1rem 0.2rem;
-  background-color: #917b39;
-  color: #ffffff;
-  font-size: 0.6rem;
-  font-weight: bold;
-  border-radius: 9px;
-  /* 狭いセルで1文字ずつ縦に折り返さないよう、1行にして長い分は … で省略する */
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  width: 100%;
-  box-sizing: border-box;
-}
 
 /* フォーム要素 */
 .input-field {
@@ -376,10 +351,6 @@
     width: 0.5rem;
     height: 0.5rem;
   }
-
-  .event-badge-container {
-    margin-top: 0.25rem;
-  }
 }
 
 /* これからの予定の一覧(日付 / 曜日 / 内容) */
@@ -440,12 +411,19 @@
   color: #2d4a22;
 }
 
-.upcoming-weekday.sunday {
+.upcoming-weekday .sunday {
   color: #dc2626;
 }
 
-.upcoming-weekday.saturday {
+.upcoming-weekday .saturday {
   color: #2563eb;
+}
+
+/* 連日の予定の「〜最終日」 */
+.upcoming-until {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .upcoming-content {
@@ -507,28 +485,97 @@
   background: transparent;
 }
 
-/* 月カレンダーのマス: スマホは点、広い画面はタイトル */
-.event-dots {
-  display: none;
-  gap: 0.2rem;
-  margin-top: 0.3rem;
-  justify-content: center;
+/* 月カレンダー(管理ページ)。週ごとのグリッドで、日付のマスを全段に敷き、その上に予定のバーを段ごとに置く */
+.cal-weeks {
+  --cal-num-h: 1.35rem;
+  --cal-bar-h: 1.15rem;
+  --cal-pad-h: 0.5rem;
+
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
-.event-dot {
-  width: 0.4rem;
-  height: 0.4rem;
-  border-radius: 50%;
-  background: #917b39;
+.cal-week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  column-gap: 1px;
+  row-gap: 2px;
+  min-height: 100px;
 }
 
+.cal-week .day-cell {
+  position: relative;
+  min-height: 0;
+}
+
+/* 今日の赤い点は、バーに重ならないよう日付の段に収める */
+.cal-week .day-cell.today::after {
+  top: 0.4rem;
+  right: 0.4rem;
+  width: 0.5rem;
+  height: 0.5rem;
+}
+
+.cal-bar {
+  z-index: 1;
+  align-self: center;
+  min-width: 0;
+  margin: 0 3px;
+  padding: 0 0.3rem;
+  border-radius: 9px;
+  background-color: #917b39;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: var(--cal-bar-h);
+  /* 狭いマスでも1行にして、入りきらない分は … で省略する */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* 押すと下の日付のマスが開く */
+  pointer-events: none;
+}
+
+/* 前の週から続く / 次の週へ続くバーは、その側の角を落とさない */
+.cal-bar.from-before {
+  margin-left: 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.cal-bar.to-after {
+  margin-right: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* スマホではマスが細いので、文字を小さくしてタイトルが読めるようにする */
 @media (max-width: 640px) {
-  .event-dots {
-    display: flex;
+  .cal-weeks {
+    --cal-num-h: 1.1rem;
+    --cal-bar-h: 0.95rem;
   }
 
-  .event-badge-container {
-    display: none;
+  .cal-week {
+    min-height: 4.25rem;
+  }
+
+  .cal-bar {
+    margin: 0 1px;
+    padding: 0 0.15rem;
+    border-radius: 4px;
+    font-size: 0.55rem;
+    letter-spacing: -0.02em;
+  }
+
+  .cal-week .day-cell {
+    padding: 0;
+  }
+
+  .cal-week .day-number {
+    padding-left: 0.15rem;
+    font-size: 0.7rem;
   }
 }
 
