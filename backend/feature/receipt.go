@@ -41,17 +41,9 @@ var allowedImageTypes = map[string]string{
 	"image/png":  ".png",
 }
 
-const (
-	defaultReceiptsLimit = 10
-	maxReceiptsLimit     = 50
-)
-
 // GetReceipts はレシートをイベントごとに返す。
 //   - ?eventID=N: そのイベントだけ(詳細ページ用)
-//   - ?dir=future|past&date=YYYY-MM-DD&id=N&limit=N: (date, id) より後/前のイベントを limit 件(一覧の無限スクロール用)
-//
-// 一覧の最初は date に今日、id に 0 を渡すと、future は今日以降、past は昨日以前になる。
-// 今日の日付はブラウザ側で決める(サーバーのタイムゾーンに左右されないように)。
+//   - ?dir=future|past&date=YYYY-MM-DD&id=N&limit=N: 一覧の無限スクロール用(parseEventCursor を参照)
 func GetReceipts(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodGet {
 		return utility.MethodNotAllowed(r.Method)
@@ -76,34 +68,12 @@ func GetReceipts(w http.ResponseWriter, r *http.Request) error {
 		}
 		rows, err = utility.DB.QueryContext(r.Context(), SQLquery.GetReceiptsOfEvent, eventID)
 	} else {
-		date, convErr := time.Parse(time.DateOnly, q.Get("date"))
-		if convErr != nil {
-			return utility.BadRequest("日付の指定が不正です。", convErr)
+		c, cErr := parseEventCursor(q)
+		if cErr != nil {
+			return cErr
 		}
-		cursorID := 0
-		if v := q.Get("id"); v != "" {
-			if cursorID, convErr = strconv.Atoi(v); convErr != nil {
-				return utility.BadRequest("イベントの指定が不正です。", convErr)
-			}
-		}
-		limit = defaultReceiptsLimit
-		if v := q.Get("limit"); v != "" {
-			if limit, convErr = strconv.Atoi(v); convErr != nil || limit < 1 || limit > maxReceiptsLimit {
-				return utility.BadRequest("件数の指定が不正です。", fmt.Errorf("invalid limit %q", v))
-			}
-		}
-
-		var query string
-		switch q.Get("dir") {
-		case "future":
-			query = SQLquery.GetReceiptsAfter
-		case "past":
-			query = SQLquery.GetReceiptsBefore
-		default:
-			return utility.BadRequest("向きの指定が不正です。", fmt.Errorf("invalid dir %q", q.Get("dir")))
-		}
-		// 1件多く取って、続きがあるかを判定する
-		rows, err = utility.DB.QueryContext(r.Context(), query, date.Format(time.DateOnly), cursorID, limit+1)
+		limit = c.Limit
+		rows, err = utility.DB.QueryContext(r.Context(), c.pick(SQLquery.GetReceiptsAfter, SQLquery.GetReceiptsBefore), c.args()...)
 	}
 	if err != nil {
 		return utility.Internal("レシートの取得に失敗しました。", err)

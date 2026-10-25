@@ -21,6 +21,7 @@ import (
 	utility "club-app/util"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 const (
@@ -528,7 +529,7 @@ func GetAlbum(w http.ResponseWriter, r *http.Request) error {
 	return json.NewEncoder(w).Encode(album)
 }
 
-// GetAlbums はアルバム一覧(写真・動画があるイベントの表紙と枚数)を返す。
+// GetAlbums はアルバム一覧(イベントごとの表紙と枚数)を、レシート一覧と同じく ?dir=future|past&date=&id=&limit= で少しずつ返す。
 func GetAlbums(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodGet {
 		return utility.MethodNotAllowed(r.Method)
@@ -537,7 +538,12 @@ func GetAlbums(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	rows, err := utility.DB.QueryContext(r.Context(), SQLquery.SelectAlbumSummaries)
+	c, err := parseEventCursor(r.URL.Query())
+	if err != nil {
+		return err
+	}
+	rows, err := utility.DB.QueryContext(r.Context(),
+		c.pick(SQLquery.SelectAlbumSummariesAfter, SQLquery.SelectAlbumSummariesBefore), c.args()...)
 	if err != nil {
 		return utility.Internal("アルバムの取得に失敗しました。", err)
 	}
@@ -562,7 +568,18 @@ func GetAlbums(w http.ResponseWriter, r *http.Request) error {
 		return utility.Internal("アルバムの取得に失敗しました。", err)
 	}
 
-	prows, err := utility.DB.QueryContext(r.Context(), SQLquery.SelectAlbumPreviews)
+	page := schema.AlbumPage{Events: albums}
+	if len(albums) > c.Limit {
+		page.Events = albums[:c.Limit]
+		page.HasMore = true
+	}
+	albums = page.Events
+	ids := make([]int64, len(albums))
+	for i, a := range albums {
+		ids[i] = int64(a.EventID)
+	}
+
+	prows, err := utility.DB.QueryContext(r.Context(), SQLquery.SelectAlbumPreviews, pq.Array(ids))
 	if err != nil {
 		return utility.Internal("アルバムの取得に失敗しました。", err)
 	}
@@ -586,7 +603,7 @@ func GetAlbums(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	return json.NewEncoder(w).Encode(albums)
+	return json.NewEncoder(w).Encode(page)
 }
 
 // DeleteMedia は写真・動画を削除する。アップロードした本人か、役員だけができる。

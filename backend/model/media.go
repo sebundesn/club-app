@@ -27,6 +27,12 @@ type DeleteMediaRequest struct {
 	ID int `json:"id"`
 }
 
+// AlbumPage はアルバム一覧の1回分。HasMore はその向きにまだ続きがあるか。
+type AlbumPage struct {
+	Events  []AlbumSummary `json:"events"`
+	HasMore bool           `json:"hasMore"`
+}
+
 // AlbumSummary はアルバム一覧の1件(イベントごとの表紙と枚数)。
 type AlbumSummary struct {
 	EventID    int      `json:"event_id"`

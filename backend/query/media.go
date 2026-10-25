@@ -78,23 +78,48 @@ const DeleteProcessingMedia = `
 
 // アルバム一覧: カレンダーに登録された全イベントを新しい順に。写真・動画がなくても出す(＋から追加できるように)。
 // 変換中・失敗は数えない。
-const SelectAlbumSummaries = `
-	SELECT e.id, e.title, e.date,
+// アルバム一覧の無限スクロール用。(date, id) をカーソルにして、イベントを limit 件ずつ取る(レシート一覧と同じ)。
+// 未来側: カーソルより後を古い順に。
+const SelectAlbumSummariesAfter = `
+	WITH ev AS (
+		SELECT id, title, date FROM events
+		WHERE (date, id) > ($1::date, $2)
+		ORDER BY date, id
+		LIMIT $3
+	)
+	SELECT ev.id, ev.title, ev.date,
 		COUNT(em.id) FILTER (WHERE em.kind = 'photo'),
 		COUNT(em.id) FILTER (WHERE em.kind = 'video')
-	FROM events e
-	LEFT JOIN event_media em ON em.event_id = e.id AND em.status = 'ready'
-	GROUP BY e.id, e.title, e.date
-	ORDER BY e.date DESC, e.id DESC;
+	FROM ev
+	LEFT JOIN event_media em ON em.event_id = ev.id AND em.status = 'ready'
+	GROUP BY ev.id, ev.title, ev.date
+	ORDER BY ev.date, ev.id;
 `
 
-// 一覧に並べる見本のサムネイル。イベントごとに写真を先に、最大10枚(一覧のカバーフローで横に流して見せる)。
+// 過去側: カーソルより前を新しい順に。
+const SelectAlbumSummariesBefore = `
+	WITH ev AS (
+		SELECT id, title, date FROM events
+		WHERE (date, id) < ($1::date, $2)
+		ORDER BY date DESC, id DESC
+		LIMIT $3
+	)
+	SELECT ev.id, ev.title, ev.date,
+		COUNT(em.id) FILTER (WHERE em.kind = 'photo'),
+		COUNT(em.id) FILTER (WHERE em.kind = 'video')
+	FROM ev
+	LEFT JOIN event_media em ON em.event_id = ev.id AND em.status = 'ready'
+	GROUP BY ev.id, ev.title, ev.date
+	ORDER BY ev.date DESC, ev.id DESC;
+`
+
+// 一覧に並べる見本のサムネイル。取ったイベントだけについて、写真を先に最大10枚(一覧のカバーフローで横に流して見せる)。
 const SelectAlbumPreviews = `
 	SELECT event_id, thumb_key FROM (
 		SELECT event_id, thumb_key,
 			ROW_NUMBER() OVER (PARTITION BY event_id ORDER BY (kind = 'photo') DESC, created_at, id) AS n
 		FROM event_media
-		WHERE status = 'ready' AND thumb_key IS NOT NULL
+		WHERE status = 'ready' AND thumb_key IS NOT NULL AND event_id = ANY($1)
 	) t
 	WHERE n <= 10
 	ORDER BY event_id, n;

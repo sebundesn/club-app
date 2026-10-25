@@ -7,23 +7,21 @@ import { backendURL, readErrorMessage } from '../utils/api';
 import { useToast } from '../../components/Toast';
 import EventStrip from '../../components/line/EventStrip';
 import MediaViewer from '../../components/line/MediaViewer';
+import EventTimeline, { formatEventDate, TimelineResult } from '../../components/line/EventTimeline';
 import { VIDEO_MAX_SEC } from '../utils/mediaUpload';
 import { setPendingFiles } from '../utils/pendingFiles';
 import '../line.css';
 
 const ALBUM_ACCEPT = 'image/jpeg,image/png,video/*';
 
-const md = (iso: string) => {
-  const [, m, d] = iso.slice(0, 10).split('-').map(Number);
-  return `${m}/${d}`;
-};
+type AlbumState = 'loggedOut' | 'error';
 
-/** アルバム一覧。写真・動画があるイベントを、表紙つきのカードで新しい順に並べる。 */
+const cursorOf = (a: AlbumSummary) => ({ date: a.date.slice(0, 10), id: a.event_id });
+
+/** アルバム一覧。直近のイベントを中央に、上へスクロールで過去、下へスクロールで未来を読み足す。 */
 function AlbumList() {
   const router = useRouter();
   const { showToast } = useToast();
-  const [albums, setAlbums] = useState<AlbumSummary[] | null>(null);
-  const [loggedOut, setLoggedOut] = useState(false);
 
   // ＋で選んだファイルをアップロードページに渡して、確認の画面へ進む
   const pickFor = (eventID: number, title: string, files: File[]) => {
@@ -31,28 +29,25 @@ function AlbumList() {
     router.push(`/album/upload?eventID=${eventID}&title=${encodeURIComponent(title)}`);
   };
 
-  useEffect(() => {
-    const load = async () => {
+  const fetchAlbums = useCallback(
+    async (query: string): Promise<TimelineResult<AlbumSummary, AlbumState>> => {
       try {
-        const res = await fetch(`${backendURL}/api/getAlbums`, { credentials: 'include' });
-        if (res.status === 401) {
-          setLoggedOut(true);
-          return;
-        }
+        const res = await fetch(`${backendURL}/api/getAlbums?${query}`, { credentials: 'include' });
+        if (res.status === 401) return { ok: false, state: 'loggedOut' };
         if (!res.ok) {
           showToast(await readErrorMessage(res, 'アルバムの取得に失敗しました。'), 'error');
-          setAlbums([]);
-          return;
+          return { ok: false, state: 'error' };
         }
-        setAlbums((await res.json()) ?? []);
+        const data: { events: AlbumSummary[] | null; hasMore: boolean } = await res.json();
+        return { ok: true, page: { items: data.events ?? [], hasMore: data.hasMore } };
       } catch (e) {
         console.error('failed to load albums:', e);
         showToast('通信に失敗しました。', 'error');
-        setAlbums([]);
+        return { ok: false, state: 'error' };
       }
-    };
-    load();
-  }, [showToast]);
+    },
+    [showToast],
+  );
 
   return (
     <div className="la-page">
@@ -60,28 +55,32 @@ function AlbumList() {
         <h1 className="la-bar-title" style={{ paddingLeft: '0.75rem' }}>アルバム</h1>
       </div>
 
-      {loggedOut ? (
-        <p className="la-notice">アルバムを見るには、右上の「LINEでログイン」からログインしてください。</p>
-      ) : albums === null ? (
-        <p className="la-empty">読み込み中…</p>
-      ) : albums.length === 0 ? (
-        <p className="la-empty">イベントがありません。カレンダーでイベントを登録してください。</p>
-      ) : (
-        <ul className="la-ev-list">
-          {albums.map((a) => (
-            <EventStrip
-              key={a.event_id}
-              title={a.title}
-              sub={`${md(a.date)} ・ 写真${a.photo_count}${a.video_count > 0 ? ` ・ 動画${a.video_count}` : ''}`}
-              href={`/album?eventID=${a.event_id}`}
-              uploadLabel={`${a.title || '(無題)'}に写真・動画を追加`}
-              accept={ALBUM_ACCEPT}
-              onPick={(files) => pickFor(a.event_id, a.title, files)}
-              thumbs={a.preview_urls}
-            />
-          ))}
-        </ul>
-      )}
+      <EventTimeline
+        fetchPage={fetchAlbums}
+        cursorOf={cursorOf}
+        emptyMessage="イベントがありません。カレンダーでイベントを登録してください。"
+        renderState={(state) =>
+          state === 'loading' ? (
+            <p className="la-empty">読み込み中…</p>
+          ) : state === 'loggedOut' ? (
+            <p className="la-notice">アルバムを見るには、右上の「LINEでログイン」からログインしてください。</p>
+          ) : (
+            <p className="la-empty">取得できませんでした。</p>
+          )
+        }
+        renderItem={(a, isNext) => (
+          <EventStrip
+            title={a.title}
+            sub={`${formatEventDate(a.date.slice(0, 10))} ・ 写真${a.photo_count}${a.video_count > 0 ? ` ・ 動画${a.video_count}` : ''}`}
+            href={`/album?eventID=${a.event_id}`}
+            uploadLabel={`${a.title || '(無題)'}に写真・動画を追加`}
+            accept={ALBUM_ACCEPT}
+            onPick={(files) => pickFor(a.event_id, a.title, files)}
+            thumbs={a.preview_urls}
+            next={isNext}
+          />
+        )}
+      />
     </div>
   );
 }
