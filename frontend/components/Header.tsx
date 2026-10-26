@@ -181,6 +181,9 @@ export default function Header() {
     window.history.replaceState({}, '', window.location.pathname + (rest ? `?${rest}` : ''));
   }, [showToast]);
 
+  // 紹介ページ(/)は部外の人も見るので、ログインボタンも部員向けのナビも出さない
+  if (pathname === '/') return null;
+
   return (
     <>
       {/* ログイン / ログアウト。ヘッダーに含めず、スクロールしても動かない */}
