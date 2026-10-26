@@ -295,6 +295,10 @@
 }
 
 /* イベントごとの操作(アルバム・編集)。狭い画面ではタイトルの下に横並びで置く */
+.day-event-participants:not(:empty) {
+  margin-top: 0.75rem;
+}
+
 .day-event-actions {
   display: flex;
   flex-shrink: 0;

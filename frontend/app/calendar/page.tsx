@@ -7,10 +7,31 @@ import EventTable from './EventTable';
 import MyUnpaidCard from './MyUnpaidCard';
 import AccountSummaryCard from './AccountSummaryCard';
 import { DateTitle, EventDetail } from '../utils/schema';
+import { toDateKey } from '../utils/calendar';
 import { backendURL, readErrorMessage } from '../utils/api';
 import { useToast } from '../../components/Toast';
 import EventFiles from '../../components/EventFiles';
+import EventParticipants from '../../components/EventParticipants';
 import './calendar.css';
+
+const prevDay = (date: string) => {
+  const [y, m, d] = date.split('-').map(Number);
+  const p = new Date(y, m - 1, d - 1);
+  return toDateKey(p.getFullYear(), p.getMonth() + 1, p.getDate());
+};
+
+/** 同じタイトルが前の日から続いていれば、その初日の予定のID(参加者は初日に記録している) */
+const firstDayID = (id: number, date: string, title: string, events: DateTitle[]) => {
+  let first = id;
+  let day = date;
+  for (;;) {
+    const before = prevDay(day);
+    const e = events.find((x) => x.date.slice(0, 10) === before && (x.title || '(無題)') === (title || '(無題)'));
+    if (!e) return first;
+    first = e.id;
+    day = before;
+  }
+};
 
 export default function CalendarPage() {
   const { showToast } = useToast();
@@ -134,7 +155,7 @@ export default function CalendarPage() {
       {/* 自分の部費の未払い */}
       <MyUnpaidCard />
 
-      {/* 予定の一覧(日付・曜日・内容)。「これから」は今日を最上段に1か月先まで、「月別」は月ごと */}
+      {/* 予定の一覧(日付・曜日・内容)。「これから」は今日を最上段に2週間先まで、「月別」は月ごと */}
       <div className="card mb-8">
         <div className="list-modes" role="tablist">
           <button
@@ -144,7 +165,7 @@ export default function CalendarPage() {
             className={`list-mode${viewMode === 'upcoming' ? ' active' : ''}`}
             onClick={() => setViewMode('upcoming')}
           >
-            これから(1か月先まで)
+            これから(2週間先まで)
           </button>
           <button
             type="button"
@@ -199,6 +220,10 @@ export default function CalendarPage() {
                     {event.subtitle && <p className="day-event-subtitle">{event.subtitle}</p>}
                     {event.content && <p className="day-event-content">{event.content}</p>}
                     <EventFiles files={event.files ?? []} />
+                    {/* 参加者と金額(部員だけ。参加者がいなければ出さない)。連日の予定は初日にまとめて記録している */}
+                    <div className="day-event-participants">
+                      <EventParticipants eventID={firstDayID(event.id, selectedDate, event.title, [...monthEvents, ...upcomingEvents])} hideEmpty />
+                    </div>
                   </div>
                 </li>
               ))}

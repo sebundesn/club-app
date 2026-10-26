@@ -13,7 +13,7 @@ import '../../line.css';
 // サーバーの上限(1イベント20枚)に合わせる
 const MAX_PICK = 20;
 
-/** レシートを提出する。部員なら誰でも出せて、見られるのは会計・部長・副部長だけ。 */
+/** レシートを提出する。部員なら誰でも出せる。 */
 function ReceiptUpload() {
   const router = useRouter();
   const params = useSearchParams();

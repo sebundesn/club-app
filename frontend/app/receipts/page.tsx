@@ -1,7 +1,6 @@
 'use client';
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ReceiptDataStruct } from '../utils/schema';
 import { backendURL, readErrorMessage, receiptSrc } from '../utils/api';
@@ -15,7 +14,7 @@ import EventTimeline, { formatEventDate, formatEventRange, TimelineResult } from
 import { defaultDay, eventIDsParam, parseEventIDs, uploadURL } from '../utils/eventGroup';
 import '../line.css';
 
-type LoadState = 'loading' | 'ok' | 'loggedOut' | 'forbidden' | 'error';
+type LoadState = 'loading' | 'ok' | 'loggedOut' | 'error';
 
 interface ApiEvent {
   id: number;
@@ -33,7 +32,7 @@ const toReceipt = (e: ApiEvent): ReceiptDataStruct => ({
   Images: e.images ?? [],
 });
 
-/** レシートを取得する。見られるのは会計・部長・副部長だけなので、権限がない場合も区別して返す。 */
+/** レシートを取得する。部員なら誰でも見られる。 */
 function useFetchReceipts() {
   const { showToast } = useToast();
   return useCallback(
@@ -41,7 +40,6 @@ function useFetchReceipts() {
       try {
         const res = await fetch(`${backendURL}/api/getReceiptsInfo?${query}`, { credentials: 'include' });
         if (res.status === 401) return { ok: false, state: 'loggedOut' };
-        if (res.status === 403) return { ok: false, state: 'forbidden' };
         if (!res.ok) {
           showToast(await readErrorMessage(res, 'レシートの取得に失敗しました。'), 'error');
           return { ok: false, state: 'error' };
@@ -84,14 +82,6 @@ function useEventReceipts(eventIDs: number[]) {
 function Notice({ state }: { state: LoadState }) {
   if (state === 'loading') return <p className="la-empty">読み込み中…</p>;
   if (state === 'loggedOut') return <p className="la-notice">レシートを見るには、右上の「LINEでログイン」からログインしてください。</p>;
-  if (state === 'forbidden')
-    return (
-      <p className="la-notice">
-        レシートを見られるのは、会計・部長・副部長だけです。
-        <br />
-        レシートの提出は <Link href="/receipts/upload">こちら</Link> からできます。
-      </p>
-    );
   if (state === 'error') return <p className="la-empty">取得できませんでした。</p>;
   return null;
 }
@@ -147,7 +137,7 @@ function ReceiptList() {
 /**
  * 1つのイベントのレシートと参加者・徴収。レシートは押すと黒地で1枚ずつ見られる。
  * 連日のイベント(合宿など)は上の日付タブでレシートの日を切り替える。参加者・徴収額は全日程で共通(初日に記録する)。
- * レシートの削除・支払い済みの切り替え・徴収額の設定は会計・部長だけ。
+ * レシートの削除は部員なら誰でも、支払い済みの切り替え・徴収額の設定は会計・部長だけ。
  */
 function ReceiptDetail({ eventIDs, initialDay }: { eventIDs: number[]; initialDay: number }) {
   const router = useRouter();
@@ -157,7 +147,8 @@ function ReceiptDetail({ eventIDs, initialDay }: { eventIDs: number[]; initialDa
   const fileInput = useRef<HTMLInputElement>(null);
   const [role, setRole] = useState('');
   // 画面を出し分けるだけ。実際の権限チェックはサーバー側で行っている
-  const canDelete = role === '会計' || role === '部長';
+  const canEdit = role === '会計' || role === '部長';
+  const canEditMembers = canEdit || role === '副部長';
   const multi = eventIDs.length > 1;
 
   // 選んでいる日。URL の day があればその日、なければ今日(期間外なら初日)
@@ -193,9 +184,9 @@ function ReceiptDetail({ eventIDs, initialDay }: { eventIDs: number[]; initialDa
         id: img.id,
         kind: 'photo' as const,
         url: receiptSrc(img.url),
-        can_delete: canDelete,
+        can_delete: true,
       })),
-    [event, canDelete],
+    [event],
   );
 
   const remove = async (imageID: number) => {
@@ -275,7 +266,7 @@ function ReceiptDetail({ eventIDs, initialDay }: { eventIDs: number[]; initialDa
           </div>
           {/* 参加者・徴収は連日でも全日程で共通。初日のイベントにまとめて記録する */}
           <div className="la-participants">
-            <EventParticipants key={first.ID} eventID={first.ID} canEdit={canDelete} />
+            <EventParticipants key={first.ID} eventID={first.ID} canEditMembers={canEditMembers} canEdit={canEdit} />
           </div>
         </>
       )}
@@ -287,7 +278,6 @@ function ReceiptDetail({ eventIDs, initialDay }: { eventIDs: number[]; initialDa
           <li>JPEG・PNG(1枚20MBまで)の画像を選べます。</li>
           <li>{multi ? '1日' : '1つのイベント'}に入れられるのは20枚までです。</li>
           {multi && <li>レシートは日ごと、参加者・徴収額は全日程で共通です。右下の＋は、選んでいる日に追加します。</li>}
-          <li>見られるのは会計・部長・副部長だけです。</li>
         </ul>
       )}
 

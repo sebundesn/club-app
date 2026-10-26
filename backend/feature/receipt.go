@@ -49,8 +49,8 @@ func GetReceipts(w http.ResponseWriter, r *http.Request) error {
 		return utility.MethodNotAllowed(r.Method)
 	}
 
-	// レシートには個人情報が写り込むことがあるので、会計と役員だけが見られる
-	if _, err := utility.RequireRole(r, utility.RoleTreasurer, utility.RoleChief, utility.RoleViceChief); err != nil {
+	// 参加者・徴収額と一緒に部員全員が見られる(未ログインは不可)
+	if _, err := utility.RequireLogin(r); err != nil {
 		return err
 	}
 
@@ -269,7 +269,8 @@ func DeleteImg(w http.ResponseWriter, r *http.Request) error {
 		return utility.MethodNotAllowed(r.Method)
 	}
 
-	if _, err := utility.RequireRole(r, utility.AccountingRoles...); err != nil {
+	// 間違えて上げたものを本人がすぐ消せるよう、部員なら誰でも消せる
+	if _, err := utility.RequireLogin(r); err != nil {
 		return err
 	}
 

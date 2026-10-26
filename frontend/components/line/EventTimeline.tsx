@@ -3,10 +3,12 @@
 import { Fragment, ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { toDateKey } from '../../app/utils/calendar';
 
-// 過去・未来それぞれ、端まで来たらこの件数ずつ読み足す
+// 足りなくなったらこの件数ずつ読み足す
 const PAGE_SIZE = 10;
-// 端に着く少し前から読み始める
-const PRELOAD_MARGIN = '600px 0px';
+// ▲・▼を押すたびにこの件数ずつ見せる
+const REVEAL_STEP = 5;
+// 最初に見せる過去のイベントは、今日からこの日数前まで
+const RECENT_DAYS = 7;
 
 export interface TimelinePage<T> {
   items: T[];
@@ -36,11 +38,13 @@ export const formatEventDate = (date: string, thisYear = todayKey().slice(0, 4))
 export const formatEventRange = (start: string, end: string, thisYear = todayKey().slice(0, 4)) =>
   start === end ? formatEventDate(start, thisYear) : `${formatEventDate(start, thisYear)}〜${formatEventDate(end, thisYear)}`;
 
-const nextDay = (date: string) => {
+const addDays = (date: string, days: number) => {
   const [y, m, d] = date.split('-').map(Number);
-  const n = new Date(y, m - 1, d + 1);
+  const n = new Date(y, m - 1, d + days);
   return toDateKey(n.getFullYear(), n.getMonth() + 1, n.getDate());
 };
+
+const nextDay = (date: string) => addDays(date, 1);
 
 /**
  * 同じタイトルで日付が続いているイベントを1つにまとめる(合宿の3日分など)。
@@ -75,7 +79,7 @@ interface Props<T, S extends string> {
   titleOf: (item: T) => string;
   /**
    * 1行分を描く。同じタイトルが連日続くイベントは group にまとめて渡す(1日だけなら1件)。
-   * isNext は今日以降でいちばん近いイベント。最初はここが画面の中央に来る
+   * isNext は今日以降でいちばん近いイベント
    */
   renderGroup: (group: T[], isNext: boolean) => ReactNode;
   /** 読み込み中や、ok 以外のときの表示 */
@@ -84,9 +88,9 @@ interface Props<T, S extends string> {
 }
 
 /**
- * イベントを古い順に上から並べる一覧。最初は今日以降でいちばん近いイベントが画面の中央に来て、
- * 上へスクロールすると過去、下へスクロールすると未来のイベントを読み足していく(レシート・アルバムで共通)。
- * 同じタイトルが連日続くイベントは1行にまとめる。
+ * イベントを古い順に上から並べる一覧(レシート・アルバムで共通)。最初は今日以降でいちばん近いイベントと、
+ * 1週間前までのイベントだけを見せる。上の▲で過去、下の▼で未来のイベントを5件ずつ見せていき、
+ * 手元に足りなければ読み足す。同じタイトルが連日続くイベントは1行にまとめる。
  */
 export default function EventTimeline<T, S extends string>({
   fetchPage,
@@ -102,13 +106,11 @@ export default function EventTimeline<T, S extends string>({
   const [hasMore, setHasMore] = useState<Record<Side, boolean>>({ past: false, future: false });
   const [loading, setLoading] = useState<Record<Side, boolean>>({ past: false, future: false });
   const [failed, setFailed] = useState<Record<Side, boolean>>({ past: false, future: false });
+  // ▲・▼で、最初の表示より何件多く見せているか
+  const [extra, setExtra] = useState<Record<Side, number>>({ past: 0, future: 0 });
 
   const listRef = useRef<HTMLUListElement>(null);
-  const topRef = useRef<HTMLDivElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
   const centered = useRef(false);
-  // 上に足す前のページの高さ。足したあとに同じ分だけ下へずらして、見ている位置を保つ
-  const heightBeforePrepend = useRef<number | null>(null);
   const busy = useRef<Record<Side, boolean>>({ past: false, future: false });
 
   // 最初は今日を境に、過去と未来を同時に取る
@@ -133,12 +135,8 @@ export default function EventTimeline<T, S extends string>({
       const edge = cursorOf(side === 'past' ? items[0] : items[items.length - 1]);
       const res = await fetchPage(`dir=${side}&date=${edge.date}&id=${edge.id}&limit=${PAGE_SIZE}`);
       if (res.ok) {
-        if (side === 'past') {
-          heightBeforePrepend.current = document.documentElement.scrollHeight;
-          setItems((xs) => [...[...res.page.items].reverse(), ...xs]);
-        } else {
-          setItems((xs) => [...xs, ...res.page.items]);
-        }
+        if (side === 'past') setItems((xs) => [...[...res.page.items].reverse(), ...xs]);
+        else setItems((xs) => [...xs, ...res.page.items]);
         setHasMore((h) => ({ ...h, [side]: res.page.hasMore }));
       } else {
         setFailed((f) => ({ ...f, [side]: true }));
@@ -149,59 +147,39 @@ export default function EventTimeline<T, S extends string>({
     [items, fetchPage, cursorOf],
   );
 
-  // ブラウザのスクロール位置の自動補正と二重にずれないよう、この一覧を出している間は切っておく
-  useEffect(() => {
-    const html = document.documentElement;
-    const prev = html.style.overflowAnchor;
-    html.style.overflowAnchor = 'none';
-    return () => {
-      html.style.overflowAnchor = prev;
-    };
-  }, []);
+  const groups = groupConsecutive(items, (x) => cursorOf(x).date, titleOf);
+  // 今日が途中に入っている連日のイベント(合宿の2日目など)も「次」に数える
+  const nextIndex = groups.findIndex((g) => cursorOf(g[g.length - 1]).date >= today);
+  // 次のイベントの位置(なければ末尾)。ここより前が過去
+  const pivot = nextIndex === -1 ? groups.length : nextIndex;
+  const weekAgo = addDays(today, -RECENT_DAYS);
+  const recentPast = groups.slice(0, pivot).filter((g) => cursorOf(g[g.length - 1]).date >= weekAgo).length;
+  const wantPast = recentPast + extra.past;
+  // 次のイベントは最初から見せる。▼で見せるのはその先
+  const wantFuture = (nextIndex === -1 ? 0 : 1) + extra.future;
+  const from = Math.max(0, pivot - wantPast);
+  const to = Math.min(groups.length, pivot + wantFuture);
+  const hidden: Record<Side, boolean> = { past: from > 0 || hasMore.past, future: to < groups.length || hasMore.future };
 
-  // 描画の直後(画面に出る前)に、最初の中央寄せと、上に足したぶんの位置合わせをする
+  // 5件ずつ見せていき、まだ見せていない手元の分が次の5件に足りなくなったら先に読み足しておく
+  const reveal = (side: Side) => {
+    setExtra((e) => ({ ...e, [side]: e[side] + REVEAL_STEP }));
+    const left = side === 'past' ? from - REVEAL_STEP : groups.length - to - REVEAL_STEP;
+    if (left < REVEAL_STEP && hasMore[side]) loadMore(side);
+  };
+
+  // 最初の描画の直後(画面に出る前)に、次のイベントを画面の中央に寄せる
   useLayoutEffect(() => {
-    if (state !== 'ok') return;
-    if (!centered.current) {
-      centered.current = true;
-      const next = listRef.current?.querySelector('[data-next]') ?? listRef.current?.lastElementChild;
-      next?.scrollIntoView({ block: 'center' });
-      return;
-    }
-    if (heightBeforePrepend.current !== null) {
-      window.scrollBy(0, document.documentElement.scrollHeight - heightBeforePrepend.current);
-      heightBeforePrepend.current = null;
-    }
-  }, [state, items]);
-
-  // 上端・下端が近づいたら読み足す。件数が変わるたびに付け直すので、
-  // 読み足しても端がまだ見えている(画面が埋まっていない)ときは続けて読む
-  useEffect(() => {
-    if (state !== 'ok') return;
-    const targets: [HTMLElement | null, Side][] = [
-      [topRef.current, 'past'],
-      [bottomRef.current, 'future'],
-    ];
-    const observers = targets
-      .filter(([el, side]) => el && hasMore[side] && !failed[side])
-      .map(([el, side]) => {
-        const io = new IntersectionObserver(
-          (entries) => {
-            if (entries.some((e) => e.isIntersecting)) loadMore(side);
-          },
-          { rootMargin: PRELOAD_MARGIN },
-        );
-        io.observe(el!);
-        return io;
-      });
-    return () => observers.forEach((io) => io.disconnect());
-  }, [state, hasMore, failed, loadMore]);
+    if (state !== 'ok' || centered.current) return;
+    centered.current = true;
+    const next = listRef.current?.querySelector('[data-next]') ?? listRef.current?.lastElementChild;
+    next?.scrollIntoView({ block: 'center' });
+  }, [state]);
 
   if (state !== 'ok') return <>{renderState(state)}</>;
   if (items.length === 0) return <p className="la-empty">{emptyMessage}</p>;
 
   const edge = (side: Side) => {
-    if (loading[side]) return <p className="la-tl-edge">読み込み中…</p>;
     if (failed[side])
       return (
         <button
@@ -215,29 +193,35 @@ export default function EventTimeline<T, S extends string>({
           読み込めませんでした。もう一度読み込む
         </button>
       );
-    if (!hasMore[side]) return <p className="la-tl-edge">{side === 'past' ? 'これより前のイベントはありません' : 'これより先のイベントはありません'}</p>;
-    return null;
+    if (loading[side]) return <p className="la-tl-edge">読み込み中…</p>;
+    if (!hidden[side]) return <p className="la-tl-edge">{side === 'past' ? 'これより前のイベントはありません' : 'これより先のイベントはありません'}</p>;
+    return (
+      <button
+        type="button"
+        className="la-tl-edge la-tl-more"
+        onClick={() => reveal(side)}
+      >
+        {side === 'past' ? `▲ 前の${REVEAL_STEP}件` : `▼ 次の${REVEAL_STEP}件`}
+      </button>
+    );
   };
 
-  const groups = groupConsecutive(items, (x) => cursorOf(x).date, titleOf);
-  // 今日が途中に入っている連日のイベント(合宿の2日目など)も「次」に数える
-  const nextIndex = groups.findIndex((g) => cursorOf(g[g.length - 1]).date >= today);
   const thisYear = today.slice(0, 4);
   const todayLine = <li className="la-tl-today">今日 {formatEventDate(today, thisYear)}</li>;
 
   return (
     <>
-      <div ref={topRef}>{edge('past')}</div>
+      {edge('past')}
       <ul ref={listRef} className="la-ev-list la-tl">
-        {groups.map((g, i) => (
+        {groups.slice(from, to).map((g, i) => (
           <Fragment key={cursorOf(g[0]).id}>
-            {i === nextIndex && todayLine}
-            {renderGroup(g, i === nextIndex)}
+            {from + i === nextIndex && todayLine}
+            {renderGroup(g, from + i === nextIndex)}
           </Fragment>
         ))}
         {nextIndex === -1 && todayLine}
       </ul>
-      <div ref={bottomRef}>{edge('future')}</div>
+      {edge('future')}
     </>
   );
 }

@@ -630,6 +630,12 @@
   text-decoration: underline;
 }
 
+.la-tl-more {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--la-green-dark);
+}
+
 /* 見出し(中央に名前と日付)の右端に＋ボタン。画像のグリッドはその下 */
 .la-ev-head {
   position: relative;

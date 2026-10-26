@@ -1,7 +1,7 @@
 import { DateTitle } from './schema';
 import { toDateKey } from './calendar';
 
-export const UPCOMING_DAYS = 30;
+export const UPCOMING_DAYS = 14;
 
 interface DayInfo {
   /** YYYY-MM-DD */
