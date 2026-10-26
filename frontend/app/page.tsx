@@ -2,24 +2,28 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { messages, Lang, SeasonKey } from './intro/messages';
+import { slides } from './intro/slides';
+import CoverFlow from './intro/CoverFlow';
 import './intro/intro.css';
 
-const SEASONS: { key: SeasonKey; emoji: string }[] = [
-  { key: 'spring', emoji: '🌸' },
-  { key: 'summer', emoji: '🏖️' },
-  { key: 'autumn', emoji: '🍁' },
-  { key: 'winter', emoji: '⛄' },
+// emoji は見出し、fx は背景に舞うもの
+const SEASONS: { key: SeasonKey; emoji: string; fx: string }[] = [
+  { key: 'spring', emoji: '🌸', fx: '🌸' },
+  { key: 'summer', emoji: '🏖️', fx: '☁️' },
+  { key: 'autumn', emoji: '🍁', fx: '🍁' },
+  { key: 'winter', emoji: '⛄', fx: '❄️' },
 ];
 
-const ACTIVITY_ICONS = ['🥾', '🏕️', '🏐', '🎿'];
+const ACTIVITY_ICONS =['🥾', '🏕️', '🏐', '🎿'];
 
 const LANG_KEY = 'intro-lang';
 const INSTAGRAM_URL = 'https://www.instagram.com/hirosaki_wangel/';
 
 /** 画面に入ったら .in を付ける。動きを減らす設定の人には最初から出す */
-function useReveal() {
+function useReveal(lang: Lang) {
+  // lang が変わると、言語によって出る/出ない要素が増減するので、まだ出ていないものを探し直す
   useEffect(() => {
-    const els = Array.from(document.querySelectorAll<HTMLElement>('.reveal'));
+    const els = Array.from(document.querySelectorAll<HTMLElement>('.reveal:not(.in)'));
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce || !('IntersectionObserver' in window)) {
       els.forEach((el) => el.classList.add('in'));
@@ -38,7 +42,7 @@ function useReveal() {
     );
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
-  }, []);
+  }, [lang]);
 }
 
 /** スクロール量を --scroll に入れて、丘と雲を奥行きつきで動かす */
@@ -60,19 +64,6 @@ function useParallax(ref: React.RefObject<HTMLElement | null>) {
       if (raf) cancelAnimationFrame(raf);
     };
   }, [ref]);
-}
-
-function SeasonPhoto({ season, emoji, alt }: { season: SeasonKey; emoji: string; alt: string }) {
-  const [failed, setFailed] = useState(false);
-  return (
-    <div className={`season-photo season-${season}`}>
-      {!failed && (
-        // eslint-disable-next-line @next/next/no-img-element -- 静的エクスポート(画像最適化なし)なので素の img
-        <img src={`/seasons/${season}.jpg`} alt={alt} loading="lazy" onError={() => setFailed(true)} />
-      )}
-      {failed && <span className="season-placeholder" aria-hidden="true">{emoji}</span>}
-    </div>
-  );
 }
 
 export default function IntroPage() {
@@ -124,7 +115,7 @@ export default function IntroPage() {
     };
   }, [loading]);
 
-  useReveal();
+  useReveal(lang);
   useParallax(rootRef);
 
   // 最初の画面を数秒見せたら、活動のセクションまで自動でスライドする。
@@ -232,7 +223,9 @@ export default function IntroPage() {
         {t.activitiesSub && <p className="section-sub reveal">{t.activitiesSub}</p>}
         <ul className="activity-grid">
           {t.activities.map((a, i) => (
-            <li key={a.name} className="activity-card reveal" style={{ transitionDelay: `${i * 80}ms` }}>
+            // key は言語で変わらない番号にする。文言を key にすると、言語を切り替えたときに
+            // 要素が作り直され、画面に入ったときに付けた .in が消えて透明のままになる
+            <li key={i} className="activity-card reveal" style={{ transitionDelay: `${i * 80}ms` }}>
               <span className="activity-icon" aria-hidden="true">{ACTIVITY_ICONS[i]}</span>
               <h3>{a.name}</h3>
               <p>{a.text}</p>
@@ -246,7 +239,7 @@ export default function IntroPage() {
         <h2 className="section-title reveal">{t.infoTitle}</h2>
         <div className="info-grid">
           {t.info.map((it, i) => (
-            <div key={it.label} className="info-card reveal" style={{ transitionDelay: `${i * 100}ms` }}>
+            <div key={i} className="info-card reveal" style={{ transitionDelay: `${i * 100}ms` }}>
               <div className="info-label">{it.label}</div>
               <div className="info-value">{it.value}</div>
               {it.note && <div className="info-note">{it.note}</div>}
@@ -256,20 +249,42 @@ export default function IntroPage() {
         {t.free && <p className="info-free reveal">★ {t.free}</p>}
       </section>
 
-      {/* 春夏秋冬 */}
+      {/* 活動風景(写真は自動で流れて、最後は1枚目に戻る) */}
       <section className="intro-section">
         <h2 className="section-title reveal">{t.seasonsTitle}</h2>
         {t.seasonsSub && <p className="section-sub reveal">{t.seasonsSub}</p>}
-        <div className="season-grid">
-          {SEASONS.map((s, i) => (
-            <article key={s.key} className="season-card reveal" style={{ transitionDelay: `${i * 100}ms` }}>
-              <div className="season-stage">1-{i + 1}</div>
-              <SeasonPhoto season={s.key} emoji={s.emoji} alt={t.seasons[s.key].title} />
-              <h3>{s.emoji} {t.seasons[s.key].title}</h3>
-              {t.seasons[s.key].text && <p>{t.seasons[s.key].text}</p>}
-            </article>
-          ))}
-        </div>
+        {SEASONS.map((s) => (
+          <div key={s.key} className={`season-block season-${s.key} reveal`}>
+            {/* 季節のものが舞う背景(桜・雲・紅葉・雪) */}
+            <div className="fx" aria-hidden="true">
+              {Array.from({ length: 9 }, (_, i) => (
+                <i
+                  key={i}
+                  style={
+                    {
+                      left: `${(i * 11 + 4) % 96}%`,
+                      '--y': `${(i * 29) % 65 + 6}%`,
+                      fontSize: `${(0.9 + (i % 3) * 0.4) * (s.key === 'summer' ? 1.8 : 1)}rem`,
+                      animationDelay: `${-i * 1.7}s`,
+                      animationDuration: `${(s.key === 'summer' ? 38 : 8) + (i % 4) * (s.key === 'summer' ? 9 : 2)}s`,
+                    } as React.CSSProperties
+                  }
+                >
+                  {s.fx}
+                </i>
+              ))}
+            </div>
+            <h3 className="season-head">
+              <span aria-hidden="true">{s.emoji}</span> {t.seasons[s.key].title}
+            </h3>
+            <CoverFlow
+              label={t.seasons[s.key].title}
+              items={slides
+                .filter((p) => p.season === s.key)
+                .map((p) => ({ src: p.src, alt: p.caption[lang], position: p.position }))}
+            />
+          </div>
+        ))}
       </section>
 
       {/* 参加案内 */}
